@@ -1,0 +1,80 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+    margin: 0;
+    font-weight: normal;
+    outline: none;
+}
+
+body {
+    margin: 0;
+    font-family:
+        'LXGW',
+        -apple-system,
+        BlinkMacSystemFont,
+        Helvetica Neue,
+        Helvetica,
+        Arial,
+        PingFang SC,
+        Hiragino Sans GB,
+        Microsoft YaHei,
+        sans-serif;
+}
+
+@layer utilities {
+    .no-scrollbar::-webkit-scrollbar {
+        display: none;
+    }
+    .no-scrollbar {
+        -ms-overflow-style: none; /* IE and Edge */
+        scrollbar-width: none; /* Firefox */
+    }
+    .dot-below::after {
+        content: '';
+        display: block;
+        width: 6px;
+        height: 6px;
+        background-color: currentColor;
+        border-radius: 50%;
+        margin: 2px auto 0;
+    }
+    .underline-below::after {
+        content: '';
+        display: block;
+        width: 12px;
+        height: 4px;
+        border-radius: 4px;
+        background-color: currentColor;
+        margin: 4px auto 0;
+    }
+}
+
+@font-face {
+    font-family: 'LXGW';
+    font-style: normal;
+    font-weight: 400;
+    src:
+        local(''),
+        url('assets/fonts/LXGWXiHeiMN.ttf') format('truetype');
+}
+@font-face {
+    font-family: 'Racer';
+    font-style: normal;
+    font-weight: 400;
+    src:
+        local(''),
+        url('assets/fonts/Slugs Racer.ttf') format('truetype');
+}
+@font-face {
+    font-family: 'Buka';
+    font-style: normal;
+    font-weight: 400;
+    src:
+        local(''),
+        url('assets/fonts/Buka Bird.ttf') format('truetype');
+}

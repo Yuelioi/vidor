@@ -1,0 +1,41 @@
+{
+    "references": [
+        {
+            "path": "./tsconfig.node.json"
+        },
+    ],
+    "include": [
+        "env.d.ts",
+        "src/**/*",
+        "src/**/*.vue",
+        "src/**/*.ts",
+        "src/**/*.ts",
+        "wailsjs/go/**/*.ts"
+    ],
+    "exclude": [
+        "dist",
+        "node_modules",
+    ],
+    "compilerOptions": {
+        "composite": true,
+        "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.app.tsbuildinfo",
+        "baseUrl": ".",
+        "lib": [
+            "ESNext",
+            "DOM"
+        ],
+        "types": [
+            "./auto-imports.d.ts",
+            "./components.d.ts",
+            "./wailsjs/runtime/runtime.d.ts",
+        ],
+        "paths": {
+            "@/*": [
+                "./src/*"
+            ],
+            "@wailsjs/*": [
+                "./wailsjs/*"
+            ]
+        }
+    }
+}

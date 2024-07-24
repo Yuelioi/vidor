@@ -1,0 +1,44 @@
+{
+    "files.exclude": {
+        "**/.git": true,
+        "**/.svn": true,
+        "**/.hg": true,
+        "**/CVS": true,
+        "**/.DS_Store": true,
+        "**/Thumbs.db": true
+    },
+    "hide-files.files": [
+        "frontend/dist"
+    ],
+    "cSpell.words": [
+        "assetserver",
+        "Bili",
+        "bvid",
+        "chromedp",
+        "Colour",
+        "daisyui",
+        "deepl",
+        "downloaders",
+        "epid",
+        "Frameless",
+        "Infof",
+        "kkdai",
+        "logrus",
+        "lucide",
+        "michimani",
+        "pubdate",
+        "regexs",
+        "sessdata",
+        "sirupsen",
+        "systray",
+        "takey",
+        "timelength",
+        "tname",
+        "Vidor",
+        "vnode",
+        "wailsapp",
+        "wailsjs",
+        "Warnf",
+        "Yuelioi"
+    ],
+}

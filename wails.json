@@ -1,0 +1,25 @@
+{
+  "$schema": "https://wails.io/schemas/config.v2.json",
+  "name": "vidor",
+  "icon": "assets/application.png",
+
+  "outputfilename": "vidor",
+  "frontend:install": "pnpm install",
+  "frontend:build": "npm run build",
+  "frontend:dev:watcher": "npm run dev",
+  "frontend:dev:serverUrl": "auto",
+  "author": {
+    "name": "yuelioi",
+    "email": "yuelioi1210@gmail.com"
+  },
+  "windows": {
+    "hideTitlebar": true,
+    "frameless": true,
+    "resizable": true,
+    "fullscreen": false,
+    "defaultWidth": 1024,
+    "defaultHeight": 768,
+    "minWidth": 800,
+    "minHeight": 600
+  }
+}
