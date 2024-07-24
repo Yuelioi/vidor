@@ -1,11 +1,5 @@
-# frontend
-node_modules
-frontend/dist
-frontend/wailsjs/go
-.envrc
-
-auto-imports.d.ts
-components.d.ts
+wailsjs/go
+envrc
 
 # GO
 build/bin
@@ -15,6 +9,11 @@ latest
 go.work*
 pkg
 
-# others
+# Logs
+logs
+*.log
+
+
+# Others
 Note.md
 temp.*
