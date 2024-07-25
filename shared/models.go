@@ -54,10 +54,13 @@ type Part struct {
 type PlaylistInfo struct {
 	Url         string // 下载链接
 	Thumbnail   string
-	WorkDirName string   // 工作路径名 一般是视频标题/合集标题 后续用来创建下载文件夹
-	Author      string   // 作者
-	Qualities   []string // 可选择的质量列表( []QualityLabel )
-	Parts       []Part   // 分段合集
+	WorkDirName string    // 工作路径名 一般是视频标题/合集标题 后续用来创建下载文件夹
+	Author      string    // 作者
+	Description string    // 发布日期
+	PubDate     time.Time // 发布日期
+	Qualities   []string  // 质量列表 必选( []QualityLabel )
+	Codecs      []string  // 编码类型 可选
+	Parts       []Part    // 分段合集
 }
 
 type status struct {

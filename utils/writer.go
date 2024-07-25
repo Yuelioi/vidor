@@ -1,7 +1,6 @@
 package utils
 
 import (
-	"context"
 	"fmt"
 	"io"
 	"log"
@@ -26,7 +25,7 @@ type chunkClip struct {
 
 func ReqWriter(client *http.Client, req *http.Request, part *shared.Part, path string, stopChannel chan struct{}, callback shared.Callback) error {
 
-	batchSize := int64(5)
+	batchSize := int64(5) // 同时下载批次
 
 	req.Header.Set("Accept-Ranges", "bytes")
 	resp, err := client.Do(req)
@@ -56,7 +55,7 @@ func ReqWriter(client *http.Client, req *http.Request, part *shared.Part, path s
 	startTime := time.Now()
 	lastTime := time.Now()
 
-	ticker := time.NewTicker(time.Millisecond * 200)
+	ticker := time.NewTicker(time.Millisecond * 3000)
 
 	var downloading = true
 
@@ -110,36 +109,14 @@ func ReqWriter(client *http.Client, req *http.Request, part *shared.Part, path s
 	}
 
 	var wg sync.WaitGroup
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
 
-	for _, chunk := range chunks {
+	for index, chunk := range chunks {
 		wg.Add(1)
 		go func(chunk chunkClip) {
 			defer wg.Done()
-			downloadChunk(ctx, client, req, chunk.start, chunk.end, out, &totalBytesRead, stopChannel)
+			downloadChunk(index, client, req, chunk.start, chunk.end, out, &totalBytesRead, stopChannel)
 		}(chunk)
 	}
-
-	go func() {
-		<-stopChannel
-		print("下载1已关闭")
-		cancel()
-	}()
-
-	// for i := int64(0); i <= batchSize-1; i++ {
-	// 	start := i * chunkSize
-	// 	end := start + chunkSize - 1
-	// 	if i == batchSize-1 {
-	// 		end = contentLength - 1
-	// 	}
-
-	// 	wg.Add(1)
-	// 	go func(start, end int64) {
-	// 		defer wg.Done()
-	// 		downloadChunk(ctx, client, req, start, end, out, &totalBytesRead, stopChannel)
-	// 	}(start, end)
-	// }
 
 	wg.Wait()
 	downloading = false
@@ -147,10 +124,9 @@ func ReqWriter(client *http.Client, req *http.Request, part *shared.Part, path s
 	return nil
 }
 
-func downloadChunk(ctx context.Context, client *http.Client, req *http.Request, start, end int64, out *os.File, totalBytesRead *atomic.Int64, stopChannel chan struct{}) error {
+func downloadChunk(index int, client *http.Client, req *http.Request, start, end int64, out *os.File, totalBytesRead *atomic.Int64, stopChannel chan struct{}) error {
 
 	reqCopy := req.Clone(req.Context())
-	reqCopy = reqCopy.WithContext(ctx)
 	reqCopy.Header.Set("Range", fmt.Sprintf("bytes=%d-%d", start, end))
 
 	resp, err := client.Do(reqCopy)
@@ -163,14 +139,14 @@ func downloadChunk(ctx context.Context, client *http.Client, req *http.Request, 
 	buffer := make([]byte, bufferSize)
 
 	for {
-		n, err := resp.Body.Read(buffer)
-		if n > 0 {
-			select {
-			case <-stopChannel:
-				print("chunk已停止下载")
-				ctx.Done()
-				return ctx.Err()
-			default:
+		select {
+		case <-stopChannel:
+			print("chunk已停止下载", index)
+			return nil
+
+		default:
+			n, err := resp.Body.Read(buffer)
+			if n > 0 {
 				_, writeErr := out.WriteAt(buffer[:n], start)
 				if writeErr != nil {
 					log.Printf("写入文件失败：%v", writeErr)
@@ -179,14 +155,14 @@ func downloadChunk(ctx context.Context, client *http.Client, req *http.Request, 
 				start += int64(n)
 				totalBytesRead.Add(int64(n))
 			}
-		}
-		if err != nil {
-			if err == io.EOF {
-				return nil
-			}
-			log.Printf("读取响应体失败：%v", err)
-			return err
-		}
 
+			if err != nil {
+				if err == io.EOF {
+					return nil // 读取完毕，正常退出
+				}
+				log.Printf("读取响应体失败：%v", err)
+				return err // 读取过程中出错，返回错误
+			}
+		}
 	}
 }

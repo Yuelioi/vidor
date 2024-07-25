@@ -141,8 +141,11 @@ func (a *App) RemoveAllTask(parts []shared.Part) bool {
 
 	var retainedTasks []Task
 
-	a.taskQueue.mu.Lock()
-	defer a.taskQueue.mu.Unlock()
+	// 有任务时需要加锁
+	if a.taskQueue != nil {
+		a.taskQueue.mu.Lock()
+		defer a.taskQueue.mu.Unlock()
+	}
 
 	for _, task := range a.tasks {
 		if _, found := partUIDs[task.part.UID]; found {
@@ -158,7 +161,10 @@ func (a *App) RemoveAllTask(parts []shared.Part) bool {
 		}
 	}
 
-	a.taskQueue.RemoveTasks(retainedTasks)
+	// 移除正在下载的任务
+	if a.taskQueue != nil {
+		a.taskQueue.RemoveTasks(retainedTasks)
+	}
 
 	if err := saveTasks(newTasks, a.configDir); err != nil {
 		a.Logger.Warn(err)

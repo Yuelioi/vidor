@@ -33,6 +33,19 @@ type page struct {
 	} `json:"dimension"`
 }
 
+type biliUserInfo struct {
+	Code    int    `json:"code"`
+	Message string `json:"message"`
+	Data    struct {
+		MID       int `json:"mid"`
+		VIPType   int `json:"vip_type"`
+		VIPStatus int `json:"vip_status"`
+		Label     struct {
+			Text string `json:"text"`
+		} `json:"label"`
+	} `json:"data"`
+}
+
 type biliPlayListData struct {
 	TName   string `json:"tname"`
 	AID     int    `json:"aid"`
@@ -153,16 +166,25 @@ type biliThumbnailParams struct {
 	coverPath    string
 	coverUrl     string
 }
+type userStatus int
+
+const (
+	NoLogin userStatus = iota
+	Login
+	Vip
+)
 
 type BilibiliDownloader struct {
 	Client      *http.Client
 	Notice      shared.Notice
 	stopChannel chan struct{} // 在GetMate时 初始化chan
+	userState   userStatus    // 0未登录 1已登录 2Vip
 	biliBaseParams
 	biliDownloadParams
 	biliThumbnailParams
 }
 
+// https://github.com/SocialSisterYi/bilibili-API-collect/blob/master/docs/video/videostream_url.md
 var qualities = []shared.VideoQuality{
 	{ID: 6, Label: "240P"},      // 仅 MP4 格式支持, 仅 platform=html5 时有效
 	{ID: 16, Label: "360P"},     // 流畅
@@ -176,6 +198,7 @@ var qualities = []shared.VideoQuality{
 	{ID: 125, Label: "HDR 真彩色"}, // 仅支持 DASH 格式, 需要 fnval&64=64, 大会员认证
 	{ID: 126, Label: "杜比视界"},    // 仅支持 DASH 格式, 需要 fnval&512=512, 大会员认证
 	{ID: 127, Label: "8K 超高清"},  // 仅支持 DASH 格式, 需要 fnval&1024=1024, 大会员认证
+	{ID: 999, Label: "最高画质(💗)"}, // 仅支持 DASH 格式, 需要 fnval&1024=1024, 大会员认证
 }
 
 func NewBiliDownloader(notice shared.Notice) *BilibiliDownloader {
@@ -193,13 +216,38 @@ func (bd *BilibiliDownloader) PluginMeta() shared.PluginMeta {
 	}
 }
 
+func (bd *BilibiliDownloader) getUserStates(sessdata string) {
+	apiUrl := bilibiliApiURL + "/x/vip/web/user/info"
+
+	data, err := doBiliReq(*bd.Client, apiUrl, sessdata)
+	var biliUserInfo biliUserInfo
+	err = json.Unmarshal(data, &biliUserInfo)
+	if err != nil {
+		bd.userState = NoLogin
+		return
+	}
+
+	if biliUserInfo.Code == -101 {
+		bd.userState = NoLogin
+		return
+	} else if biliUserInfo.Data.VIPStatus == 1 {
+		bd.userState = Vip
+		return
+	}
+	bd.userState = Login
+}
+
 func (bd *BilibiliDownloader) ShowInfo(link string, config shared.Config, callback shared.Callback) (*shared.PlaylistInfo, error) {
 	client, err := utils.GetClient(config.ProxyURL, config.UseProxy)
 	if err != nil {
 		return nil, err
 	}
 
+	// 初始化Client
 	bd.Client = client
+
+	// 获取登录信息
+	bd.getUserStates(config.SESSDATA)
 
 	aid, bvid := extractAidBvid(link)
 	bpi, err := getPlaylistInfo(*client, aid, bvid, config.SESSDATA)
@@ -213,7 +261,22 @@ func (bd *BilibiliDownloader) ShowInfo(link string, config shared.Config, callba
 		pi = biliSeasonToPlaylistInfo(*bpi)
 	} else {
 		pi = biliPageToPlaylistInfo(*bpi)
+	}
 
+	pi.Description = bpi.Data.Desc
+
+	copyQualities := make([]shared.VideoQuality, len(qualities))
+	copy(copyQualities, qualities)
+	if bd.userState == NoLogin {
+		copyQualities = copyQualities[1:4]
+	} else if bd.userState == Login {
+		copyQualities = copyQualities[2:6]
+	} else {
+		copyQualities = copyQualities[2:]
+	}
+
+	for _, qu := range copyQualities {
+		pi.Qualities = append(pi.Qualities, qu.Label)
 	}
 
 	img, err := utils.GetThumbnail(client, pi.Thumbnail)
@@ -554,7 +617,7 @@ func getPlaylistInfo(client http.Client, aid int, bvid, sessdata string) (*biliP
 }
 
 func getVideoDownloadInfo(client http.Client, bvid string, cid int, sessdata string) (*biliDownloadInfo, error) {
-	body, err := doBiliReq(client, fmt.Sprintf("%s/x/player/wbi/playurl?bvid=%s&cid=%d&fnval=4048", bilibiliApiURL, bvid, cid), sessdata)
+	body, err := doBiliReq(client, fmt.Sprintf("%s/x/player/wbi/playurl?bvid=%s&cid=%d&fnval=4048&fourk=1", bilibiliApiURL, bvid, cid), sessdata)
 	if err != nil {
 		fmt.Println("Error reading response body:", err)
 		return nil, err

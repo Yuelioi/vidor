@@ -1,22 +1,22 @@
 <template>
-    <div class="px-4 h-full">
-        <div class="p-2 flex flex-col overflow-y-auto h-full">
-            <div class="space-y-3" v-if="props.filteredTasks.length > 0">
-                <div class="py-2 flex space-x-4 items-center">
-                    <div class="badge badge-neutral badge-lg mr-auto">
-                        任务:{{ filteredTasks.length }}
-                    </div>
-
-                    <div class="" v-if="tabId == 1" @click="removeAll">
-                        <span class="icon-[ic--outline-stop-circle] size-6"></span>
-                    </div>
-                    <div class="" v-else-if="tabId == 2" @click="removeAll">
-                        <span class="icon-[icon-park-outline--clear-format] size-6"></span>
-                    </div>
-                    <div class="" v-else @click="removeAll">
-                        <span class="icon-[ant-design--clear-outlined] size-6"></span>
-                    </div>
+    <div class="p-4 h-full flex flex-col">
+        <div class="h-full" v-if="props.filteredTasks.length > 0">
+            <div class="py-2 flex space-x-4 items-center">
+                <div class="badge badge-neutral badge-lg mr-auto text-neutral-content">
+                    任务:{{ filteredTasks.length }}
                 </div>
+
+                <div class="" v-if="tabId == 1" @click="removeAll">
+                    <span class="icon-[ic--outline-stop-circle] size-6"></span>
+                </div>
+                <div class="" v-else-if="tabId == 2" @click="removeAll">
+                    <span class="icon-[icon-park-outline--clear-format] size-6"></span>
+                </div>
+                <div class="" v-else @click="removeAll">
+                    <span class="icon-[ant-design--clear-outlined] size-6"></span>
+                </div>
+            </div>
+            <div class="overflow-y-auto space-y-3 h-full">
                 <div
                     v-for="(task, index) in filteredTasks"
                     :key="index"
@@ -80,9 +80,9 @@
                     </div>
                 </div>
             </div>
-            <div class="pt-2 font-bold" v-else>
-                <span>还木有任务捏~</span>
-            </div>
+        </div>
+        <div class="pt-2 font-bold" v-else>
+            <span>还木有任务捏~</span>
         </div>
     </div>
 </template>

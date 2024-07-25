@@ -41,7 +41,7 @@
                             max="24"
                             v-model.number.lazy="config.ScaleFactor"
                             value="16"
-                            class="range range-xs"
+                            class="range range-xs [--range-shdw:#788091]"
                             @change="changeScaleFactor"
                             step="1" />
                         <span class="pl-2 text-nowrap">{{ config.ScaleFactor }}</span>
@@ -63,7 +63,7 @@
                             max="7"
                             v-model.number.lazy="config.DownloadLimit"
                             value="5"
-                            class="range range-xs"
+                            class="range range-xs bg-primary [--range-shdw:#788091]"
                             step="1" />
                         <span class="pl-2 text-nowrap">{{ config.DownloadLimit }}</span>
                     </label>

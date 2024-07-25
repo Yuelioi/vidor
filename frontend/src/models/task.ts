@@ -26,7 +26,10 @@ export class PlaylistInfo {
     Thumbnail: string
     WorkDirName: string
     Author: string
+    PubDate: Date
+    Description: string
     Qualities: string[]
+    Codecs: string[]
     Parts: {
         URL: string
         Title: string

@@ -20,10 +20,10 @@
     </div>
 
     <VDialog v-model:show="showPlaylistInfo">
-        <template #header>视频信息</template>
+        <template #header><span class="text-base-content font-bold">视频信息</span></template>
 
-        <div class="flex flex-col rounded-md space-y-4">
-            <div class="w-full flex cursor-pointer h-32 p-2 join-item">
+        <div class="flex flex-col rounded-md space-y-6">
+            <div class="w-full flex h-32 p-2 join-item">
                 <div class="h-full">
                     <img
                         :src="videoInfo.Thumbnail"
@@ -32,132 +32,141 @@
                 </div>
 
                 <div class="flex-1 pl-4 p-2">
-                    <div
-                        class="tooltip tooltip-top flex items-center"
-                        :data-tip="videoInfo.WorkDirName">
-                        <h2 class="card-title line-clamp-2">{{ videoInfo.WorkDirName }}</h2>
-                    </div>
+                    <h2 class="card-title line-clamp-1">{{ videoInfo.WorkDirName }}</h2>
                     <p class="mt-2">作者: {{ videoInfo.Author }}</p>
+                    <p class="line-clamp-1 opacity-40">{{ videoInfo.PubDate }}</p>
+                    <p class="line-clamp-1 opacity-40">{{ videoInfo.Description }}</p>
                 </div>
             </div>
 
-            <div class="flex flex-wrap px-4 py-4 gap-y-3 items-center justify-between select-none">
-                <div class="px-2">
-                    <div class="tooltip tooltip-top flex items-center" data-tip="视频">
-                        <label for="downloadVideo" class="flex items-center cursor-pointer">
-                            <span class="icon-[lucide--file-video-2]"></span>
-                        </label>
-                        <input
-                            type="checkbox"
-                            id="downloadVideo"
-                            class="ml-2 checkbox checkbox-xs"
-                            v-model="config.DownloadVideo" />
+            <div class="px-4">
+                <h2 class="p-2 py-3 font-bold">下载选项</h2>
+                <div class="flex flex-wrap gap-y-3 items-center select-none">
+                    <div class="px-2 basis-1/4">
+                        <div class="tooltip tooltip-top flex items-center" data-tip="视频">
+                            <label for="downloadVideo" class="flex items-center cursor-pointer">
+                                <span class="icon-[lucide--file-video-2] size-6"></span>
+                            </label>
+                            <input
+                                type="checkbox"
+                                id="downloadVideo"
+                                class="ml-2 checkbox checkbox-xs"
+                                v-model="config.DownloadVideo" />
+                        </div>
                     </div>
-                </div>
-                <div class="px-2">
-                    <div class="tooltip tooltip-top flex items-center" data-tip="音频">
-                        <label for="downloadAudio" class="flex items-center cursor-pointer">
-                            <span class="icon-[lucide--file-audio]"></span>
-                        </label>
-                        <input
-                            type="checkbox"
-                            id="downloadAudio"
-                            class="ml-2 checkbox checkbox-xs"
-                            v-model="config.DownloadAudio" />
+                    <div class="px-2 basis-1/4">
+                        <div class="tooltip tooltip-top flex items-center" data-tip="音频">
+                            <label for="downloadAudio" class="flex items-center cursor-pointer">
+                                <span class="icon-[lucide--file-audio] size-6"></span>
+                            </label>
+                            <input
+                                type="checkbox"
+                                id="downloadAudio"
+                                class="ml-2 checkbox checkbox-xs"
+                                v-model="config.DownloadAudio" />
+                        </div>
                     </div>
-                </div>
-                <div class="px-2">
-                    <div class="tooltip tooltip-top flex items-center" data-tip="字幕">
-                        <label for="downloadSubtitle" class="flex items-center cursor-pointer">
-                            <span class="icon-[lucide--subtitles]"></span>
-                        </label>
-                        <input
-                            type="checkbox"
-                            id="downloadSubtitle"
-                            class="ml-2 checkbox checkbox-xs"
-                            v-model="config.DownloadSubtitle" />
+                    <div class="px-2 basis-1/4">
+                        <div class="tooltip tooltip-top flex items-center" data-tip="字幕">
+                            <label for="downloadSubtitle" class="flex items-center cursor-pointer">
+                                <span class="icon-[lucide--subtitles] size-6"></span>
+                            </label>
+                            <input
+                                type="checkbox"
+                                id="downloadSubtitle"
+                                class="ml-2 checkbox checkbox-xs"
+                                v-model="config.DownloadSubtitle" />
+                        </div>
                     </div>
-                </div>
-                <div class="px-2">
-                    <div class="tooltip tooltip-top flex items-center" data-tip="合并">
-                        <label for="downloadCombine" class="flex items-center cursor-pointer">
-                            <span class="icon-[lucide--combine]"></span>
-                        </label>
-                        <input
-                            type="checkbox"
-                            id="downloadCombine"
-                            class="ml-2 checkbox checkbox-xs"
-                            v-model="config.DownloadCombine" />
+                    <div class="px-2 basis-1/4">
+                        <div class="tooltip tooltip-top flex items-center" data-tip="合并">
+                            <label for="downloadCombine" class="flex items-center cursor-pointer">
+                                <span class="icon-[lucide--combine] size-6"></span>
+                            </label>
+                            <input
+                                type="checkbox"
+                                id="downloadCombine"
+                                class="ml-2 checkbox checkbox-xs"
+                                v-model="config.DownloadCombine" />
+                        </div>
                     </div>
                 </div>
             </div>
-
-            <div class="flex flex-wrap px-4 py-4 gap-y-3">
-                <div
-                    v-for="format in videoInfo.Qualities"
-                    :key="format"
-                    class="px-2 form-control sm:basis-1/4 md:basis--1/5 lg:basis--1/6 xl:basis--1/6">
-                    <label class="cursor-pointer flex items-center">
-                        <input
-                            type="radio"
-                            :value="format"
-                            v-model="selectedFormat"
-                            name="format"
-                            class="radio radio-primary radio-sm" />
-                        <span class="label-text ml-1">{{ format }}</span>
-                    </label>
-                </div>
-            </div>
-
-            <div class="flex flex-wrap text-sm px-2 py-4">
-                <div class="flex flex-wrap w-full">
+            <div class="px-4">
+                <h2 class="p-2 py-3 font-bold">分辨率</h2>
+                <div class="flex flex-wrap gap-y-3">
                     <div
-                        v-for="(video, index) in videoInfo.Parts"
-                        :key="index"
-                        class="w-1/2 sm:w-1/3 md:w-1/4 lg:w-1/5 xl:w-1/6 px-2 mb-2">
-                        <label class="flex items-center cursor-pointer space-x-2">
-                            <div
-                                class="tooltip tooltip-top w-full text-left"
-                                :data-tip="video.Title">
-                                <input
-                                    type="checkbox"
-                                    class="hidden peer"
-                                    :value="video"
-                                    v-model="selectedVideos" />
-
-                                <div
-                                    class="peer-checked:bg-primary border peer-checked:text-white truncate w-full px-2 py-1 rounded">
-                                    {{ video.Title }}
-                                </div>
-                            </div>
+                        v-for="format in videoInfo.Qualities"
+                        :key="format"
+                        class="px-2 form-control basis-1/4">
+                        <label class="cursor-pointer flex items-center">
+                            <input
+                                type="radio"
+                                :value="format"
+                                v-model="selectedFormat"
+                                name="format"
+                                class="radio radio-primary radio-sm" />
+                            <span class="label-text ml-1">{{ format }}</span>
                         </label>
                     </div>
                 </div>
             </div>
 
-            <div class="flex flex-wrap text-sm px-2 py-4">
-                <label class="flex items-center cursor-pointer">
-                    <input
-                        :checked="selectAll"
-                        type="checkbox"
-                        class="hidden peer"
-                        @change="handleSelectedAll" />
-                    <span
-                        class="border-secondary border text-sm peer-checked:bg-secondary peer-checked:text-white ml-2 px-3 py-1 rounded">
-                        全选
-                    </span>
-                </label>
-                <button class="btn btn-sm ml-auto mx-4" @click="showPlaylistInfo = false">
-                    取消
-                </button>
-                <button
-                    class="btn btn-primary btn-sm"
-                    @click="addTasks"
-                    :disabled="
-                        isDownloadBtnDisabled || selectedVideos.length == 0 || selectedFormat == ''
-                    ">
-                    下载
-                </button>
+            <div class="px-4">
+                <h2 class="p-2 py-3 font-bold">分P选择</h2>
+                <div class="flex flex-wrap text-sm">
+                    <div class="flex flex-wrap w-full selections">
+                        <div
+                            v-for="(video, index) in videoInfo.Parts"
+                            :key="index"
+                            class="basis-1/4 overflow-hidden px-2 mb-2">
+                            <label class="flex items-center cursor-pointer space-x-2">
+                                <div
+                                    class="tooltip tooltip-top w-full text-left"
+                                    :data-tip="video.Title">
+                                    <input
+                                        type="checkbox"
+                                        class="hidden peer"
+                                        :value="video"
+                                        v-model="selectedVideos" />
+
+                                    <div
+                                        class="peer-checked:bg-primary border peer-checked:text-white truncate w-full px-2 py-1 rounded">
+                                        P{{ index + 1 + video.Title }}
+                                    </div>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="px-4 pb-6">
+                <div class="flex flex-wrap text-sm py-4">
+                    <label class="flex items-center cursor-pointer">
+                        <input
+                            :checked="selectAll"
+                            type="checkbox"
+                            class="hidden peer"
+                            @change="handleSelectedAll" />
+                        <span
+                            class="border-primary select-none border text-sm peer-checked:bg-primary peer-checked:text-white ml-2 px-3 py-1 rounded">
+                            全选
+                        </span>
+                    </label>
+                    <button class="btn btn-sm ml-auto mx-4" @click="showPlaylistInfo = false">
+                        取消
+                    </button>
+                    <button
+                        class="btn btn-primary btn-sm mr-2"
+                        @click="addTasks"
+                        :disabled="
+                            isDownloadBtnDisabled ||
+                            selectedVideos.length == 0 ||
+                            selectedFormat == ''
+                        ">
+                        下载
+                    </button>
+                </div>
             </div>
         </div>
     </VDialog>
@@ -199,10 +208,14 @@ function extractPlaylistInfo() {
             videoInfo.WorkDirName = vi.WorkDirName
             videoInfo.Author = vi.Author
             videoInfo.Qualities = vi.Qualities
+            videoInfo.Codecs = vi.Codecs
             videoInfo.Parts = vi.Parts
+            videoInfo.Description = vi.Description
+            videoInfo.PubDate = vi.PubDate
+
             showPlaylistInfo.value = true
 
-            selectedFormat.value = videoInfo.Qualities[0]
+            selectedFormat.value = videoInfo.Qualities[videoInfo.Qualities.length - 1]
         }
     })
 }
@@ -246,5 +259,7 @@ watch(config.value, async () => {
     })
 })
 </script>
+
+<style></style>
 
 ../../wailsjs/go/main/App.js

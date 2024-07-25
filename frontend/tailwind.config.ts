@@ -18,10 +18,11 @@ export default {
                     secondary: '#a36ffd',
                     accent: '#ffbe00',
                     neutral: '#a3a7af',
+                    'neutral-content': '#f8fafc',
 
                     'base-100': '#ffffff',
                     'base-200': '#f3f4f6',
-                    'base-300': '#d1d5db',
+                    'base-300': '#a6adbb',
                     'base-content': '#0f172a',
 
                     info: '#3056d3',
@@ -36,6 +37,7 @@ export default {
                     secondary: '#a36ffd',
                     accent: '#ffd043',
                     neutral: '#22212c',
+                    'neutral-content': '#f8fafc',
 
                     'base-100': '#16181d',
                     'base-200': '#2a2e37',

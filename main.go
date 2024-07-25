@@ -9,8 +9,6 @@ import (
 	"strings"
 
 	"github.com/Yuelioi/vidor/app"
-	"github.com/Yuelioi/vidor/plugins"
-	"github.com/Yuelioi/vidor/shared"
 
 	"github.com/wailsapp/wails/v2"
 	"github.com/wailsapp/wails/v2/pkg/logger"
@@ -93,9 +91,10 @@ func AppLaunch() {
 }
 
 func main() {
-	dl := plugins.NewYTBDownloader()
-	dl.ShowInfo("https://www.youtube.com/watch?v=kaZOXRqFPCw", shared.Config{
-		UseProxy: true,
-		ProxyURL: "socks://127.0.0.1:10809",
-	})
+	AppLaunch()
+	// dl := plugins.NewYTBDownloader()
+	// dl.ShowInfo("https://www.youtube.com/watch?v=kaZOXRqFPCw", shared.Config{
+	// 	UseProxy: true,
+	// 	ProxyURL: "socks://127.0.0.1:10809",
+	// })
 }
