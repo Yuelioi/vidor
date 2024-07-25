@@ -123,6 +123,8 @@ const removeTask = (uid: string) => {
 const removeAll = () => {
     VAlert({ alert: '确定要清理所有任务吗(不会删除文件)' }).then((ok) => {
         if (ok) {
+            console.log(props.filteredTasks)
+
             RemoveAllTask(props.filteredTasks).then((ok) => {
                 if (ok) {
                     Message({ message: '删除任务成功', type: 'success' })

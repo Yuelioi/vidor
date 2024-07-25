@@ -31,7 +31,7 @@ func (a *App) ShowDownloadInfo(link string) *shared.PlaylistInfo {
 		return &shared.PlaylistInfo{}
 	}
 
-	pi, err := downloader.ShowInfo(link, *a.config, a.Callback)
+	pi, err := (*downloader).ShowInfo(link, *a.config, a.Callback)
 	if err != nil {
 		a.Logger.Warn(err)
 		return &shared.PlaylistInfo{}
@@ -73,7 +73,7 @@ func (a *App) AddDownloadTasks(parts []shared.Part, workName string) []shared.Pa
 
 // 检测/创建任务队列
 func (a *App) ensureTaskQueue(tasks []Task) {
-	if a.taskQueue == nil || isTaskQueueClosed(a.taskQueue) {
+	if a.taskQueue == nil {
 		NewTaskQueue(a, tasks)
 	} else {
 		a.taskQueue.AddTasks(tasks)
@@ -117,7 +117,9 @@ func (a *App) RemoveTask(uid string) bool {
 		if task.part.UID == uid {
 			fmt.Printf("task.part.UID: %v\n", task.part.UID)
 			if task.downloader != nil {
-				task.downloader.StopDownload(task.part, a.Callback)
+				(*task.downloader).StopDownload(task.part, a.Callback)
+				// 关闭完记得关闭下载器
+				a.tasks[i].downloader = nil
 			}
 			a.tasks = append(a.tasks[:i], a.tasks[i+1:]...)
 			if err := saveTasks(a.tasks, a.configDir); err != nil {
@@ -138,7 +140,7 @@ func (a *App) RemoveAllTask(parts []shared.Part) bool {
 	for _, part := range parts {
 		partUIDs[part.UID] = part
 	}
-
+	fmt.Println("正在移除", len(parts))
 	var retainedTasks []Task
 
 	// 有任务时需要加锁
@@ -147,17 +149,18 @@ func (a *App) RemoveAllTask(parts []shared.Part) bool {
 		defer a.taskQueue.mu.Unlock()
 	}
 
-	for _, task := range a.tasks {
+	for i, task := range a.tasks {
 		if _, found := partUIDs[task.part.UID]; found {
 			if task.downloader != nil {
 				if task.part.State == shared.TaskStatus.Queue {
 					retainedTasks = append(retainedTasks, task)
 				} else {
-					task.downloader.StopDownload(task.part, a.Callback)
+					(*task.downloader).StopDownload(task.part, a.Callback)
 				}
+				a.tasks[i].downloader = nil
 			}
 		} else {
-			newTasks = append(newTasks, task)
+			newTasks = append(newTasks, a.tasks[i])
 		}
 	}
 

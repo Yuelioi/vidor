@@ -1,20 +1,16 @@
 <template>
     <div class="container mx-auto h-full overflow-hidden items-center">
-        <div class="h-full w-full flex flex-col items-center justify-stretch">
-            <div
-                class="font-[Racer] basis-1/2 text-[2.75rem] select-none flex items-center justify-center">
-                <div class="overflow-hidden">
-                    <div class="text-primary relative">
-                        <h1>Vidor</h1>
-                    </div>
-                </div>
-            </div>
-            <div class="join flex w-full min-w-[350px] items-start justify-center">
+        <div class="h-full w-full flex flex-col items-center justify-center gap-12">
+            <div class="join w-full flex min-w-[350px] items-start justify-center">
                 <input
                     class="input basis-3/5 w-full h-full input-bordered join-item"
                     v-model="link"
                     placeholder="Link" />
-                <button class="btn btn-primary join-item" @click="extractPlaylistInfo">Go</button>
+                <button
+                    class="btn btn-primary join-item text-white/85 dark:text-base-content/85"
+                    @click="extractPlaylistInfo">
+                    Go
+                </button>
             </div>
         </div>
     </div>

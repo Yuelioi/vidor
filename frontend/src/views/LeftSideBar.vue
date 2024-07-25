@@ -2,12 +2,9 @@
     <div class="flex w-12 flex-col items-center h-full gap-6 justify-between">
         <div class="pt-1 w-full text-center">
             <router-link :to="{ name: 'home' }">
-                <!-- <div class="avatar">
-                    <div class="rounded size-6">
-                        <img src="/assets/images/appicon.png" />
-                    </div>
-                </div> -->
-                <span class="underline-below font-[Buka] text-[1.5rem] text-primary">V</span>
+                <div class="avatar pt-2">
+                    <IconLogoLight class="text-primary size-8"></IconLogoLight>
+                </div>
             </router-link>
         </div>
 
@@ -59,10 +56,14 @@
         </div>
 
         <div class="flex mt-auto flex-col space-y-2 pb-4">
-            <router-link class=" " :to="{ name: 'info' }">
-                <span class="icon-[lucide--book-open-text]"></span>
+            <router-link class=" " :to="{ name: 'info' }" @click="setActiveLink('about')">
+                <span
+                    :class="
+                        activeLink === 'about' ? 'icon-[ic--round-info]' : 'icon-[lucide--info]'
+                    "
+                    class="size-5"></span>
             </router-link>
-            <span class="icon-[lucide--power]" @click="showClose()"></span>
+            <span class="icon-[lucide--power] size-5" @click="showClose()"></span>
         </div>
     </div>
 </template>

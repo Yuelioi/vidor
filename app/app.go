@@ -232,11 +232,11 @@ func (a *App) loadTasks() {
 	saveTasks(tasks, a.configDir)
 }
 
-func (a *App) newDownloader(link string) (shared.Downloader, error) {
+func (a *App) newDownloader(link string) (*shared.Downloader, error) {
 	for _, downloader := range a.downloaders {
 		for _, regex := range downloader.Regexs {
 			if regex.MatchString(link) {
-				return downloader.Impl, nil
+				return &downloader.Impl, nil
 			}
 		}
 	}

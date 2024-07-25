@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"log"
@@ -23,7 +24,7 @@ type chunkClip struct {
 	end   int64
 }
 
-func ReqWriter(client *http.Client, req *http.Request, part *shared.Part, path string, stopChannel chan struct{}, callback shared.Callback) error {
+func ReqWriter(ctx context.Context, client *http.Client, req *http.Request, part *shared.Part, path string, callback shared.Callback) error {
 
 	batchSize := int64(5) // 同时下载批次
 
@@ -55,7 +56,7 @@ func ReqWriter(client *http.Client, req *http.Request, part *shared.Part, path s
 	startTime := time.Now()
 	lastTime := time.Now()
 
-	ticker := time.NewTicker(time.Millisecond * 3000)
+	ticker := time.NewTicker(time.Millisecond * 1000)
 
 	var downloading = true
 
@@ -109,22 +110,40 @@ func ReqWriter(client *http.Client, req *http.Request, part *shared.Part, path s
 	}
 
 	var wg sync.WaitGroup
+	errChan := make(chan error, batchSize)
 
 	for index, chunk := range chunks {
 		wg.Add(1)
-		go func(chunk chunkClip) {
+		go func(idx int, chunk chunkClip) {
 			defer wg.Done()
-			downloadChunk(index, client, req, chunk.start, chunk.end, out, &totalBytesRead, stopChannel)
-		}(chunk)
+			err := downloadChunk(ctx, client, req, chunk.start, chunk.end, out, &totalBytesRead)
+			if err != nil {
+				errChan <- err
+			}
+		}(index, chunk)
 	}
 
-	wg.Wait()
-	downloading = false
+	go func() {
+		wg.Wait()
+		close(errChan)
+		downloading = false
+	}()
+
+	select {
+	case <-ctx.Done():
+		// 上下文被取消
+		return ctx.Err()
+	case err := <-errChan:
+		// 下载过程中出错
+		if err != nil {
+			return err
+		}
+	}
 
 	return nil
 }
 
-func downloadChunk(index int, client *http.Client, req *http.Request, start, end int64, out *os.File, totalBytesRead *atomic.Int64, stopChannel chan struct{}) error {
+func downloadChunk(ctx context.Context, client *http.Client, req *http.Request, start, end int64, out *os.File, totalBytesRead *atomic.Int64) error {
 
 	reqCopy := req.Clone(req.Context())
 	reqCopy.Header.Set("Range", fmt.Sprintf("bytes=%d-%d", start, end))
@@ -140,10 +159,9 @@ func downloadChunk(index int, client *http.Client, req *http.Request, start, end
 
 	for {
 		select {
-		case <-stopChannel:
-			print("chunk已停止下载", index)
-			return nil
-
+		case <-ctx.Done():
+			// 上下文被取消
+			return ctx.Err()
 		default:
 			n, err := resp.Body.Read(buffer)
 			if n > 0 {

@@ -62,14 +62,7 @@ body {
         local(''),
         url('assets/fonts/LXGWXiHeiMN.ttf') format('truetype');
 }
-@font-face {
-    font-family: 'Racer';
-    font-style: normal;
-    font-weight: 400;
-    src:
-        local(''),
-        url('assets/fonts/Slugs Racer.ttf') format('truetype');
-}
+
 @font-face {
     font-family: 'Buka';
     font-style: normal;

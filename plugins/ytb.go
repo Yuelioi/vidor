@@ -197,10 +197,10 @@ func (yd *YouTubeDownloader) GetMeta(ctx context.Context, part *shared.Part, cal
 
 	format_v := getTargetYtbVideo(targetHeight, video.Formats)
 	part.Quality = format_v.QualityLabel
-	filePureName := utils.SanitizeFileName(part.Title)
+	// filePureName := utils.SanitizeFileName(part.Title)
 
-	input_v := filepath.Join(part.DownloadDir, fmt.Sprintf("%s_temp.mp4", filePureName))
-	input_a := filepath.Join(part.DownloadDir, fmt.Sprintf("%s_temp.mp3", filePureName))
+	// input_v := filepath.Join(part.DownloadDir, fmt.Sprintf("%s_temp.mp4", filePureName))
+	// input_a := filepath.Join(part.DownloadDir, fmt.Sprintf("%s_temp.mp3", filePureName))
 
 	// 下载视频
 	req_v, err := http.NewRequestWithContext(ctx, "GET", format_v.URL, nil)
@@ -209,20 +209,20 @@ func (yd *YouTubeDownloader) GetMeta(ctx context.Context, part *shared.Part, cal
 	}
 	req_v.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36 Edg/126.0.0.0")
 
-	if err = utils.ReqWriter(yd.Client.HTTPClient, req_v, part, input_v, make(chan struct{}), callback); err != nil {
-		part.Status = "下载视频出错"
-		return err
-	}
+	// if err = utils.ReqWriter(yd.Client.HTTPClient, req_v, part, input_v, make(chan struct{}), callback); err != nil {
+	// 	part.Status = "下载视频出错"
+	// 	return err
+	// }
 
-	format_a := getBestHighFormat(filterFormats(video.Formats, "audio"))
-	req, err := http.NewRequestWithContext(ctx, "GET", format_a.URL, nil)
-	if err != nil {
-		return err
-	}
-	if err = utils.ReqWriter(yd.Client.HTTPClient, req, part, input_a, make(chan struct{}), callback); err != nil {
-		part.Status = "下载音频出错"
-		return err
-	}
+	// format_a := getBestHighFormat(filterFormats(video.Formats, "audio"))
+	// req, err := http.NewRequestWithContext(ctx, "GET", format_a.URL, nil)
+	// if err != nil {
+	// 	return err
+	// }
+	// if err = utils.ReqWriter(yd.Client.HTTPClient, req, part, input_a, make(chan struct{}), callback); err != nil {
+	// 	part.Status = "下载音频出错"
+	// 	return err
+	// }
 
 	part.Status = "正在合并"
 

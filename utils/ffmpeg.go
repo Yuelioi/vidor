@@ -71,10 +71,12 @@ func CombineAV(ffmpegPath string, part *shared.Part, stopChannel chan struct{}) 
 		for {
 			select {
 			case <-stopChannel:
+				fmt.Println("ffmpeg stop")
 				cancel()
-				break
+				return
 			case <-ctx.Done():
-				break
+				fmt.Println("ffmpeg done")
+				return
 			}
 		}
 	}()
@@ -101,7 +103,7 @@ func CombineAV(ffmpegPath string, part *shared.Part, stopChannel chan struct{}) 
 
 	cmd := out.OverWriteOutput().WithOutput(logAdapter, logAdapter).Compile()
 
-	// 关闭cmd弹窗
+	// TODO关闭cmd弹窗
 	// cmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
 	err = cmd.Run()
 	return err

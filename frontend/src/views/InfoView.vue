@@ -6,9 +6,9 @@
         </div>
         <div class="right flex-1 h-full w-full border-l-4 border-neutral-100 dark:border-base-300">
             <!-- 任务内容区域 -->
-            <div class="h-full" v-if="tabId == 1"><Use></Use></div>
-            <div class="h-full" v-else-if="tabId == 2"><Update></Update></div>
-            <div class="h-full" v-else><About></About></div>
+            <div class="h-full" v-if="tabId == 1"><AppUse></AppUse></div>
+            <div class="h-full" v-else-if="tabId == 2"><AppUpdate></AppUpdate></div>
+            <div class="h-full" v-else><AppAbout></AppAbout></div>
         </div>
     </div>
 </template>

@@ -1,6 +1,7 @@
 package plugins
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -175,6 +176,8 @@ const (
 )
 
 type BilibiliDownloader struct {
+	ctx         context.Context
+	cancel      context.CancelFunc
 	Client      *http.Client
 	Notice      shared.Notice
 	stopChannel chan struct{} // 在GetMate时 初始化chan
@@ -202,8 +205,12 @@ var qualities = []shared.VideoQuality{
 }
 
 func NewBiliDownloader(notice shared.Notice) *BilibiliDownloader {
+
+	ctx, cancel := context.WithCancel(context.Background())
 	return &BilibiliDownloader{
 		Notice: notice,
+		ctx:    ctx,
+		cancel: cancel,
 	}
 }
 
@@ -248,6 +255,8 @@ func (bd *BilibiliDownloader) ShowInfo(link string, config shared.Config, callba
 
 	// 获取登录信息
 	bd.getUserStates(config.SESSDATA)
+
+	fmt.Printf("bd.userState: %v\n", bd.userState)
 
 	aid, bvid := extractAidBvid(link)
 	bpi, err := getPlaylistInfo(*client, aid, bvid, config.SESSDATA)
@@ -352,6 +361,8 @@ func (bd *BilibiliDownloader) GetMeta(config shared.Config, part *shared.Part, c
 		videoUrl = video.BaseURL
 	}
 
+	fmt.Printf("video.Width: %v\n", video.Width)
+
 	audio := getTargetAudio(bdi.Data.Dash.Audios)
 	if audio == nil {
 		audioUrl = ""
@@ -418,8 +429,10 @@ func (bd *BilibiliDownloader) Clear(part *shared.Part, callback shared.Callback)
 func (bd *BilibiliDownloader) StopDownload(part *shared.Part, callback shared.Callback) error {
 	if bd.stopChannel != nil {
 		println("关闭通道")
+		bd.cancel()
 		close(bd.stopChannel)
 		bd.stopChannel = nil
+		bd.cancel = nil
 	}
 	part.State = shared.TaskStatus.Finished
 	callback(shared.NoticeData{
@@ -447,7 +460,7 @@ func (bd *BilibiliDownloader) download(part *shared.Part, link, ext string, call
 		return err
 	}
 	req.URL = mediaUrl
-	utils.ReqWriter(bd.Client, req, part, path, bd.stopChannel, callback)
+	utils.ReqWriter(bd.ctx, bd.Client, req, part, path, callback)
 	return nil
 }
 
@@ -506,6 +519,7 @@ func processPagesData(bpi biliPlayListData, index int) biliBaseParams {
 	}
 }
 
+// 音频取最大的, 反正不大
 func getTargetAudio(audios []biliAudio) *biliAudio {
 
 	if len(audios) == 0 {
@@ -521,18 +535,19 @@ func getTargetAudio(audios []biliAudio) *biliAudio {
 // 如果有 直接用, 没有就找比它高1级的
 // TODO 视频编码选择
 func getTargetVideo(targeID int, videos []biliVideo) *biliVideo {
-	// 从小到大排序, 应对竖版视频
+	// 倒序, 向上取
 	sort.Slice(videos, func(i, j int) bool {
-		return videos[i].Height < videos[j].Height
+		return videos[i].ID > videos[j].ID
 	})
 
 	var closestVideo *biliVideo
 	for _, video := range videos {
-		if video.ID >= targeID {
+		if video.ID <= targeID {
 			return &video
 		}
 		closestVideo = &video
 	}
+
 	return closestVideo
 }
 
