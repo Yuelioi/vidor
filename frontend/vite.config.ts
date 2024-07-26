@@ -31,9 +31,9 @@ export default defineConfig({
             ]
         }),
         Components({
-            dts: true,
+            dts: 'components.d.ts',
             dirs: ['src/components/**', 'src/assets/icons', 'src/views'],
-            extensions: ['vue', 'md'],
+            extensions: ['vue'],
             include: [/\.vue$/, /\.vue\?vue/, /\.md$/],
             exclude: [/[\\/]node_modules[\\/]/, /[\\/]\.git[\\/]/],
             resolvers: [IconsResolver({})]

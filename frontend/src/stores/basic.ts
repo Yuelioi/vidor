@@ -8,6 +8,7 @@ export const useBasicStore = defineStore('basic', () => {
         ProxyURL: '',
         UseProxy: false,
         DownloadDir: '',
+        MagicName: '',
         DownloadVideo: false,
         DownloadAudio: false,
         DownloadSubtitle: false,

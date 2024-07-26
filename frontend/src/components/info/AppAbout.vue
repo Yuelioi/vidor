@@ -1,8 +1,8 @@
 <template>
-    <div class="p-4 flex flex-col space-y-4 h-full">
+    <TabCard :tab="tab">
         <div class="flex-1">Vidor 是一款由Golang编写的高性能下载器</div>
         <div class="divider mt-auto"></div>
-        <div class="flex flex-col space-y-2">
+        <div class="flex flex-col space-y-2 h-full">
             <div class="">
                 <div
                     class="link flex items-center space-x-2"
@@ -21,9 +21,11 @@
                 </div>
             </div>
         </div>
-    </div>
+    </TabCard>
 </template>
 
 <script setup lang="ts">
 import { BrowserOpenURL } from '@wailsjs/runtime/runtime'
+import { Tab } from '@/models/ui'
+defineProps<{ tab: Tab }>()
 </script>

@@ -5,6 +5,7 @@ export interface Config {
     DownloadDir: string
     FFMPEG: string
     ScaleFactor: number
+    MagicName: string
     DownloadVideo: boolean
     DownloadAudio: boolean
     DownloadSubtitle: boolean

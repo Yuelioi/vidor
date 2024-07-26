@@ -25,18 +25,18 @@ type TaskQueue struct {
 	ctx        context.Context // app上下文
 	wg         sync.WaitGroup
 	mu         sync.Mutex
-	tasks      chan Task
-	queueTasks chan Task
+	tasks      chan *Task
+	queueTasks chan *Task
 	done       chan struct{}
 }
 
 // 创建新的任务队列 并添加上下文
-func NewTaskQueue(a *App, tasks []Task) {
+func NewTaskQueue(a *App, tasks []*Task) {
 	tq := &TaskQueue{
 		app:        a,
 		ctx:        a.ctx,
-		tasks:      make(chan Task, a.config.DownloadLimit),
-		queueTasks: make(chan Task, 9999),
+		tasks:      make(chan *Task, a.config.DownloadLimit),
+		queueTasks: make(chan *Task, 9999),
 		done:       make(chan struct{}),
 	}
 
@@ -58,7 +58,7 @@ func NewTaskQueue(a *App, tasks []Task) {
 }
 
 // 添加所有任务到队列
-func (tq *TaskQueue) addTasksWithoutLock(tasks []Task) {
+func (tq *TaskQueue) addTasksWithoutLock(tasks []*Task) {
 	for _, task := range tasks {
 		tq.wg.Add(1)
 		select {
@@ -69,7 +69,7 @@ func (tq *TaskQueue) addTasksWithoutLock(tasks []Task) {
 	}
 }
 
-func (tq *TaskQueue) AddTasks(tasks []Task) {
+func (tq *TaskQueue) AddTasks(tasks []*Task) {
 	tq.mu.Lock()
 	defer tq.mu.Unlock()
 	tq.addTasksWithoutLock(tasks)
@@ -81,7 +81,7 @@ func (tq *TaskQueue) worker() {
 		case task, ok := <-tq.tasks:
 			if ok {
 				println("开始处理", task.part.Title)
-				tq.handleTask(&task)
+				tq.handleTask(task)
 			} else {
 				if len(tq.queueTasks) > 0 {
 					tq.refillTasks()
@@ -109,10 +109,10 @@ func (tq *TaskQueue) refillTasks() {
 }
 
 // 移除tq.tasks通道中的任务, 需要先移除所有的 再填充...
-func (tq *TaskQueue) RemoveTasks(tasks []Task) {
+func (tq *TaskQueue) RemoveTasks(tasks []*Task) {
 	tq.mu.Lock()
 	defer tq.mu.Unlock()
-	var tempTasks []Task
+	var tempTasks []*Task
 
 	for {
 		select {
@@ -131,7 +131,7 @@ removeDone:
 	tq.AddTasks(tempTasks)
 }
 
-func contains(tasks []Task, task Task) bool {
+func contains(tasks []*Task, task *Task) bool {
 	for _, t := range tasks {
 		if t.part.UID == task.part.UID {
 			return true
@@ -148,8 +148,8 @@ func (tq *TaskQueue) handleTask(task *Task) {
 	}()
 
 	for i, t := range tq.app.tasks {
-		if t == *task {
-			tq.app.tasks[i] = *task
+		if t == task {
+			tq.app.tasks[i] = task
 			break
 		}
 	}
@@ -211,7 +211,6 @@ func (tq *TaskQueue) handleTask(task *Task) {
 	}
 
 	// 清理工作
-
 	if err := (*task.downloader).Clear(task.part, tq.app.Callback); err != nil {
 		tq.handleDownloadError(tq.app.Logger, task.part, err)
 		return
@@ -231,7 +230,7 @@ func (tq *TaskQueue) taskStart(logger *logrus.Logger, part *shared.Part) {
 	part.State = shared.TaskStatus.Downloading
 }
 
-func updateTaskConfig(logger *logrus.Logger, task *Task, appTasks []Task, appConfigDir string) error {
+func updateTaskConfig(logger *logrus.Logger, task *Task, appTasks []*Task, appConfigDir string) error {
 	// 更新任务数据
 	if err := saveTask(task, appTasks, appConfigDir); err != nil {
 		logger.Errorf("保存任务数据失败: %v", err)

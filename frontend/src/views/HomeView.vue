@@ -256,6 +256,4 @@ watch(config.value, async () => {
 })
 </script>
 
-<style></style>
-
 ../../wailsjs/go/main/App.js

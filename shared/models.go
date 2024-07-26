@@ -13,6 +13,7 @@ type Config struct {
 	ProxyURL         string
 	UseProxy         bool
 	FFMPEG           string
+	MagicName        string
 	DownloadDir      string
 	DownloadVideo    bool
 	DownloadAudio    bool

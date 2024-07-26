@@ -13,14 +13,8 @@
 </template>
 
 <script setup lang="ts">
-const tabId = defineModel<Number>('tabId')
-
-interface Tab {
-    id: number
-    name: string
-    icon: string
-}
-
+const tabId = defineModel<number>('tabId')
+import { Tab } from '@/models/ui'
 defineProps<{ tabs: Tab[] }>()
 
 function tabChange(index: number) {

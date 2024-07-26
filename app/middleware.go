@@ -46,7 +46,7 @@ func (a *App) AddDownloadTasks(parts []shared.Part, workName string) []shared.Pa
 		return []shared.Part{}
 	}
 
-	var tasks = make([]Task, 0)
+	var tasks = make([]*Task, 0)
 
 	for _, part := range parts {
 		if a.taskExists(part.Url) {
@@ -57,8 +57,8 @@ func (a *App) AddDownloadTasks(parts []shared.Part, workName string) []shared.Pa
 				a.Logger.Warnf("添加任务:创建任务失败%s", err)
 				continue
 			}
-			tasks = append(tasks, *task)
-			a.tasks = append(a.tasks, *task)
+			tasks = append(tasks, task)
+			a.tasks = append(a.tasks, task)
 		}
 	}
 	a.ensureTaskQueue(tasks)
@@ -72,7 +72,7 @@ func (a *App) AddDownloadTasks(parts []shared.Part, workName string) []shared.Pa
 }
 
 // 检测/创建任务队列
-func (a *App) ensureTaskQueue(tasks []Task) {
+func (a *App) ensureTaskQueue(tasks []*Task) {
 	if a.taskQueue == nil {
 		NewTaskQueue(a, tasks)
 	} else {
@@ -134,14 +134,14 @@ func (a *App) RemoveTask(uid string) bool {
 // 移除
 func (a *App) RemoveAllTask(parts []shared.Part) bool {
 
-	newTasks := make([]Task, 0)
+	newTasks := make([]*Task, 0)
 	partUIDs := make(map[string]shared.Part)
 
 	for _, part := range parts {
 		partUIDs[part.UID] = part
 	}
 	fmt.Println("正在移除", len(parts))
-	var retainedTasks []Task
+	var retainedTasks []*Task
 
 	// 有任务时需要加锁
 	if a.taskQueue != nil {
@@ -261,7 +261,7 @@ func (a *App) OpenFileWithSystemPlayer(filePath string) error {
 }
 
 // 任务转任务片段
-func tasksToParts(tasks []Task) []shared.Part {
+func tasksToParts(tasks []*Task) []shared.Part {
 	parts := make([]shared.Part, len(tasks))
 	for i, task := range tasks {
 		parts[i] = *task.part

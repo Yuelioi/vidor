@@ -24,17 +24,17 @@ import (
 var Application *App
 
 var (
-	version      = "0.0.1"
-	name         = "vidor"
-	appConfigDir = ""
-	appTempDir   = ""
+	version      = "0.0.1" // 软件版本号
+	name         = "vidor" // 软件名
+	appConfigDir = ""      // 软件配置文件夹
+	appTempDir   = ""      // 软件临时文件夹(日志文件夹)
 )
 
 var (
 	logger *logrus.Logger
 )
 
-// 软件基础信息
+// 软件基础信息 aa
 type appInfo struct {
 	name      string
 	version   string
@@ -45,19 +45,21 @@ type appInfo struct {
 type App struct {
 	appInfo
 	ctx         context.Context
-	config      *shared.Config
-	downloaders []shared.PluginMeta
-	taskQueue   *TaskQueue
-	tasks       []Task // 所有任务 包括不在下载范围内的
+	config      *shared.Config      // 软件配置信息
+	downloaders []shared.PluginMeta // 下载器 解析链接并下载
+	taskQueue   *TaskQueue          // 任务队列 用于分发任务 同一时刻只会出现一个队列
+	tasks       []*Task             // 所有任务 包括不在下载范围内的
 	Notice      shared.Notice
 	Logger      *logrus.Logger
 	Callback    shared.Callback
 }
 
+// 基础插件回调
 var callback = func(data shared.NoticeData) {
 	runtime.EventsEmit(Application.ctx, data.EventName, data.Message.(*shared.Part))
 }
 
+// todo 插件通知
 type appNotice struct {
 	app *App
 }
@@ -86,6 +88,7 @@ func NewApp() *App {
 	return &App{}
 }
 
+// 系统托盘
 func systemTray() {
 
 	iconData, _ := os.ReadFile("./build/windows/icon.ico")
@@ -117,7 +120,7 @@ func (a *App) Startup(ctx context.Context) {
 	}
 	a.Logger = logger
 
-	// 测试托盘
+	// 添加托盘
 	go func() {
 		systray.Run(systemTray, func() {})
 	}()
@@ -129,7 +132,7 @@ func (a *App) Startup(ctx context.Context) {
 
 	// 加载任务列表
 	logger.Infof("App 加载任务列表 %s...", a.appInfo.configDir)
-	a.loadTasks()
+	go a.loadTasks()
 
 	// 加载配置信息
 	logger.Infof("App 加载配置文件 %s...", a.appInfo.configDir)
@@ -156,6 +159,7 @@ func (a *App) Startup(ctx context.Context) {
 func (a *App) Shutdown(ctx context.Context) {
 }
 
+// 初始化创建一些必要文件夹
 func createAppDirs() {
 	tempDir := os.TempDir()
 	userConfigDir, err := os.UserConfigDir()
@@ -163,32 +167,30 @@ func createAppDirs() {
 		log.Fatal(err)
 	}
 
-	// 存储缩略图位置
-	imgCacheDir := filepath.Join(os.Getenv("LOCALAPPDATA"), name)
-
 	appConfigDir = filepath.Join(userConfigDir, name)
 	appTempDir = filepath.Join(tempDir, name)
 
-	if err := utils.CreateDirs([]string{imgCacheDir, appConfigDir, appTempDir}); err != nil {
+	if err := utils.CreateDirs([]string{appConfigDir, appTempDir}); err != nil {
 		log.Fatal(err)
 	}
 }
 
 // 保存单个任务
-func saveTask(task *Task, tasks []Task, configDir string) error {
+func saveTask(srcTask *Task, tasks []*Task, configDir string) error {
 	parts := make([]shared.Part, 0)
 
-	for _, tk := range tasks {
-		if task.part.UID == tk.part.UID {
-			parts = append(parts, *task.part)
+	// 修改/更新
+	for _, task := range tasks {
+		if srcTask.part.UID == task.part.UID {
+			parts = append(parts, *srcTask.part)
 		} else {
-			parts = append(parts, *tk.part)
+			parts = append(parts, *task.part)
 		}
 	}
 
 	tasksData, err := json.MarshalIndent(parts, "", "  ")
 	if err != nil {
-		logger.Error(err)
+		logger.Error("" + err.Error())
 	}
 
 	err = os.WriteFile(filepath.Join(configDir, "tasks.json"), tasksData, 0644)
@@ -200,15 +202,15 @@ func saveTask(task *Task, tasks []Task, configDir string) error {
 }
 
 // 启动时加载App任务列表
-func (a *App) loadTasks() {
-	tasks := make([]Task, 0)
+func (a *App) loadTasks() error {
+	tasks := make([]*Task, 0)
 
 	configFile := filepath.Join(a.appInfo.configDir, "tasks.json")
 	configData, err := os.ReadFile(configFile)
 	if err != nil {
 		logger.Errorf("Cannot read/find task file: %v", err)
 		a.tasks = tasks
-		return
+		return err
 	}
 
 	parts := make([]shared.Part, 0)
@@ -216,20 +218,21 @@ func (a *App) loadTasks() {
 	if err != nil {
 		logger.Errorf("Cannot convert task data: %v", err)
 		a.tasks = tasks
-		return
+		return err
 	}
 
 	for _, part := range parts {
 		// 过滤掉不存在的任务
 		if _, err = os.Stat(part.DownloadDir); err == nil {
 			newPart := part
-			tasks = append(tasks, Task{
+			tasks = append(tasks, &Task{
 				part: &newPart,
 			})
 		}
 	}
 	a.tasks = tasks
 	saveTasks(tasks, a.configDir)
+	return nil
 }
 
 func (a *App) newDownloader(link string) (*shared.Downloader, error) {
@@ -243,7 +246,7 @@ func (a *App) newDownloader(link string) (*shared.Downloader, error) {
 	return nil, errors.New("没有对应的下载器")
 }
 
-func (a *App) loadDownloaders() {
+func (a *App) loadDownloaders() error {
 	_plugins := make([]shared.PluginMeta, 0)
 
 	// System Plugins
@@ -254,7 +257,7 @@ func (a *App) loadDownloaders() {
 	glob := "*.exe"
 	pluginFiles, err := plugin.Discover(glob, pluginsDir)
 	if err != nil {
-		logger.Infof("Failed to discover plugins: %v", err)
+		return err
 	}
 
 	for _, pluginPath := range pluginFiles {
@@ -267,6 +270,7 @@ func (a *App) loadDownloaders() {
 	}
 
 	a.downloaders = _plugins
+	return nil
 }
 
 func loadLocalPlugin(pluginPath string) (shared.Downloader, error) {
@@ -308,6 +312,7 @@ func (a *App) loadConfig() error {
 		config := shared.Config{
 			Theme:            "dark",
 			ScaleFactor:      16,
+			MagicName:        "{{Index}}-{{Title}}",
 			DownloadVideo:    true,
 			DownloadAudio:    true,
 			DownloadSubtitle: true,
@@ -367,7 +372,7 @@ func saveConfig(configDir string, config shared.Config) error {
 }
 
 // task更新时 保存
-func saveTasks(tasks []Task, configDir string) error {
+func saveTasks(tasks []*Task, configDir string) error {
 	parts := make([]shared.Part, 0)
 
 	for _, task := range tasks {

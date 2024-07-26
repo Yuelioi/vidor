@@ -32,6 +32,7 @@ onMounted(async () => {
         config.value.Theme = fetchedConfig.Theme
         config.value.ProxyURL = fetchedConfig.ProxyURL
         config.value.UseProxy = fetchedConfig.UseProxy
+        config.value.MagicName = fetchedConfig.MagicName
         config.value.DownloadDir = fetchedConfig.DownloadDir
         config.value.DownloadVideo = fetchedConfig.DownloadVideo
         config.value.DownloadAudio = fetchedConfig.DownloadAudio

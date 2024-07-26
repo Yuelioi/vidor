@@ -16,7 +16,7 @@
                     <span class="icon-[ant-design--clear-outlined] size-6"></span>
                 </div>
             </div>
-            <div class="overflow-y-auto space-y-3 h-full">
+            <div class="overflow-y-auto space-y-3 h-full text">
                 <div
                     v-for="(task, index) in filteredTasks"
                     :key="index"
