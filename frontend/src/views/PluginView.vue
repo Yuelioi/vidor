@@ -1,27 +1,26 @@
 <template>
-    <div class="flex h-full">
-        <div class="left w-36 border-r-4 border-zinc-200 dark:border-base-100">
-            <!-- 插件左侧边栏 -->
-            <TabLeftSideBar :tabs="tabs" v-model:tabId="tabId"></TabLeftSideBar>
-        </div>
-        <div class="right flex-1 h-full w-full border-l-4 border-neutral-100 dark:border-base-300">
-            <PluginTab></PluginTab>
-        </div>
-    </div>
+    <TabsView :tabs="tabs" v-model:tabId="tabId"></TabsView>
 </template>
 
 <script setup lang="ts">
+import PluginTab from '@/components/plugins/PluginTab.vue'
+
 const tabId = ref(1)
-const tabs = [
+
+const tabs: Tab[] = [
     {
         id: 1,
         name: '系统插件',
-        icon: 'icon-[lucide--plug-2]'
+        icon: 'icon-[lucide--plug-2]',
+        component: PluginTab,
+        color: 'text-primary'
     },
     {
         id: 2,
         name: '三方插件',
-        icon: 'icon-[lucide--sailboat]'
+        component: PluginTab,
+        icon: 'icon-[lucide--sailboat]',
+        color: 'text-secondary'
     }
 ]
 </script>

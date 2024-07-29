@@ -1,15 +1,15 @@
 <template>
     <div class="p-4 h-full flex flex-col">
-        <div class="h-full" v-if="props.filteredTasks.length > 0">
+        <div class="h-full" v-if="filteredTasks.length > 0">
             <div class="py-2 flex space-x-4 items-center">
                 <div class="badge badge-neutral badge-lg mr-auto text-neutral-content">
                     任务:{{ filteredTasks.length }}
                 </div>
 
-                <div class="" v-if="tabId == 1" @click="removeAll">
+                <div class="" v-if="tab.id == 1" @click="removeAll">
                     <span class="icon-[ic--outline-stop-circle] size-6"></span>
                 </div>
-                <div class="" v-else-if="tabId == 2" @click="removeAll">
+                <div class="" v-else-if="tab.id == 2" @click="removeAll">
                     <span class="icon-[icon-park-outline--clear-format] size-6"></span>
                 </div>
                 <div class="" v-else @click="removeAll">
@@ -33,7 +33,8 @@
                                 :alt="task.Title" />
                             <div
                                 @click="OpenFileWithSystemPlayer(task.Path)"
-                                class="transition-opacity duration-300 opacity-0 group-hover:opacity-100 absolute text-primary icon-[lucide--circle-play] size-8 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"></div>
+                                :class="tab.color"
+                                class="transition-opacity duration-300 opacity-0 group-hover:opacity-100 absolute icon-[lucide--circle-play] size-8 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"></div>
                         </div>
                         <div v-else>
                             <div class="h-16 w-24 skeleton shrink-0"></div>
@@ -42,13 +43,14 @@
                         <div class="flex-1 pl-4 flex flex-col">
                             <h2 class="flex-1 font-bold line-clamp-1">
                                 <span
-                                    class="group-hover:link group-hover:link-primary font-bold"
+                                    :class="'group-hover:' + tab.color"
+                                    class="group-hover:link font-bold"
                                     @click="BrowserOpenURL(task.Url)">
                                     {{ task.Title ? task.Title : '标题正在加载中...' }}
                                 </span>
                             </h2>
 
-                            <div v-if="tabId == 1">
+                            <div v-if="tab.id == 1">
                                 <div class="flex justify-between truncate">
                                     <span class="text-sm text-gray-500">
                                         {{ task.Status }}
@@ -63,7 +65,7 @@
                                     max="100"></progress>
                             </div>
 
-                            <div v-if="tabId == 3" class="text-xs text-base-content/40">
+                            <div v-if="tab.id == 3" class="text-xs text-base-content/40">
                                 <div>2024年7月24日</div>
                                 <div>52.3M</div>
                             </div>
@@ -90,21 +92,21 @@
 <script setup lang="ts">
 import { OpenExplorer, RemoveTask, OpenFileWithSystemPlayer } from '@wailsjs/go/app/App'
 import { BrowserOpenURL } from '@wailsjs/runtime/runtime'
-
-const props = defineProps({
-    tabId: {
-        type: Number,
-        required: true
-    },
-    filteredTasks: {
-        type: Array as () => Part[],
-        required: true
-    }
-})
-
-import { Part } from '@/models/task'
+import { Part } from '@/models/go'
+import { Tab } from '@/models/ui'
+const props = defineProps<{ tab: Tab }>()
 
 const { tasks } = storeToRefs(useBasicStore())
+
+const filteredTasks = computed(() => {
+    if (props.tab.id == 1) {
+        return tasks.value.filter((task) => task.State === '下载中')
+    } else if (props.tab.id == 2) {
+        return tasks.value.filter((task) => task.State === '队列中')
+    } else {
+        return tasks.value.filter((task) => task.State === '已完成')
+    }
+})
 
 const removeTask = (uid: string) => {
     RemoveTask(uid).then((ok) => {
@@ -123,16 +125,16 @@ const removeTask = (uid: string) => {
 const removeAll = () => {
     VAlert({ alert: '确定要清理所有任务吗(不会删除文件)' }).then((ok) => {
         if (ok) {
-            console.log(props.filteredTasks)
+            console.log(filteredTasks.value)
 
-            RemoveAllTask(props.filteredTasks).then((ok) => {
+            RemoveAllTask(filteredTasks.value).then((ok) => {
                 if (ok) {
                     Message({ message: '删除任务成功', type: 'success' })
                     console.log(tasks.value, 1)
                     tasks.value.splice(
                         0,
                         tasks.value.length,
-                        ...subtractTaskLists(tasks.value, props.filteredTasks)
+                        ...subtractTaskLists(tasks.value, filteredTasks.value)
                     )
                     console.log(tasks.value, 2)
                 } else {

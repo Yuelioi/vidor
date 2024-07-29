@@ -13,11 +13,30 @@ export default defineConfig({
         vue(),
         AutoImport({
             dts: 'auto-imports.d.ts',
+            include: [
+                /\.[t]sx?$/, // .ts, .tsx
+                /\.vue$/,
+                /\.vue\?vue/, // .vue
+                /\.md$/ // .md
+            ],
+            eslintrc: {
+                enabled: true
+            },
             imports: [
                 'vue',
                 'vue-router',
                 {
                     pinia: ['defineStore', 'storeToRefs']
+                },
+                {
+                    from: './src/models/ui',
+                    imports: ['Tab'],
+                    type: true
+                },
+                {
+                    from: './src/models/go',
+                    imports: ['Config', 'MessageData'],
+                    type: true
                 }
             ],
             resolvers: [IconsResolver({})],

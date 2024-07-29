@@ -10,18 +10,20 @@ export default {
         extend: {}
     },
     plugins: [daisyui, addDynamicIconSelectors()],
+    safelist: ['hover:text-primary', 'hover:text-secondary', 'hover:text-accent'],
+
     daisyui: {
         themes: [
             {
                 light: {
                     primary: '#ff6699',
-                    secondary: '#a36ffd',
-                    accent: '#ffbe00',
+                    secondary: '#00aeec',
+                    accent: '#a36ffd',
                     neutral: '#a3a7af',
                     'neutral-content': '#f8fafc',
 
                     'base-100': '#ffffff',
-                    'base-200': '#f3f4f6',
+                    'base-200': '#f6f8fa',
                     'base-300': '#a6adbb',
                     'base-content': '#0f172a',
 
@@ -34,8 +36,8 @@ export default {
             {
                 dark: {
                     primary: '#ff6699',
-                    secondary: '#a36ffd',
-                    accent: '#ffd043',
+                    secondary: '#4ac7ff',
+                    accent: '#a36ffd',
                     neutral: '#22212c',
                     'neutral-content': '#f8fafc',
 

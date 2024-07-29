@@ -153,11 +153,11 @@ func (yd *YouTubeDownloader) ShowInfo(link string, config shared.Config) (*share
 		cacheThumbnail = getBestThumbnail(video.Thumbnails).URL
 	}
 
-	img, err := utils.GetThumbnail(yd.Client.HTTPClient, cacheThumbnail)
+	img, err := utils.GetThumbnail(yd.Client.HTTPClient, cacheThumbnail, "")
 	if err != nil {
 		return nil, err
 	}
-	pi.Thumbnail = img
+	pi.Cover = img
 
 	return &pi, nil
 }
@@ -190,8 +190,8 @@ func (yd *YouTubeDownloader) GetMeta(ctx context.Context, part *shared.Part, cal
 
 	part.Status = "获取封面"
 
-	targetHeight, _ := utils.GetQualityID(part.Quality, []shared.VideoQuality{})
-	part.Quality, _ = utils.GetQualityLabel(targetHeight, []shared.VideoQuality{})
+	targetHeight, _ := utils.GetQualityID(part.Quality, []shared.StreamQuality{})
+	part.Quality, _ = utils.GetQualityLabel(targetHeight, []shared.StreamQuality{})
 
 	part.Status = "获取元数据"
 

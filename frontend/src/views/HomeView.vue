@@ -169,7 +169,7 @@
 </template>
 <script lang="ts" setup>
 import { VDialog } from '@/plugins/dialog/index.js'
-import { Part, PlaylistInfo } from '@/models/task'
+import { Part, PlaylistInfo } from '@/models/go'
 import { ShowDownloadInfo, AddDownloadTasks } from '@wailsjs/go/app/App'
 
 const { config, tasks } = storeToRefs(useBasicStore())

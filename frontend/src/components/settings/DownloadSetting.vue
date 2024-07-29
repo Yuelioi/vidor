@@ -59,7 +59,6 @@
 </template>
 
 <script setup lang="ts">
-import { Tab } from '@/models/ui'
 defineProps<{ tab: Tab }>()
 const { config } = storeToRefs(useBasicStore())
 
@@ -76,6 +75,7 @@ function ffmpegChange() {
     SetFFmpegPath('请选择FFmpeg文件夹').then((result) => {
         if (result != '') {
             config.value.FFMPEG = result
+            Message({ message: '设置成功', type: 'success' })
         } else {
             Message({ message: '用户取消/路径无效', type: 'warn' })
         }

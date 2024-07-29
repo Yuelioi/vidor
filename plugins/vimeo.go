@@ -158,8 +158,8 @@ func (vd *VimeoDownloader) GetMeta(ctx context.Context, part *shared.Part) error
 	clipBaseUrl := baseUrl
 
 	// todo
-	targetHeight, _ := utils.GetQualityID(part.Quality, []shared.VideoQuality{})
-	part.Quality, _ = utils.GetQualityLabel(targetHeight, []shared.VideoQuality{})
+	targetHeight, _ := utils.GetQualityID(part.Quality, []shared.StreamQuality{})
+	part.Quality, _ = utils.GetQualityLabel(targetHeight, []shared.StreamQuality{})
 
 	part.Thumbnail = vd.videoConfig.Video.Thumbs.Size1280
 	part.Title = vd.videoConfig.Video.Title
@@ -235,7 +235,7 @@ func start(client http.Client, link string, config shared.Config) (*shared.Playl
 		return nil, nil, err
 	}
 
-	pli.Thumbnail = videoConfig.Video.Thumbs.Size1280
+	pli.Cover = videoConfig.Video.Thumbs.Size1280
 	pli.WorkDirName = videoConfig.Video.Title
 	pli.Author = videoConfig.Video.Owner.Name
 	pli.Url = videoConfig.Video.Url

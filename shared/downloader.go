@@ -7,6 +7,7 @@ import (
 )
 
 type Downloader interface {
+	New(notice Notice) Downloader
 	PluginMeta() PluginMeta // 获取插件信息
 
 	ShowInfo(link string, config Config, callback Callback) (*PlaylistInfo, error) // 主页搜索展示信息

@@ -63,7 +63,7 @@
                     "
                     class="size-5"></span>
             </router-link>
-            <span class="icon-[lucide--power] size-5" @click="showClose()"></span>
+            <span class="icon-[lucide--power] size-5 cursor-pointer" @click="showClose()"></span>
         </div>
     </div>
 </template>

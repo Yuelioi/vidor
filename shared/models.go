@@ -29,10 +29,11 @@ type Part struct {
 	UID         string // 唯一标识 ;需创建task时初始化
 	WorkDirName string // 工作文件夹名 ;需创建task时初始化
 	DownloadDir string // 下载文件夹完整路径 ;需创建task时初始化
+	MagicName   string // 下载文件名 不带后缀
 	Path        string // 下载文件完整路径
 
 	Url         string    // 链接
-	Index       int       // 所在父级索引
+	Index       int       // 所在父级索引 0开始
 	Author      string    //作者
 	Title       string    //标题
 	Description string    //描述
@@ -54,7 +55,7 @@ type Part struct {
 // Home页面搜索展示所需信息
 type PlaylistInfo struct {
 	Url         string // 下载链接
-	Thumbnail   string
+	Cover       string
 	WorkDirName string    // 工作路径名 一般是视频标题/合集标题 后续用来创建下载文件夹
 	Author      string    // 作者
 	Description string    // 发布日期
@@ -82,15 +83,16 @@ type status struct {
 }
 
 // 视频质量
-type VideoQuality struct {
-	ID     int
-	Label  string
-	Format string
+type StreamQuality struct {
+	ID     int    // 流媒体ID
+	Label  string // 流媒体标签
+	Format string // 流媒体编码格式
 }
 
 // 插件信息
 type PluginMeta struct {
 	Name   string
+	Type   string // System/ThirdPart
 	Regexs []*regexp.Regexp
 	Impl   Downloader
 }

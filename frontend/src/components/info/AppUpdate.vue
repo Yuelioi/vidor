@@ -5,6 +5,5 @@
 </template>
 
 <script setup lang="ts">
-import { Tab } from '@/models/ui'
 defineProps<{ tab: Tab }>()
 </script>

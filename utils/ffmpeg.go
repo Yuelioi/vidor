@@ -6,11 +6,10 @@ import (
 	"log"
 	"os"
 	"os/exec"
-
 	"path/filepath"
+
 	"strings"
 
-	"github.com/Yuelioi/vidor/shared"
 	ffmpeg_go "github.com/u2takey/ffmpeg-go"
 )
 
@@ -22,8 +21,8 @@ func (l *LogAdapter) Write(p []byte) (n int, err error) {
 	return l.file.Write(p)
 }
 
-func createLogAdapter(part *shared.Part) (*LogAdapter, error) {
-	logFile, err := os.Create(filepath.Join(part.DownloadDir, "ffmpeg.log"))
+func createLogAdapter(logFilePath string) (*LogAdapter, error) {
+	logFile, err := os.Create(logFilePath)
 	if err != nil {
 		return nil, err
 	}
@@ -64,26 +63,7 @@ func isFFmpegExecutable(path string) bool {
 // }
 
 // 合并音频与视频
-func CombineAV(ffmpegPath string, part *shared.Part, stopChannel chan struct{}) (err error) {
-	ctx, cancel := context.WithCancel(context.Background())
-
-	go func() {
-		for {
-			select {
-			case <-stopChannel:
-				fmt.Println("ffmpeg stop")
-				cancel()
-				return
-			case <-ctx.Done():
-				fmt.Println("ffmpeg done")
-				return
-			}
-		}
-	}()
-
-	input_v := filepath.Join(part.DownloadDir, fmt.Sprintf("%s_temp.mp4", part.Title))
-	input_a := filepath.Join(part.DownloadDir, fmt.Sprintf("%s_temp.mp3", part.Title))
-	output_v := filepath.Join(part.DownloadDir, fmt.Sprintf("%s.mp4", part.Title))
+func CombineAV(ctx context.Context, ffmpegPath string, input_v, input_a, output_v, logFile string) (err error) {
 
 	input := []*ffmpeg_go.Stream{ffmpeg_go.Input(input_v), ffmpeg_go.Input(input_a)}
 	out := ffmpeg_go.OutputContext(ctx, input, output_v, ffmpeg_go.KwArgs{"c:v": "copy", "c:a": "aac"})
@@ -94,8 +74,19 @@ func CombineAV(ffmpegPath string, part *shared.Part, stopChannel chan struct{}) 
 		out = out.SetFfmpegPath(ffmpegPath)
 	}
 
+	logDir := filepath.Dir(logFile)
+
+	// 检查目录是否存在
+	if _, err := os.Stat(logDir); os.IsNotExist(err) {
+		// 创建目录，使用 0755 权限
+		if err := os.MkdirAll(logDir, 0755); err != nil {
+			fmt.Println("Error creating directory:", err)
+			return err
+		}
+	}
+
 	// err = out.OverWriteOutput().WithOutput().Run()
-	logAdapter, err := createLogAdapter(part)
+	logAdapter, err := createLogAdapter(logFile)
 	if err != nil {
 		return err
 	}

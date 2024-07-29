@@ -1,6 +1,5 @@
 import { defineStore } from 'pinia'
-import { Config } from '@/models/config'
-import { Part } from '@/models/task'
+import { Part } from '@/models/go'
 
 export const useBasicStore = defineStore('basic', () => {
     const config = reactive<Config>({

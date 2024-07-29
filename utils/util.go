@@ -67,39 +67,47 @@ func MagicName(template, workDirname, title string, index int) string {
 // 向上取画质代码
 //
 //	sortOrder?
-func GetQualityID(label string, qualities []shared.VideoQuality) (int, error) {
+func GetQualityID(label string, qualities []shared.StreamQuality) (int, error) {
 
 	if len(qualities) == 0 {
 		return 0, errors.New("视频质量列表为空")
 	}
 
-	sort.Slice(qualities, func(i, j int) bool {
-		return qualities[i].ID > qualities[j].ID
+	qualitiesCopy := make([]shared.StreamQuality, len(qualities))
+	copy(qualitiesCopy, qualities)
+
+	sort.Slice(qualitiesCopy, func(i, j int) bool {
+		return qualitiesCopy[i].ID > qualitiesCopy[j].ID
 	})
 
-	for _, q := range qualities {
+	for _, q := range qualitiesCopy {
 		if q.Label == label {
 			return q.ID, nil
 		}
 	}
-	return qualities[0].ID, nil
+	return qualitiesCopy[0].ID, nil
 }
-func GetQualityLabel(id int, qualities []shared.VideoQuality) (string, error) {
+
+func GetQualityLabel(id int, qualities []shared.StreamQuality) (string, error) {
 
 	if len(qualities) == 0 {
 		return "", errors.New("视频质量列表为空")
 	}
 
-	sort.Slice(qualities, func(i, j int) bool {
-		return qualities[i].ID > qualities[j].ID
+	// 创建 qualities 的副本
+	qualitiesCopy := make([]shared.StreamQuality, len(qualities))
+	copy(qualitiesCopy, qualities)
+
+	sort.Slice(qualitiesCopy, func(i, j int) bool {
+		return qualitiesCopy[i].ID > qualitiesCopy[j].ID
 	})
 
-	for _, q := range qualities {
+	for _, q := range qualitiesCopy {
 		if q.ID == id {
 			return q.Label, nil
 		}
 	}
-	return qualities[0].Label, nil
+	return qualitiesCopy[0].Label, nil
 }
 
 // 创建文件夹

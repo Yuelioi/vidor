@@ -1,3 +1,26 @@
+export interface MessageData {
+    Message: string
+    MessageType: string
+}
+
+export interface Config {
+    Theme: string
+    ProxyURL: string
+    UseProxy: boolean
+    DownloadDir: string
+    FFMPEG: string
+    ScaleFactor: number
+    MagicName: string
+    DownloadVideo: boolean
+    DownloadAudio: boolean
+    DownloadSubtitle: boolean
+    DownloadCombine: boolean
+
+    SESSDATA: string
+
+    DownloadLimit: number
+}
+
 export class Task {
     path: string // 下载后的路径
     url: string // 原始Url

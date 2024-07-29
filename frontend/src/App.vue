@@ -2,7 +2,7 @@
     <main class="flex w-screen h-screen bg-base-200">
         <div class="left bg-slate-900 text-slate-200">
             <!-- 主界面左侧栏 -->
-            <LeftSideBar></LeftSideBar>
+            <SideBar></SideBar>
         </div>
         <div class="right flex flex-col flex-1 h-full">
             <!-- 主界面顶部 -->

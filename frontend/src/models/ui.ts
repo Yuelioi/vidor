@@ -3,4 +3,5 @@ export interface Tab {
     name: string
     icon: string
     component: ReturnType<typeof defineComponent>
+    color: string
 }

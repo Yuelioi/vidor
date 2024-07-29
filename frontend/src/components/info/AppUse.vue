@@ -40,6 +40,5 @@
 
 <script setup lang="ts">
 import { BrowserOpenURL } from '@wailsjs/runtime/runtime'
-import { Tab } from '@/models/ui'
 defineProps<{ tab: Tab }>()
 </script>

@@ -3,6 +3,8 @@ package app
 import (
 	"context"
 	"fmt"
+	"sync/atomic"
+	"time"
 
 	"sync"
 
@@ -13,214 +15,292 @@ import (
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
 
+const (
+	Queue = iota
+	Working
+	Finished
+)
+
 // 最小调度单位
 type Task struct {
-	downloader *shared.Downloader
+	downloader shared.Downloader
+	state      int
 	part       *shared.Part
 }
 
 // 任务队列
 type TaskQueue struct {
-	app        *App
-	ctx        context.Context // app上下文
-	wg         sync.WaitGroup
-	mu         sync.Mutex
-	tasks      chan *Task
-	queueTasks chan *Task
-	done       chan struct{}
+	app            *App
+	ctx            context.Context // app上下文
+	state          int             // Working/Finished
+	wg             sync.WaitGroup
+	mu             sync.Mutex
+	tasksRemaining atomic.Int64
+	tasks          chan *Task // 任务通道
+	queueTasks     []*Task    // 队列任务
+	done           chan struct{}
 }
 
-// 创建新的任务队列 并添加上下文
-func NewTaskQueue(a *App, tasks []*Task) {
+/*
+创建新的任务队列
+并添加任务
+*/
+func NewTaskQueue(a *App, tasks []*Task) *TaskQueue {
+	limit := utils.ClampInt(a.config.DownloadLimit, 1, 10)
+
 	tq := &TaskQueue{
 		app:        a,
 		ctx:        a.ctx,
-		tasks:      make(chan *Task, a.config.DownloadLimit),
-		queueTasks: make(chan *Task, 9999),
+		state:      Working,
+		tasks:      make(chan *Task, limit),
+		queueTasks: make([]*Task, 0),
 		done:       make(chan struct{}),
 	}
 
 	tq.AddTasks(tasks)
 
-	limit := utils.ClampInt(a.config.DownloadLimit, 1, 10)
 	for i := 0; i < limit; i++ {
 		go tq.worker()
 	}
 
 	go func() {
 		tq.wg.Wait()
-		close(tq.done)
-		print("关闭tq nil")
-		tq = nil
 	}()
-	print("创建队列成功") // 没有到达
-	a.taskQueue = tq
+
+	return tq
 }
 
-// 添加所有任务到队列
-func (tq *TaskQueue) addTasksWithoutLock(tasks []*Task) {
-	for _, task := range tasks {
-		tq.wg.Add(1)
-		select {
-		case tq.tasks <- task:
-		default:
-			tq.queueTasks <- task
-		}
-	}
-}
+// 任务工作函数
+// 影响: tq.queueTasks tq.tasks
 
-func (tq *TaskQueue) AddTasks(tasks []*Task) {
-	tq.mu.Lock()
-	defer tq.mu.Unlock()
-	tq.addTasksWithoutLock(tasks)
-}
 func (tq *TaskQueue) worker() {
-
 	for {
 		select {
 		case task, ok := <-tq.tasks:
-			if ok {
-				println("开始处理", task.part.Title)
-				tq.handleTask(task)
-			} else {
-				if len(tq.queueTasks) > 0 {
-					tq.refillTasks()
-				} else {
-					// if queueTasks is empty, exit the worker
-					return
-				}
+			if !ok {
+				// 队列通道关闭 直接退出
+				tq.Close()
+				return
 			}
+
+			// 创建下载器
+			downloader, err := newDownloader(tq.app.downloaders, tq.app.Notice, task.part.Url)
+			fmt.Printf("downloader: %v\n", downloader)
+			task.downloader = downloader
+			if err != nil {
+				continue
+			}
+			tq.state = Working
+			task.state = Working
+			tq.handleTask(task)
+
 		case <-tq.done:
-			println("taskQue 接收到完成信号")
+			tq.Close()
 			return
-		}
-	}
-}
 
-func (tq *TaskQueue) refillTasks() {
-	for {
-		select {
-		case task := <-tq.queueTasks:
-			tq.tasks <- task
 		default:
-			return
+			// 每秒检测下任务队列
+			if len(tq.queueTasks) > 0 {
+				tq.reFillTasks()
+			} else {
+				tq.Close()
+				return
+			}
+			time.Sleep(1 * time.Second)
 		}
 	}
 }
 
-// 移除tq.tasks通道中的任务, 需要先移除所有的 再填充...
-func (tq *TaskQueue) RemoveTasks(tasks []*Task) {
+/*
+添加任务
+ 1. 添加到任务通道
+ 2. 超额的添加到tq.queueTasks
+
+影响: tq.queueTasks
+*/
+func (tq *TaskQueue) AddTasks(tasks []*Task) {
 	tq.mu.Lock()
 	defer tq.mu.Unlock()
-	var tempTasks []*Task
 
-	for {
-		select {
-		case t := <-tq.tasks:
-			if !contains(tasks, t) {
-				tempTasks = append(tempTasks, t)
-			} else {
-				tq.wg.Done() // 移除任务时减少计数
-			}
-		default:
-			goto removeDone
-		}
-	}
-
-removeDone:
-	tq.AddTasks(tempTasks)
+	tq.queueTasks = append(tq.queueTasks, tasks...)
 }
 
-func contains(tasks []*Task, task *Task) bool {
-	for _, t := range tasks {
-		if t.part.UID == task.part.UID {
-			return true
+// 重新填充任务
+//
+// 影响: tq.queueTasks tq.tasks 已加锁
+func (tq *TaskQueue) reFillTasks() {
+	tq.mu.Lock()
+	defer tq.mu.Unlock()
+
+	availableCapacity := cap(tq.tasks) - len(tq.tasks)
+	slice := utils.MinInt(availableCapacity, len(tq.queueTasks))
+
+	for _, task := range tq.queueTasks {
+		if availableCapacity <= 0 {
+			break
 		}
+
+		task.state = Working
+		tq.tasks <- task
+		// 添加到任务通道 wg+1
+		tq.tasksRemaining.Add(1)
+		tq.wg.Add(1)
+		availableCapacity--
 	}
-	return false
+	tq.queueTasks = tq.queueTasks[slice:]
 }
 
+// 移除队列中的任务
+// 影响: tq.queueTasks 已加锁
+func (tq *TaskQueue) removeQueueTasks(tasks []*Task) {
+	tq.mu.Lock()
+	defer tq.mu.Unlock()
+
+	tasksSet := make(map[string]struct{})
+	for _, task := range tasks {
+		tasksSet[task.part.UID] = struct{}{}
+	}
+
+	newTasks := make([]*Task, 0)
+
+	// 基于索引重新规划 queueTasks
+	for _, task := range tq.queueTasks {
+		if _, ok := tasksSet[task.part.UID]; ok {
+			continue
+		}
+		newTasks = append(newTasks, task)
+	}
+
+	tq.queueTasks = newTasks
+}
+
+func (tq *TaskQueue) stopTask(task *Task) {
+	fmt.Printf("task.downloader: %v\n", task.downloader)
+	task.downloader.StopDownload(task.part, tq.app.Callback)
+}
+
+/*
+处理任务
+
+	1.正常下载流程
+	2.完成需要检测任务队列
+*/
 func (tq *TaskQueue) handleTask(task *Task) {
 
 	defer func() {
-		tq.wg.Done()
-		task.downloader = nil
+		// if err := recover(); err != nil {
+		// 	tq.app.Logger.Errorf("Task handling panic: %v", err)
+		// }
 	}()
 
-	for i, t := range tq.app.tasks {
-		if t == task {
-			tq.app.tasks[i] = task
-			break
-		}
+	if task.downloader == nil {
+		tq.handleDownloadError(tq.app.Logger, task, fmt.Errorf("downloader is nil"))
+		return
 	}
+
+	defer func() {
+		tq.tasksRemaining.Add(-1)
+		// 下载完成 检测任务队列
+		if len(tq.queueTasks) > 0 {
+			fmt.Printf("任务%s 完成: 准备重新填充\n", task.part.UID)
+			tq.reFillTasks()
+			tq.state = Finished
+		} else if tq.tasksRemaining.Load() != 0 {
+			fmt.Printf("任务%s 完成, 等待后续任务下载完毕: \n", task.part.UID)
+			tq.state = Finished
+
+		} else {
+			fmt.Printf("任务%s 完成: 关闭下载队列\n\n", task.part.UID)
+			tq.state = Finished
+			close(tq.done)
+		}
+		task.downloader = nil
+		tq.wg.Done()
+	}()
 
 	tq.taskStart(tq.app.Logger, task.part)
 
 	// 获取视频元数据
-	if err := (*task.downloader).GetMeta(*tq.app.config, task.part, tq.app.Callback); err != nil {
-		tq.app.Logger.Errorf("%s失败: %v", shared.TaskStatus.GettingMetadata, err)
-		tq.handleDownloadError(tq.app.Logger, task.part, err)
-		updateTaskConfig(tq.app.Logger, task, tq.app.tasks, tq.app.configDir)
-		return
+	if task.state == Working {
+		if err := task.downloader.GetMeta(*tq.app.config, task.part, tq.app.Callback); err != nil {
+			tq.handleDownloadError(tq.app.Logger, task, err)
+			updateTaskConfig(tq.app.Logger, task, tq.app.tasks, tq.app.configDir)
+			return
+		}
 	}
 
 	// 默认下封面 又不大!
-	if err := (*task.downloader).DownloadThumbnail(task.part, tq.app.Callback); err != nil {
-		tq.handleDownloadError(tq.app.Logger, task.part, err)
-		return
-	}
-
-	if tq.app.config.DownloadVideo && task.part.State != shared.TaskStatus.Stopped {
-		task.part.Status = shared.TaskStatus.DownloadingVideo
-		if err := (*task.downloader).DownloadVideo(task.part, tq.app.Callback); err != nil {
-			tq.handleDownloadError(tq.app.Logger, task.part, err)
-			updateTaskConfig(tq.app.Logger, task, tq.app.tasks, tq.app.configDir)
+	if task.state == Working {
+		if err := task.downloader.DownloadThumbnail(task.part, tq.app.Callback); err != nil {
+			tq.handleDownloadError(tq.app.Logger, task, err)
 			return
 		}
 	}
 
-	if tq.app.config.DownloadAudio && task.part.State != shared.TaskStatus.Stopped {
-		task.part.Status = shared.TaskStatus.DownloadingAudio
-		if err := (*task.downloader).DownloadAudio(task.part, tq.app.Callback); err != nil {
-			tq.handleDownloadError(tq.app.Logger, task.part, err)
-			updateTaskConfig(tq.app.Logger, task, tq.app.tasks, tq.app.configDir)
-			return
+	if task.state == Working {
+		if tq.app.config.DownloadVideo && task.part.State != shared.TaskStatus.Stopped {
+			task.part.Status = shared.TaskStatus.DownloadingVideo
+			if err := task.downloader.DownloadVideo(task.part, tq.app.Callback); err != nil {
+				tq.handleDownloadError(tq.app.Logger, task, err)
+				updateTaskConfig(tq.app.Logger, task, tq.app.tasks, tq.app.configDir)
+				return
+			}
 		}
 	}
-	if tq.app.config.DownloadSubtitle && task.part.State != shared.TaskStatus.Stopped {
-		task.part.Status = shared.TaskStatus.DownloadingSubtitle
-		if err := (*task.downloader).DownloadSubtitle(task.part, tq.app.Callback); err != nil {
-			tq.handleDownloadError(tq.app.Logger, task.part, err)
-			updateTaskConfig(tq.app.Logger, task, tq.app.tasks, tq.app.configDir)
-			return
+	if task.state == Working {
+		if tq.app.config.DownloadAudio && task.part.State != shared.TaskStatus.Stopped {
+			task.part.Status = shared.TaskStatus.DownloadingAudio
+			if err := task.downloader.DownloadAudio(task.part, tq.app.Callback); err != nil {
+				tq.handleDownloadError(tq.app.Logger, task, err)
+				updateTaskConfig(tq.app.Logger, task, tq.app.tasks, tq.app.configDir)
+				return
+			}
+		}
+	}
+	if task.state == Working {
+		if tq.app.config.DownloadSubtitle && task.part.State != shared.TaskStatus.Stopped {
+			task.part.Status = shared.TaskStatus.DownloadingSubtitle
+			if err := task.downloader.DownloadSubtitle(task.part, tq.app.Callback); err != nil {
+				tq.handleDownloadError(tq.app.Logger, task, err)
+				updateTaskConfig(tq.app.Logger, task, tq.app.tasks, tq.app.configDir)
+				return
+			}
 		}
 	}
 
 	// 合并
-	if tq.app.config.DownloadCombine && task.part.State != shared.TaskStatus.Stopped {
-		task.part.Status = shared.TaskStatus.Merging
-		tq.app.Callback(shared.NoticeData{
-			EventName: "updateInfo",
-			Message:   task.part,
-		})
-		if err := (*task.downloader).Combine(tq.app.config.FFMPEG, task.part); err != nil {
-			tq.handleDownloadError(tq.app.Logger, task.part, err)
-			updateTaskConfig(tq.app.Logger, task, tq.app.tasks, tq.app.configDir)
-			return
+	if task.state == Working {
+		if tq.app.config.DownloadCombine && task.part.State != shared.TaskStatus.Stopped {
+			task.part.Status = shared.TaskStatus.Merging
+			tq.app.Callback(shared.NoticeData{
+				EventName: "updateInfo",
+				Message:   task.part,
+			})
+			if err := task.downloader.Combine(tq.app.config.FFMPEG, task.part); err != nil {
+				tq.handleDownloadError(tq.app.Logger, task, err)
+				updateTaskConfig(tq.app.Logger, task, tq.app.tasks, tq.app.configDir)
+				return
+			}
 		}
 	}
 
 	// 清理工作
-	if err := (*task.downloader).Clear(task.part, tq.app.Callback); err != nil {
-		tq.handleDownloadError(tq.app.Logger, task.part, err)
-		return
-	} else {
-		tq.app.Logger.Info("清理工作完成")
+	if task.state == Working {
+		if err := task.downloader.Clear(task.part, tq.app.Callback); err != nil {
+			tq.handleDownloadError(tq.app.Logger, task, err)
+			return
+		} else {
+			tq.app.Logger.Info("清理工作完成")
+		}
 	}
 
 	tq.taskFinish(task, tq.app.Logger)
 	updateTaskConfig(tq.app.Logger, task, tq.app.tasks, tq.app.configDir)
 
+}
+
+func (tq *TaskQueue) Close() {
+	tq.state = Finished
 }
 
 func (tq *TaskQueue) taskStart(logger *logrus.Logger, part *shared.Part) {
@@ -241,15 +321,15 @@ func updateTaskConfig(logger *logrus.Logger, task *Task, appTasks []*Task, appCo
 	return nil
 }
 
-func (tq *TaskQueue) handleDownloadError(logger *logrus.Logger, part *shared.Part, err error) {
-
-	part.Status = fmt.Sprintf("%s: %s", shared.TaskStatus.Failed, err.Error())
-	logger.Errorf(shared.TaskStatus.Failed)
-	runtime.EventsEmit(tq.ctx, "updateInfo", *part)
+func (tq *TaskQueue) handleDownloadError(logger *logrus.Logger, task *Task, err error) {
+	task.state = Finished
+	task.part.Status = fmt.Sprintf("%s: %s", shared.TaskStatus.Failed, err.Error())
+	logger.Errorf(shared.TaskStatus.Failed, err.Error())
+	runtime.EventsEmit(tq.ctx, "updateInfo", task.part)
 }
 
 func (tq *TaskQueue) taskFinish(task *Task, logger *logrus.Logger) {
-
+	task.state = Finished
 	task.part.DownloadPercent = 100
 	task.part.Status = shared.TaskStatus.Finished
 	task.part.State = shared.TaskStatus.Finished

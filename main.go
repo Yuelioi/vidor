@@ -74,8 +74,8 @@ func AppLaunch() {
 			Assets:  assets,
 			Handler: NewFileLoader(),
 		},
-		LogLevel: logger.WARNING,
-		// LogLevelProduction: logger.WARNING,
+		LogLevel:           logger.WARNING,
+		LogLevelProduction: logger.WARNING,
 
 		BackgroundColour: &options.RGBA{R: 27, G: 38, B: 54, A: 1},
 		OnStartup:        a.Startup,
@@ -92,9 +92,11 @@ func AppLaunch() {
 
 func main() {
 	AppLaunch()
+
 	// dl := plugins.NewYTBDownloader()
 	// dl.ShowInfo("https://www.youtube.com/watch?v=kaZOXRqFPCw", shared.Config{
 	// 	UseProxy: true,
 	// 	ProxyURL: "socks://127.0.0.1:10809",
 	// })
+
 }

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"math"
 	"net/http"
 	"os"
 	"sync"
@@ -24,9 +25,16 @@ type chunkClip struct {
 	end   int64
 }
 
-func ReqWriter(ctx context.Context, client *http.Client, req *http.Request, part *shared.Part, path string, callback shared.Callback) error {
+func autoSetBatchSize(contentLength int64) int64 {
+	minBatchSize := int64(2)
+	maxBatchSize := int64(20)
 
-	batchSize := int64(5) // 同时下载批次
+	batchSize := int64(math.Sqrt(float64(contentLength) / (1024 * 1024))) // 1MB chunks
+	batchSize = int64(math.Max(float64(minBatchSize), float64(math.Min(float64(batchSize), float64(maxBatchSize)))))
+	return batchSize
+}
+
+func ReqWriter(ctx context.Context, client *http.Client, req *http.Request, part *shared.Part, path string, callback shared.Callback) error {
 
 	req.Header.Set("Accept-Ranges", "bytes")
 	resp, err := client.Do(req)
@@ -48,7 +56,8 @@ func ReqWriter(ctx context.Context, client *http.Client, req *http.Request, part
 	}()
 
 	contentLength := resp.ContentLength
-	fmt.Printf("contentLength: %v\n", contentLength)
+	batchSize := autoSetBatchSize(contentLength)
+	fmt.Printf("batchSize: %v\n", batchSize)
 
 	var totalBytesRead atomic.Int64
 	var lastBytesRead int64 = 0
@@ -56,7 +65,7 @@ func ReqWriter(ctx context.Context, client *http.Client, req *http.Request, part
 	startTime := time.Now()
 	lastTime := time.Now()
 
-	ticker := time.NewTicker(time.Millisecond * 1000)
+	ticker := time.NewTicker(time.Millisecond * 300)
 
 	var downloading = true
 

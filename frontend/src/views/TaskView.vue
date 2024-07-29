@@ -1,47 +1,32 @@
 <template>
-    <div class="flex h-full">
-        <div class="left w-36 border-r-4 border-zinc-200 dark:border-base-100">
-            <!-- 任务左侧边栏 -->
-            <TabLeftSideBar :tabs="tabs" v-model:tabId="tabId"></TabLeftSideBar>
-        </div>
-        <div class="right flex-1 h-full w-full border-l-4 border-neutral-100 dark:border-base-300">
-            <!-- 任务内容区域 -->
-            <TaskTab v-if="tabId == 1" :filteredTasks="downloadingTasks" :tabId="tabId"></TaskTab>
-            <TaskTab v-else-if="tabId == 2" :filteredTasks="queueTasks" :tabId="tabId"></TaskTab>
-            <TaskTab v-else :filteredTasks="finishedTasks" :tabId="tabId"></TaskTab>
-        </div>
-    </div>
+    <TabsView :tabs="tabs" v-model:tabId="tabId"></TabsView>
 </template>
 
 <script setup lang="ts">
-const { tasks } = storeToRefs(useBasicStore())
-
-const downloadingTasks = computed(() => {
-    return tasks.value.filter((task) => task.State === '下载中')
-})
-const queueTasks = computed(() => {
-    return tasks.value.filter((task) => task.State === '队列中')
-})
-const finishedTasks = computed(() => {
-    return tasks.value.filter((task) => task.State === '已完成')
-})
+import TaskTab from '@/components/tasks/TaskTab.vue'
 
 const tabId = ref(1)
-const tabs = [
+const tabs: Tab[] = [
     {
         id: 1,
         name: '下载中',
-        icon: 'icon-[ic--round-downloading]'
+        icon: 'icon-[ic--round-downloading]',
+        component: TaskTab,
+        color: 'text-primary'
     },
     {
         id: 2,
         name: '队列中',
-        icon: 'icon-[lucide--square-stack]'
+        icon: 'icon-[lucide--square-stack]',
+        component: TaskTab,
+        color: 'text-secondary'
     },
     {
         id: 3,
         name: '已完成',
-        icon: 'icon-[ic--outline-expand-circle-down]'
+        icon: 'icon-[ic--outline-expand-circle-down]',
+        component: TaskTab,
+        color: 'text-accent'
     }
 ]
 </script>
