@@ -88,54 +88,71 @@
                     </div>
                 </div>
             </div>
-            <div class="px-4">
-                <h2 class="p-2 py-3 font-bold">分辨率</h2>
-                <div class="flex flex-wrap gap-y-3">
-                    <div
-                        v-for="format in videoInfo.Qualities"
-                        :key="format"
-                        class="px-2 form-control basis-1/4">
-                        <label class="cursor-pointer flex items-center">
-                            <input
-                                type="radio"
-                                :value="format"
-                                v-model="selectedFormat"
-                                name="format"
-                                class="radio radio-primary radio-sm" />
-                            <span class="label-text ml-1">{{ format }}</span>
-                        </label>
-                    </div>
-                </div>
-            </div>
 
-            <div class="px-4">
+            <div class="overflow-x-auto px-4">
                 <h2 class="p-2 py-3 font-bold">分P选择</h2>
-                <div class="flex flex-wrap text-sm">
-                    <div class="flex flex-wrap w-full selections">
-                        <div
-                            v-for="(video, index) in videoInfo.Parts"
-                            :key="index"
-                            class="basis-1/4 overflow-hidden px-2 mb-2">
-                            <label class="flex items-center cursor-pointer space-x-2">
-                                <div
-                                    class="tooltip tooltip-top w-full text-left"
-                                    :data-tip="video.Title">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>
+                                <label>
                                     <input
                                         type="checkbox"
-                                        class="hidden peer"
-                                        :value="video"
-                                        v-model="selectedVideos" />
-
-                                    <div
-                                        class="peer-checked:bg-primary border peer-checked:text-white truncate w-full px-2 py-1 rounded">
-                                        P{{ index + 1 + video.Title }}
-                                    </div>
-                                </div>
-                            </label>
-                        </div>
-                    </div>
-                </div>
+                                        class="checkbox"
+                                        @change="handleSelectedAll" />
+                                </label>
+                            </th>
+                            <th>序号</th>
+                            <th>标题</th>
+                            <th>时长</th>
+                            <th>画质</th>
+                            <th>音质</th>
+                            <th>编码</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr
+                            v-for="(part, index) in videoInfo.Parts"
+                            :key="index"
+                            class="overflow-hidden px-2 mb-2">
+                            <th>
+                                <label>
+                                    <input type="checkbox" class="checkbox" />
+                                </label>
+                            </th>
+                            <td>
+                                {{ index + 1 }}
+                            </td>
+                            <td>
+                                <div class="font-bold">{{ part.Title }}</div>
+                            </td>
+                            <td>{{ part.Duration }}</td>
+                            <th>
+                                <button class="btn btn-ghost btn-xs">画质</button>
+                            </th>
+                            <th>
+                                <button class="btn btn-ghost btn-xs">音质</button>
+                            </th>
+                            <th>
+                                <button class="btn btn-ghost btn-xs">编码</button>
+                            </th>
+                        </tr>
+                    </tbody>
+                    <!-- foot -->
+                    <tfoot>
+                        <tr>
+                            <th></th>
+                            <th>Index</th>
+                            <th>Title</th>
+                            <th>Duration</th>
+                            <th>Video</th>
+                            <th>Audio</th>
+                            <th>Code</th>
+                        </tr>
+                    </tfoot>
+                </table>
             </div>
+
             <div class="px-4 pb-6">
                 <div class="flex flex-wrap text-sm py-4">
                     <label class="flex items-center cursor-pointer">

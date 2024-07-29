@@ -60,9 +60,9 @@ type PlaylistInfo struct {
 	Author      string    // 作者
 	Description string    // 发布日期
 	PubDate     time.Time // 发布日期
-	Qualities   []string  // 质量列表 必选( []QualityLabel )
+	Qualities   []string  // 质量列表 可选( []QualityLabel )
 	Codecs      []string  // 编码类型 可选
-	Parts       []Part    // 分段合集
+	Parts       []Part    // 分段合集 包含 Url Duration Title
 }
 
 type status struct {
@@ -94,7 +94,7 @@ type PluginMeta struct {
 	Name   string
 	Type   string // System/ThirdPart
 	Regexs []*regexp.Regexp
-	Impl   Downloader
+	Impl   func(notice Notice) Downloader
 }
 
 // 状态

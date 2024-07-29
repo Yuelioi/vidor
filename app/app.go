@@ -13,7 +13,6 @@ import (
 	"github.com/Yuelioi/vidor/plugins"
 	"github.com/Yuelioi/vidor/shared"
 	"github.com/Yuelioi/vidor/utils"
-	"github.com/hashicorp/go-plugin"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 
 	"github.com/sirupsen/logrus"
@@ -205,21 +204,21 @@ func (a *App) loadDownloaders() error {
 	_plugins = append(_plugins, system_plugins...)
 
 	// Local Plugins
-	pluginsDir := "./plugins"
-	glob := "*.exe"
-	pluginFiles, err := plugin.Discover(glob, pluginsDir)
-	if err != nil {
-		return err
-	}
+	// pluginsDir := "./plugins"
+	// glob := "*.exe"
+	// pluginFiles, err := plugin.Discover(glob, pluginsDir)
+	// if err != nil {
+	// 	return err
+	// }
 
-	for _, pluginPath := range pluginFiles {
-		_downloader, err := loadLocalPlugin(pluginPath)
-		if err != nil {
-			logger.Error(err)
-			continue
-		}
-		_plugins = append(_plugins, utils.Downloader2plugin(_downloader, "ThirdPart"))
-	}
+	// for _, pluginPath := range pluginFiles {
+	// 	_downloader, err := loadLocalPlugin(pluginPath)
+	// 	if err != nil {
+	// 		logger.Error(err)
+	// 		continue
+	// 	}
+	// 	_plugins = append(_plugins, utils.Downloader2plugin(_downloader, "ThirdPart"))
+	// }
 
 	a.downloaders = _plugins
 	return nil

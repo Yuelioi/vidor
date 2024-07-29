@@ -259,8 +259,9 @@ func biliPageToPlaylistInfo(biliInfo biliPlaylistInfo) shared.PlaylistInfo {
 	for _, page := range biliInfo.Data.Pages {
 
 		videoInfo.Parts = append(videoInfo.Parts, shared.Part{
-			Url:   fmt.Sprintf("https://www.bilibili.com/video/%s?p=%d", biliInfo.Data.BVID, page.Page),
-			Title: page.Title,
+			Url:      fmt.Sprintf("https://www.bilibili.com/video/%s?p=%d", biliInfo.Data.BVID, page.Page),
+			Title:    page.Title,
+			Duration: page.Duration,
 		})
 
 	}
@@ -277,8 +278,10 @@ func biliSeasonToPlaylistInfo(biliInfo biliPlaylistInfo) shared.PlaylistInfo {
 
 	for _, episode := range biliInfo.Data.UgcSeason.Sections[0].Episodes {
 		videoInfo.Parts = append(videoInfo.Parts, shared.Part{
-			Url:   fmt.Sprintf("https://www.bilibili.com/video/%s", episode.Bvid),
-			Title: episode.Title,
+			Url:      fmt.Sprintf("https://www.bilibili.com/video/%s", episode.Bvid),
+			Title:    episode.Title,
+			Duration: episode.Arc.Duration,
+
 			// Thumbnail: biliInfo.Data.UgcSeason.Sections[0].Episodes[index].Arc.Pic,
 		})
 

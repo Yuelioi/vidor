@@ -104,11 +104,11 @@ func saveTask(srcTask *Task, tasks []*Task, configDir string) error {
 }
 
 // 创建下载器
-func newDownloader(downloaders []shared.PluginMeta, notice shared.Notice, link string) (shared.Downloader, error) {
-	for _, downloader := range downloaders {
-		for _, regex := range downloader.Regexs {
+func newDownloader(plugins []shared.PluginMeta, notice shared.Notice, link string) (shared.Downloader, error) {
+	for _, plugin := range plugins {
+		for _, regex := range plugin.Regexs {
 			if regex.MatchString(link) {
-				return downloader.Impl.New(notice), nil
+				return plugin.Impl(notice), nil
 			}
 		}
 	}

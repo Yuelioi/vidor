@@ -11,10 +11,18 @@
                     <slot></slot>
                 </div>
             </div>
+
+            <div
+                v-if="$slots.description"
+                class="p-4 rounded-xl overflow-hidden flex flex-col border border-base-300">
+                <slot name="description"></slot>
+            </div>
         </div>
     </div>
 </template>
 
 <script setup lang="ts">
 defineProps<{ tab: Tab }>()
+
+console.log()
 </script>

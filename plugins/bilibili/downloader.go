@@ -22,10 +22,8 @@ type Downloader struct {
 	biliThumbnailParams
 }
 
-func (bd *Downloader) New(notice shared.Notice) shared.Downloader {
+func New(notice shared.Notice) shared.Downloader {
 	ctx, cancel := context.WithCancel(context.Background())
-	// ctx
-
 	return &Downloader{
 		Notice: notice,
 		ctx:    ctx,
