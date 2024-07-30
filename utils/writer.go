@@ -170,6 +170,7 @@ func downloadChunk(ctx context.Context, client *http.Client, req *http.Request, 
 		select {
 		case <-ctx.Done():
 			// 上下文被取消
+			fmt.Println("ctx 退出")
 			return ctx.Err()
 		default:
 			n, err := resp.Body.Read(buffer)

@@ -22,10 +22,8 @@ type Downloader struct {
 	biliThumbnailParams
 }
 
-func (bd *Downloader) New(notice shared.Notice) shared.Downloader {
+func New(notice shared.Notice) shared.Downloader {
 	ctx, cancel := context.WithCancel(context.Background())
-	// ctx
-
 	return &Downloader{
 		Notice: notice,
 		ctx:    ctx,
@@ -65,20 +63,6 @@ func (bd *Downloader) ShowInfo(link string, config shared.Config, callback share
 		playList = biliSeasonToPlaylistInfo(*biliPlayList)
 	} else {
 		playList = biliPageToPlaylistInfo(*biliPlayList)
-	}
-
-	copyQualities := make([]shared.StreamQuality, len(qualities))
-	copy(copyQualities, qualities)
-	if bd.userState == NoLogin {
-		copyQualities = copyQualities[1:4]
-	} else if bd.userState == Login {
-		copyQualities = copyQualities[2:6]
-	} else {
-		copyQualities = copyQualities[2:]
-	}
-
-	for _, qu := range copyQualities {
-		playList.Qualities = append(playList.Qualities, qu.Label)
 	}
 
 	thumbnailPath := filepath.Join(os.TempDir(), "vidor", "info_thumbnail.jpg")
@@ -231,9 +215,11 @@ func (bd *Downloader) Combine(ffmpegPath string, part *shared.Part) error {
 	utils.CombineAV(bd.ctx, ffmpegPath, input_v, input_a, output_v, logFilePath)
 	return nil
 }
+
 func (bd *Downloader) Clear(part *shared.Part, callback shared.Callback) error {
 	return nil
 }
+
 func (bd *Downloader) StopDownload(part *shared.Part, callback shared.Callback) error {
 	bd.cancel()
 

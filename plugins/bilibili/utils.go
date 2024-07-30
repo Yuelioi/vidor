@@ -248,7 +248,7 @@ func biliPlaylistInfoToPlaylistInfo(biliInfo biliPlaylistInfo) shared.PlaylistIn
 	videoInfo.Description = biliInfo.Data.Desc
 	videoInfo.Cover = biliInfo.Data.Pic
 
-	videoInfo.Parts = make([]shared.Part, 0)
+	videoInfo.StreamInfos = make([]shared.StreamInfo, 0)
 	return videoInfo
 }
 
@@ -258,15 +258,14 @@ func biliPageToPlaylistInfo(biliInfo biliPlaylistInfo) shared.PlaylistInfo {
 
 	for _, page := range biliInfo.Data.Pages {
 
-		videoInfo.Parts = append(videoInfo.Parts, shared.Part{
-			Url:   fmt.Sprintf("https://www.bilibili.com/video/%s?p=%d", biliInfo.Data.BVID, page.Page),
-			Title: page.Title,
+		videoInfo.StreamInfos = append(videoInfo.StreamInfos, shared.StreamInfo{
+			TaskID: page.Title,
 		})
 
 	}
 	// 如果只有一个 就用主标题
 	if len(biliInfo.Data.Pages) == 1 {
-		videoInfo.Parts[0].Title = videoInfo.WorkDirName
+		videoInfo.StreamInfos[0].TaskID = videoInfo.WorkDirName
 	}
 	return videoInfo
 }
@@ -276,9 +275,13 @@ func biliSeasonToPlaylistInfo(biliInfo biliPlaylistInfo) shared.PlaylistInfo {
 	videoInfo := biliPlaylistInfoToPlaylistInfo(biliInfo)
 
 	for _, episode := range biliInfo.Data.UgcSeason.Sections[0].Episodes {
-		videoInfo.Parts = append(videoInfo.Parts, shared.Part{
-			Url:   fmt.Sprintf("https://www.bilibili.com/video/%s", episode.Bvid),
-			Title: episode.Title,
+		videoInfo.StreamInfos = append(videoInfo.StreamInfos, shared.StreamInfo{
+			TaskID: episode.Arc.Pic,
+
+			// Url:      fmt.Sprintf("https://www.bilibili.com/video/%s", episode.Bvid),
+			// Title:    episode.Title,
+			// Duration: episode.Arc.Duration,
+
 			// Thumbnail: biliInfo.Data.UgcSeason.Sections[0].Episodes[index].Arc.Pic,
 		})
 
@@ -286,7 +289,7 @@ func biliSeasonToPlaylistInfo(biliInfo biliPlaylistInfo) shared.PlaylistInfo {
 
 	// 如果只有一个 就用主标题
 	// if len(biliInfo.Data.UgcSeason.Sections[0].Episodes) == 1 {
-	// 	videoInfo.Parts[0].Title = videoInfo.WorkDirName
+	// 	videoInfo.StreamInfos[0].Title = videoInfo.WorkDirName
 	// }
 
 	return videoInfo

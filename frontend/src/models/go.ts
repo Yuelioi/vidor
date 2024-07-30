@@ -56,6 +56,7 @@ export class PlaylistInfo {
     Parts: {
         URL: string
         Title: string
+        Duration: number
     }[]
 
     constructor() {

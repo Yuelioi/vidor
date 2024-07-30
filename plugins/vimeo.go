@@ -242,12 +242,9 @@ func start(client http.Client, link string, config shared.Config) (*shared.Playl
 	// todo
 	// pli.Qualities = utils.GetQualities(videoConfig.Video.Height)
 
-	pli.Parts = make([]shared.Part, 0)
+	pli.StreamInfos = make([]shared.StreamInfo, 0)
 
-	pli.Parts = []shared.Part{{
-		Url:   videoConfig.Video.Url,
-		Title: videoConfig.Video.Title,
-	}}
+	pli.StreamInfos = []shared.StreamInfo{{}}
 
 	return &pli, videoConfig, nil
 }

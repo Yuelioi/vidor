@@ -62,7 +62,6 @@ func NewTaskQueue(a *App, tasks []*Task) *TaskQueue {
 	for i := 0; i < limit; i++ {
 		go tq.worker()
 	}
-
 	go func() {
 		tq.wg.Wait()
 	}()
@@ -85,11 +84,11 @@ func (tq *TaskQueue) worker() {
 
 			// 创建下载器
 			downloader, err := newDownloader(tq.app.downloaders, tq.app.Notice, task.part.Url)
-			fmt.Printf("downloader: %v\n", downloader)
-			task.downloader = downloader
+
 			if err != nil {
 				continue
 			}
+			task.downloader = downloader
 			tq.state = Working
 			task.state = Working
 			tq.handleTask(task)
@@ -175,8 +174,9 @@ func (tq *TaskQueue) removeQueueTasks(tasks []*Task) {
 }
 
 func (tq *TaskQueue) stopTask(task *Task) {
-	fmt.Printf("task.downloader: %v\n", task.downloader)
+	// 停止下载器 并标记为完成
 	task.downloader.StopDownload(task.part, tq.app.Callback)
+	task.state = Finished
 }
 
 /*

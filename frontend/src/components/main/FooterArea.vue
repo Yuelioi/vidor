@@ -57,7 +57,6 @@ onMounted(async () => {
     document.documentElement.style.fontSize = `${scale}px`
 
     // 禁用页面缩放
-
     document.addEventListener('mousewheel', blockWindowScale, {
         capture: false,
         passive: false

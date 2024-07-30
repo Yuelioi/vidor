@@ -2,11 +2,6 @@ package shared
 
 import "time"
 
-type Quality struct {
-	QualityID    string
-	QualityLabel string
-}
-
 type Format struct {
 	IDtag         int    // 标签ID
 	URL           string // 链接

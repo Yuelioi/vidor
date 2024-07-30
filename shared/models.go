@@ -60,7 +60,7 @@ type PlaylistInfo struct {
 	Author      string       // 作者
 	Description string       // 描述
 	PubDate     time.Time    // 发布日期
-	Streams     []StreamInfo // 分段合集
+	StreamInfos []StreamInfo // 分段合集
 }
 
 type StreamInfo struct {
@@ -96,10 +96,10 @@ type StreamQuality struct {
 
 // 插件信息
 type PluginMeta struct {
-	Name   string           // 名称
-	Type   string           // System/ThirdPart
-	Regexs []*regexp.Regexp // 解析正则
-	Impl   Downloader       // 下载器
+	Name   string
+	Type   string // System/ThirdPart
+	Regexs []*regexp.Regexp
+	Impl   func(notice Notice) Downloader
 }
 
 // 任务状态

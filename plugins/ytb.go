@@ -52,7 +52,7 @@ func (yd *YouTubeDownloader) ShowInfo(link string, config shared.Config) (*share
 	var pi shared.PlaylistInfo
 
 	pi.Url = link
-	pi.Parts = make([]shared.Part, 0)
+	pi.StreamInfos = make([]shared.StreamInfo, 0)
 
 	cacheThumbnail := ""
 
@@ -122,9 +122,10 @@ func (yd *YouTubeDownloader) ShowInfo(link string, config shared.Config) (*share
 		})
 
 		for _, part := range parts {
-			pi.Parts = append(pi.Parts, shared.Part{
-				Url:   part.Url,
-				Title: part.Title,
+			pi.StreamInfos = append(pi.StreamInfos, shared.StreamInfo{
+				TaskID: part.Title,
+				// Url:   part.Url,
+				// Title: part.Title,
 			})
 		}
 		//todo
@@ -144,10 +145,7 @@ func (yd *YouTubeDownloader) ShowInfo(link string, config shared.Config) (*share
 		}
 		pi.Author = video.Author
 		pi.WorkDirName = video.Title
-		pi.Qualities = formats2Qualities(video.Formats)
-		pi.Parts = append(pi.Parts, shared.Part{
-			Url: link, Title: video.Title,
-		})
+		pi.StreamInfos = append(pi.StreamInfos, shared.StreamInfo{})
 
 		yd.TaskDir = utils.SanitizeFileName(video.Title)
 		cacheThumbnail = getBestThumbnail(video.Thumbnails).URL

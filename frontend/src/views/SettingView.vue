@@ -8,6 +8,7 @@ const tabId = ref(1)
 import BaseSetting from '@/components/settings/BaseSetting.vue'
 import DownloadSetting from '@/components/settings/DownloadSetting.vue'
 import ThirdPart from '@/components/settings/ThirdPart.vue'
+import TranslateSetting from '@/components/settings/TranslateSetting.vue'
 const tabs: Tab[] = [
     {
         id: 1,
@@ -29,6 +30,13 @@ const tabs: Tab[] = [
         icon: 'icon-[lucide--send]',
         component: ThirdPart,
         color: 'text-accent'
+    },
+    {
+        id: 4,
+        name: '翻译设置',
+        icon: 'icon-[ic--twotone-translate]',
+        component: TranslateSetting,
+        color: 'text-primary'
     }
 ]
 </script>
