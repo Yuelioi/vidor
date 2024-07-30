@@ -121,7 +121,7 @@ func (tq *TaskQueue) removeQueueTasks(tasks []*Task) {
 
 	tasksSet := make(map[string]struct{})
 	for _, task := range tasks {
-		tasksSet[task.part.UID] = struct{}{}
+		tasksSet[task.part.TaskID] = struct{}{}
 	}
 
 	fmt.Printf("tasks: %v\n", tasks)
@@ -130,7 +130,7 @@ func (tq *TaskQueue) removeQueueTasks(tasks []*Task) {
 
 	// 基于索引重新规划 queueTasks
 	for _, task := range tq.queueTasks {
-		if _, ok := tasksSet[task.part.UID]; ok {
+		if _, ok := tasksSet[task.part.TaskID]; ok {
 			continue
 		}
 		newTasks = append(newTasks, task)
@@ -158,22 +158,22 @@ func (tq *TaskQueue) handleTask(task *Task) {
 		task.state = Finished
 		// 下载完成 检测任务队列
 		if len(tq.queueTasks) > 0 {
-			fmt.Printf("任务%s 完成: 准备重新填充\n", task.part.UID)
+			fmt.Printf("任务%s 完成: 准备重新填充\n", task.part.TaskID)
 			tq.reFillTasks()
 			tq.state = Finished
 		} else if tq.tasksRemaining.Load() != 0 {
-			fmt.Printf("任务%s 完成, 等待后续任务下载完毕: \n", task.part.UID)
+			fmt.Printf("任务%s 完成, 等待后续任务下载完毕: \n", task.part.TaskID)
 			tq.state = Finished
 
 		} else {
-			fmt.Printf("任务%s 完成: 关闭下载队列\n\n", task.part.UID)
+			fmt.Printf("任务%s 完成: 关闭下载队列\n\n", task.part.TaskID)
 			tq.state = Finished
 			close(tq.done)
 		}
 		tq.wg.Done()
 	}()
 	task.state = Working
-	fmt.Printf("任务%s working\n", task.part.UID)
+	fmt.Printf("任务%s working\n", task.part.TaskID)
 	time.Sleep(time.Second * time.Duration(rand.Intn(3)))
 
 }
@@ -185,11 +185,11 @@ func (tq *TaskQueue) Close() {
 
 func TestNewTaskQueue(t *testing.T) {
 	tasks := []*Task{
-		{part: Part{UID: "1"}},
-		{part: Part{UID: "2"}},
-		{part: Part{UID: "3"}},
-		// {part: Part{UID: "4"}},
-		// {part: Part{UID: "5"}},
+		{part: Part{TaskID: "1"}},
+		{part: Part{TaskID: "2"}},
+		{part: Part{TaskID: "3"}},
+		// {part: Part{TaskID: "4"}},
+		// {part: Part{TaskID: "5"}},
 	}
 	NewTaskQueue(tasks, 1)
 	time.Sleep(time.Second * 20)
@@ -197,16 +197,16 @@ func TestNewTaskQueue(t *testing.T) {
 
 func TestTaskQueue_AddTasks(t *testing.T) {
 	tasks1 := []*Task{
-		{part: Part{UID: "1"}},
-		{part: Part{UID: "2"}},
+		{part: Part{TaskID: "1"}},
+		{part: Part{TaskID: "2"}},
 	}
 	tq := NewTaskQueue(tasks1, 2)
 
 	tasks2 := []*Task{
-		// {part: Part{UID: "1"}},
-		// {part: Part{UID: "2"}},
-		{part: Part{UID: "3"}},
-		{part: Part{UID: "4"}},
+		// {part: Part{TaskID: "1"}},
+		// {part: Part{TaskID: "2"}},
+		{part: Part{TaskID: "3"}},
+		{part: Part{TaskID: "4"}},
 	}
 	tq.AddTasks(tasks2)
 	time.Sleep(time.Second * 20)
@@ -215,11 +215,11 @@ func TestTaskQueue_AddTasks(t *testing.T) {
 
 func TestTaskQueue_removeQueueTasks(t *testing.T) {
 	tasks := []*Task{
-		{part: Part{UID: "1"}},
-		{part: Part{UID: "2"}},
-		{part: Part{UID: "3"}},
-		{part: Part{UID: "4"}},
-		{part: Part{UID: "5"}},
+		{part: Part{TaskID: "1"}},
+		{part: Part{TaskID: "2"}},
+		{part: Part{TaskID: "3"}},
+		{part: Part{TaskID: "4"}},
+		{part: Part{TaskID: "5"}},
 	}
 	tq := NewTaskQueue(tasks, 2)
 
@@ -231,11 +231,11 @@ func TestTaskQueue_removeQueueTasks(t *testing.T) {
 
 func TestTaskQueue_Close(t *testing.T) {
 	tasks := []*Task{
-		{part: Part{UID: "1"}},
-		{part: Part{UID: "2"}},
-		{part: Part{UID: "3"}},
-		{part: Part{UID: "4"}},
-		{part: Part{UID: "5"}},
+		{part: Part{TaskID: "1"}},
+		{part: Part{TaskID: "2"}},
+		{part: Part{TaskID: "3"}},
+		{part: Part{TaskID: "4"}},
+		{part: Part{TaskID: "5"}},
 	}
 
 	tq := NewTaskQueue(tasks, 2)

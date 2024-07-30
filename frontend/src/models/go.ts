@@ -69,7 +69,7 @@ export class PlaylistInfo {
 }
 
 export class Part {
-    UID: string
+    TaskID: string
     DownloadDir: string
 
     Author: string

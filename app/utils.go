@@ -83,7 +83,7 @@ func saveTask(srcTask *Task, tasks []*Task, configDir string) error {
 
 	// 修改/更新
 	for _, task := range tasks {
-		if srcTask.part.UID == task.part.UID {
+		if srcTask.part.TaskID == task.part.TaskID {
 			parts = append(parts, *srcTask.part)
 		} else {
 			parts = append(parts, *task.part)
@@ -125,7 +125,7 @@ func createNewTask(part shared.Part, downloadDir, workName string) (*Task, error
 	return &Task{
 		state: Queue,
 		part: &shared.Part{
-			UID:         uuid.New().String(),
+			TaskID:      uuid.New().String(),
 			DownloadDir: filepath.Join(downloadDir, workName),
 			Url:         part.Url,
 			Title:       part.Title,

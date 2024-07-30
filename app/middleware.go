@@ -104,7 +104,7 @@ func (a *App) AddDownloadTasks(parts []shared.Part, workName string) []shared.Pa
 func (a *App) RemoveTask(uid string) bool {
 
 	for i, task := range a.tasks {
-		if task.part.UID == uid {
+		if task.part.TaskID == uid {
 
 			if checkTaskQueueWorking(a) {
 				if task.state == Queue {
@@ -139,14 +139,14 @@ func (a *App) RemoveAllTask(parts []shared.Part) bool {
 	newTasks := make([]*Task, 0)
 	delQueueTasks := make([]*Task, 0)
 
-	partUIDs := make(map[string]shared.Part)
+	partTaskIDs := make(map[string]shared.Part)
 
 	for _, part := range parts {
-		partUIDs[part.UID] = part
+		partTaskIDs[part.TaskID] = part
 	}
 
 	for i, task := range a.tasks {
-		if _, found := partUIDs[task.part.UID]; found {
+		if _, found := partTaskIDs[task.part.TaskID]; found {
 
 			if checkTaskQueueWorking(a) {
 				if task.state == Queue {

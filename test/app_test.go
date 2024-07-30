@@ -41,15 +41,15 @@ func (a *App) AddDownloadTasks(parts []Part, workName string) {
 func (a *App) RemoveTask(uid string) bool {
 
 	for i, task := range a.tasks {
-		if task.part.UID == uid {
+		if task.part.TaskID == uid {
 			if task.state == Working {
 				if task.state == Queue {
 					// 1. 正在队列中
-					a.Logger.Info("任务移除(队列中):", task.part.UID)
+					a.Logger.Info("任务移除(队列中):", task.part.TaskID)
 					a.taskQueue.removeQueueTasks([]*Task{task})
 				} else {
 					// 2. 正在下载中
-					a.Logger.Info("任务移除(下载中):", task.part.UID)
+					a.Logger.Info("任务移除(下载中):", task.part.TaskID)
 				}
 			}
 
@@ -67,21 +67,21 @@ func (a *App) RemoveAllTask(parts []Part) bool {
 	newTasks := make([]*Task, 0)
 	delQueueTasks := make([]*Task, 0)
 
-	partUIDs := make(map[string]Part)
+	partTaskIDs := make(map[string]Part)
 
 	for _, part := range parts {
-		partUIDs[part.UID] = part
+		partTaskIDs[part.TaskID] = part
 	}
 
 	for i, task := range a.tasks {
-		if _, found := partUIDs[task.part.UID]; found {
+		if _, found := partTaskIDs[task.part.TaskID]; found {
 			if task.state == Working {
 				if task.state == Queue {
 					// 添加到待删队列
 					delQueueTasks = append(delQueueTasks, task)
 				} else {
 					// 直接调用停止函数
-					a.Logger.Info("任务移除(下载中):", task.part.UID)
+					a.Logger.Info("任务移除(下载中):", task.part.TaskID)
 				}
 			}
 		} else {
@@ -104,14 +104,14 @@ func Test_AddDownloadTasks(t *testing.T) {
 	a := App{}
 
 	parts := []Part{
-		{UID: "1", Url: "1"},
-		{UID: "2", Url: "2"},
-		{UID: "3", Url: "3"},
+		{TaskID: "1", Url: "1"},
+		{TaskID: "2", Url: "2"},
+		{TaskID: "3", Url: "3"},
 	}
 	parts2 := []Part{
-		{UID: "4", Url: "4"},
-		{UID: "5", Url: "5"},
-		{UID: "6", Url: "6"},
+		{TaskID: "4", Url: "4"},
+		{TaskID: "5", Url: "5"},
+		{TaskID: "6", Url: "6"},
 	}
 	a.AddDownloadTasks(parts, "workName")
 
@@ -124,14 +124,14 @@ func Test_RemoveTask(t *testing.T) {
 	a := App{}
 
 	parts := []Part{
-		{UID: "1", Url: "1"},
-		{UID: "2", Url: "2"},
-		{UID: "3", Url: "3"},
+		{TaskID: "1", Url: "1"},
+		{TaskID: "2", Url: "2"},
+		{TaskID: "3", Url: "3"},
 	}
 	parts2 := []Part{
-		{UID: "4", Url: "4"},
-		{UID: "5", Url: "5"},
-		{UID: "6", Url: "6"},
+		{TaskID: "4", Url: "4"},
+		{TaskID: "5", Url: "5"},
+		{TaskID: "6", Url: "6"},
 	}
 	a.AddDownloadTasks(parts, "workName")
 	a.AddDownloadTasks(parts2, "workName")
@@ -147,14 +147,14 @@ func Test_RemoveAllTask(t *testing.T) {
 	a := App{}
 
 	parts := []Part{
-		{UID: "1", Url: "1"},
-		{UID: "2", Url: "2"},
-		{UID: "3", Url: "3"},
+		{TaskID: "1", Url: "1"},
+		{TaskID: "2", Url: "2"},
+		{TaskID: "3", Url: "3"},
 	}
 	parts2 := []Part{
-		{UID: "4", Url: "4"},
-		{UID: "5", Url: "5"},
-		{UID: "6", Url: "6"},
+		{TaskID: "4", Url: "4"},
+		{TaskID: "5", Url: "5"},
+		{TaskID: "6", Url: "6"},
 	}
 	a.AddDownloadTasks(parts, "workName")
 	a.AddDownloadTasks(parts2, "workName")

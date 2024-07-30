@@ -74,7 +74,7 @@
                             class="ml-3 h-full flex space-x-2 items-center justify-between transition-opacity duration-300 opacity-0 group-hover:opacity-100">
                             <span
                                 class="icon-[lucide--trash-2] size-8"
-                                @click="removeTask(task.UID)"></span>
+                                @click="removeTask(task.TaskID)"></span>
                             <span
                                 class="icon-[ic--baseline-folder-open] size-8"
                                 @click="OpenExplorer(task.DownloadDir)"></span>
@@ -112,7 +112,7 @@ const removeTask = (uid: string) => {
     RemoveTask(uid).then((ok) => {
         if (ok) {
             Message({ message: '删除任务成功', type: 'success' })
-            const index = tasks.value.findIndex((task) => task.UID === uid)
+            const index = tasks.value.findIndex((task) => task.TaskID === uid)
             if (index !== -1) {
                 tasks.value.splice(index, 1)
             }
@@ -146,7 +146,7 @@ const removeAll = () => {
 }
 
 function subtractTaskLists(tasks: Part[], filteredTasks: Part[]): Part[] {
-    const filteredTaskUIDs = new Set(filteredTasks.map((task) => task.UID))
-    return tasks.filter((task) => !filteredTaskUIDs.has(task.UID))
+    const filteredTaskTaskIDs = new Set(filteredTasks.map((task) => task.TaskID))
+    return tasks.filter((task) => !filteredTaskTaskIDs.has(task.TaskID))
 }
 </script>

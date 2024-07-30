@@ -9,9 +9,9 @@ import (
 )
 
 type Part struct {
-	State int
-	UID   string
-	Url   string
+	State  int
+	TaskID string
+	Url    string
 }
 
 type App struct {

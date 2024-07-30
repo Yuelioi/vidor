@@ -8,7 +8,7 @@ const { switchTheme } = useTheme(_themes)
 const { config, tasks } = storeToRefs(useBasicStore())
 
 EventsOn('updateInfo', (optionalData?: Part) => {
-    const index = tasks.value.findIndex((task) => task.UID === optionalData?.UID)
+    const index = tasks.value.findIndex((task) => task.TaskID === optionalData?.TaskID)
     if (index !== -1 && optionalData) {
         tasks.value.splice(index, 1, optionalData)
     }

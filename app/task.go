@@ -158,14 +158,14 @@ func (tq *TaskQueue) removeQueueTasks(tasks []*Task) {
 
 	tasksSet := make(map[string]struct{})
 	for _, task := range tasks {
-		tasksSet[task.part.UID] = struct{}{}
+		tasksSet[task.part.TaskID] = struct{}{}
 	}
 
 	newTasks := make([]*Task, 0)
 
 	// 基于索引重新规划 queueTasks
 	for _, task := range tq.queueTasks {
-		if _, ok := tasksSet[task.part.UID]; ok {
+		if _, ok := tasksSet[task.part.TaskID]; ok {
 			continue
 		}
 		newTasks = append(newTasks, task)
@@ -202,15 +202,15 @@ func (tq *TaskQueue) handleTask(task *Task) {
 		tq.tasksRemaining.Add(-1)
 		// 下载完成 检测任务队列
 		if len(tq.queueTasks) > 0 {
-			fmt.Printf("任务%s 完成: 准备重新填充\n", task.part.UID)
+			fmt.Printf("任务%s 完成: 准备重新填充\n", task.part.TaskID)
 			tq.reFillTasks()
 			tq.state = Finished
 		} else if tq.tasksRemaining.Load() != 0 {
-			fmt.Printf("任务%s 完成, 等待后续任务下载完毕: \n", task.part.UID)
+			fmt.Printf("任务%s 完成, 等待后续任务下载完毕: \n", task.part.TaskID)
 			tq.state = Finished
 
 		} else {
-			fmt.Printf("任务%s 完成: 关闭下载队列\n\n", task.part.UID)
+			fmt.Printf("任务%s 完成: 关闭下载队列\n\n", task.part.TaskID)
 			tq.state = Finished
 			close(tq.done)
 		}
