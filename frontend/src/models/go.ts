@@ -45,28 +45,76 @@ export class Task {
 }
 // 直接获取播放列表信息
 export class PlaylistInfo {
-    Url: string
-    Thumbnail: string
-    WorkDirName: string
-    Author: string
-    PubDate: Date
-    Description: string
-    Qualities: string[]
-    Codecs: string[]
-    Parts: {
-        URL: string
-        Title: string
-        Duration: number
-    }[]
+    Url: string = ''
+    Cover: string = ''
+    WorkDirName: string = ''
+    Author: string = ''
+    PubDate: Date = new Date()
+    Description: string = ''
+    StreamInfos: StreamInfo[] = []
+}
 
-    constructor() {
-        this.Url = ''
-        this.Thumbnail = ''
-        this.WorkDirName = ''
-        this.Author = ''
-        this.Qualities = []
-        this.Parts = []
-    }
+export class StreamInfo {
+    Name = ''
+    TaskID = ''
+    Selected: boolean = false
+    Thumbnails: Thumbnail[] = []
+    Videos: Stream = new Stream()
+    Audios: Stream = new Stream()
+    Captions = []
+}
+
+export class Stream {
+    ID = '' // youtubeID bilibiliID...
+    SessionId = '' // biliCID...
+    URL = ''
+    Title = ''
+    Description = ''
+    Author = ''
+    ChannelID = ''
+    Views = 0
+    Duration = 0 // You can convert this to a proper duration format if needed
+    PublishDate = new Date()
+    Formats: Format[] = []
+    DASHManifestURL = '' // URI of the DASH manifest file
+    HLSManifestURL = '' // URI of the HLS manifest file
+}
+
+export class Format {
+    IDtag = 0 // 标签ID
+    URL = '' // 链接
+    MimeType = '' // video/mp4...
+    Quality = '' // 质量标签
+    ContentLength = 0 // 内容长度
+    DurationMs = 0 // 时长
+    Selected = false
+
+    // 图片+视频
+    Width = 0
+    Height = 0
+
+    // 仅视频
+    FPS = 0 // FPS
+    Bitrate = 0 // 码率
+    AverageBitrate = 0 // 平均码率
+
+    // 仅音频
+    AudioSampleRate = '' // 音频码率
+}
+
+export class Thumbnail {
+    URL = ''
+    Label = ''
+    Width = 0
+    Height = 0
+}
+
+export class CaptionTrack {
+    BaseURL = ''
+    Name = ''
+    LanguageCode = ''
+    Kind = ''
+    IsTranslatable = false
 }
 
 export class Part {

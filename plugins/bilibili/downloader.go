@@ -52,7 +52,7 @@ func (bd *Downloader) ShowInfo(link string, callback shared.Callback) (*shared.P
 	aid, bvid := extractAidBvid(link)
 	biliPlayList, err := bd.client.GetPlaylistInfo(aid, bvid)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("ShowInfo %s", err)
 	}
 
 	// 填充列表信息
@@ -71,6 +71,8 @@ func (bd *Downloader) ShowInfo(link string, callback shared.Callback) (*shared.P
 		return nil, err
 	}
 	playList.Cover = img
+
+	fmt.Printf("playList: %v\n", playList)
 
 	return &playList, nil
 }

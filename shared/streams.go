@@ -25,6 +25,7 @@ type Format struct {
 	Quality       string // 质量标签
 	ContentLength int64  // 内容长度
 	DurationMs    int    // 时长
+	Selected      bool   // 是否选中当前格式
 
 	// 图片+视频
 

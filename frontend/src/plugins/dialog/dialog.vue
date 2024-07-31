@@ -11,7 +11,7 @@
                     ref="dialogRef"
                     class="w-[80%] overflow-hidden min-w-[375px] min-h-[500px] max-h-[75vh] flex flex-col rounded-lg bg-base-200 overflow-y-auto">
                     <header
-                        class="flex px-4 py-2 items-center text-sm text-base-100 justify-between bg-base-300 font-bold">
+                        class="flex px-4 py-2 border-b-2 border-base-200 items-center text-sm text-base-100 justify-between bg-base-100 font-bold">
                         <slot name="header">
                             <span>{{ title }}</span>
                         </slot>
@@ -21,10 +21,10 @@
                             @click="show = false"></span>
                     </header>
                     <main
-                        class="text-base-content bg-base-100 shadow-lg rounded-lg overflow-x-hidden overflow-y-scroll">
+                        class="text-base-content bg-base-100 shadow-lg overflow-x-hidden overflow-y-scroll">
                         <slot></slot>
                     </main>
-                    <footer>
+                    <footer class="bg-base-100 border-t-2 border-base-200">
                         <slot name="footer"></slot>
                     </footer>
                 </div>

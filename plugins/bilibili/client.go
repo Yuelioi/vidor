@@ -15,7 +15,7 @@ type Client struct {
 }
 
 var defaultClient = clientInfo{
-	userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+	userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Safari/537.36",
 	referer:   "https://www.bilibili.com",
 }
 
@@ -40,7 +40,7 @@ func NewClient(sessdata string) *Client {
 	}
 }
 func (c *Client) NewRequest(method string, url string, body io.Reader) (*http.Request, error) {
-	req, err := http.NewRequest("Get", url, body)
+	req, err := http.NewRequest(method, url, body)
 	if err != nil {
 		return nil, err
 	}
@@ -67,7 +67,7 @@ func (c *Client) Response(method string, url string, body io.Reader) (*http.Resp
 }
 
 func (c *Client) Get(url string, body io.Reader) ([]byte, error) {
-	resp, err := c.Response("Get", url, nil)
+	resp, err := c.Response("GET", url, nil)
 
 	if err != nil {
 		fmt.Println("Error fetching data:", err)
@@ -87,16 +87,14 @@ func (c *Client) GetPlaylistInfo(aid int, bvid string) (*biliPlaylistInfo, error
 	var bv biliPlaylistInfo
 
 	playListApiUrl := fmt.Sprintf(`%s/x/web-interface/view?aid=%d&bvid=%s`, apiURL, aid, bvid)
-
 	body, err := c.Get(playListApiUrl, nil)
 	if err != nil {
-		fmt.Println("Error cannot fetch Aid:", err)
-		return nil, err
+		return nil, fmt.Errorf("GetPlaylistInfo cannot fetch Aid :%s", err)
 	}
+
 	err = json.Unmarshal(body, &bv)
 	if err != nil {
-		fmt.Println("Error  JSON:", err)
-		return nil, err
+		return nil, fmt.Errorf("GetPlaylistInfo Error JSON :%s", err)
 	}
 
 	if bv.Code != 0 {

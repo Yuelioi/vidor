@@ -65,10 +65,12 @@ type PlaylistInfo struct {
 
 // 流媒体所有信息
 type StreamInfo struct {
+	Name       string
 	TaskID     string
+	Selected   bool
 	Thumbnails []Thumbnail
-	Videos     []Stream
-	Audios     []Stream
+	Videos     Stream
+	Audios     Stream
 	Captions   []CaptionTrack
 }
 

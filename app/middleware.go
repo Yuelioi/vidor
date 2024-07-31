@@ -33,13 +33,13 @@ func (a *App) ShowDownloadInfo(link string) *shared.PlaylistInfo {
 	downloader, err := newDownloader(a.downloaders, *a.config, a.Notice, link)
 	// 没有下载器 直接返回空
 	if err != nil {
-		a.Logger.Info(err)
+		a.Logger.Info("ShowDownloadInfo: 获取下载器失败", err)
 		return new(shared.PlaylistInfo)
 	}
 
 	pi, err := downloader.ShowInfo(link, a.Callback)
 	if err != nil {
-		a.Logger.Warn(err)
+		a.Logger.Warn("ShowDownloadInfo: 获取主页搜索展示信息失败", err)
 		return new(shared.PlaylistInfo)
 	}
 

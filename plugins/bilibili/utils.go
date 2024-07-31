@@ -2,10 +2,10 @@ package bilibili
 
 import (
 	"fmt"
-	"net/http"
 	"regexp"
 	"sort"
 	"strconv"
+	"time"
 
 	"github.com/Yuelioi/vidor/shared"
 	"github.com/Yuelioi/vidor/utils"
@@ -150,14 +150,27 @@ func biliPageToPlaylistInfo(biliInfo biliPlaylistInfo) shared.PlaylistInfo {
 	for _, page := range biliInfo.Data.Pages {
 
 		videoInfo.StreamInfos = append(videoInfo.StreamInfos, shared.StreamInfo{
-			TaskID: page.Title,
+			Name: page.Title,
+			Videos: shared.Stream{Formats: []shared.Format{
+				{
+					IDtag:    99999,
+					Quality:  "最高画质",
+					Selected: true,
+				},
+			}},
+			Audios: shared.Stream{Formats: []shared.Format{
+				{
+					IDtag:    99999,
+					Quality:  "最高音质",
+					Selected: true,
+				},
+			}},
+			Captions:   []shared.CaptionTrack{{Name: "需要解析"}},
+			Thumbnails: []shared.Thumbnail{{URL: page.Thumbnail}},
 		})
 
 	}
-	// 如果只有一个 就用主标题
-	if len(biliInfo.Data.Pages) == 1 {
-		videoInfo.StreamInfos[0].TaskID = videoInfo.WorkDirName
-	}
+
 	return videoInfo
 }
 
@@ -165,38 +178,39 @@ func biliPageToPlaylistInfo(biliInfo biliPlaylistInfo) shared.PlaylistInfo {
 func biliSeasonToPlaylistInfo(biliInfo biliPlaylistInfo) shared.PlaylistInfo {
 	videoInfo := biliPlaylistInfoToPlaylistInfo(biliInfo)
 
+	videoInfo.Author = biliInfo.Data.Owner.Name
+	videoInfo.WorkDirName = utils.SanitizeFileName(biliInfo.Data.Title)
+	videoInfo.PubDate = time.Unix(int64(biliInfo.Data.PubDate), 0)
+	videoInfo.StreamInfos = make([]shared.StreamInfo, 0)
+
 	for _, episode := range biliInfo.Data.UgcSeason.Sections[0].Episodes {
+
 		videoInfo.StreamInfos = append(videoInfo.StreamInfos, shared.StreamInfo{
-			TaskID: episode.Arc.Pic,
-
-			// Url:      fmt.Sprintf("https://www.bilibili.com/video/%s", episode.Bvid),
-			// Title:    episode.Title,
-			// Duration: episode.Arc.Duration,
-
-			// Thumbnail: biliInfo.Data.UgcSeason.Sections[0].Episodes[index].Arc.Pic,
+			Name: episode.Title,
+			Videos: shared.Stream{Formats: []shared.Format{
+				{
+					IDtag:   99999,
+					Quality: "最高画质", Selected: true,
+				},
+				{
+					IDtag:   99999,
+					Quality: "最低画质",
+				},
+			}},
+			Audios: shared.Stream{Formats: []shared.Format{
+				{
+					IDtag:   99999,
+					Quality: "最高音质", Selected: true,
+				}, {
+					IDtag:   99999,
+					Quality: "最低音质",
+				},
+			}},
+			Captions:   []shared.CaptionTrack{{Name: "需要解析"}},
+			Thumbnails: []shared.Thumbnail{{URL: episode.Arc.Pic}},
 		})
 
 	}
 
-	// 如果只有一个 就用主标题
-	// if len(biliInfo.Data.UgcSeason.Sections[0].Episodes) == 1 {
-	// 	videoInfo.StreamInfos[0].Title = videoInfo.WorkDirName
-	// }
-
 	return videoInfo
-}
-
-func downloadReq(SESSDATA string) (*http.Request, error) {
-	req, err := http.NewRequest("GET", "", nil)
-	if err != nil {
-		return nil, err
-	}
-
-	req.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36 Edg/126.0.0.0")
-	req.Header.Set("Referer", "https://www.bilibili.com")
-	if SESSDATA != "" {
-		req.Header.Set("Cookie", "SESSDATA="+SESSDATA)
-	}
-
-	return req, nil
 }
