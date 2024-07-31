@@ -3,7 +3,7 @@ package bilibili
 import (
 	"context"
 	"fmt"
-	"net/http"
+	"net/url"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -15,19 +15,25 @@ import (
 type Downloader struct {
 	ctx       context.Context
 	cancel    context.CancelFunc
-	Client    *http.Client
+	client    *Client
+	magicName string
 	Notice    shared.Notice
 	userState userStatus // 0未登录 1已登录 2Vip
 	biliDownloadParams
 	biliThumbnailParams
 }
 
-func New(notice shared.Notice) shared.Downloader {
+func New(config shared.Config, notice shared.Notice) shared.Downloader {
+
+	client := NewClient(config.SESSDATA)
 	ctx, cancel := context.WithCancel(context.Background())
+
 	return &Downloader{
-		Notice: notice,
-		ctx:    ctx,
-		cancel: cancel,
+		Notice:    notice,
+		ctx:       ctx,
+		magicName: config.MagicName,
+		cancel:    cancel,
+		client:    client,
 	}
 }
 
@@ -40,25 +46,17 @@ func (bd *Downloader) PluginMeta() shared.PluginMeta {
 	}
 }
 
-func (bd *Downloader) ShowInfo(link string, config shared.Config, callback shared.Callback) (*shared.PlaylistInfo, error) {
-	client, err := utils.GetClient(config.ProxyURL, config.UseProxy)
-	if err != nil {
-		return nil, err
-	}
-
-	// 初始化Client
-	bd.Client = client
-
-	// 获取登录信息
-	bd.getUserStates(config.SESSDATA)
+func (bd *Downloader) ShowInfo(link string, callback shared.Callback) (*shared.PlaylistInfo, error) {
 
 	// 获取b站播放列表信息
-	var playList shared.PlaylistInfo
 	aid, bvid := extractAidBvid(link)
-	biliPlayList, err := getPlaylistInfo(*client, aid, bvid, config.SESSDATA)
+	biliPlayList, err := bd.client.GetPlaylistInfo(aid, bvid)
 	if err != nil {
 		return nil, err
 	}
+
+	// 填充列表信息
+	var playList shared.PlaylistInfo
 	if biliPlayList.Data.IsSeason {
 		playList = biliSeasonToPlaylistInfo(*biliPlayList)
 	} else {
@@ -68,7 +66,7 @@ func (bd *Downloader) ShowInfo(link string, config shared.Config, callback share
 	thumbnailPath := filepath.Join(os.TempDir(), "vidor", "info_thumbnail.jpg")
 	fmt.Printf("thumbnailPath: %v\n", thumbnailPath)
 
-	img, err := utils.GetThumbnail(client, playList.Cover, thumbnailPath)
+	img, err := utils.GetThumbnail(bd.client.HTTPClient, playList.Cover, thumbnailPath)
 	if err != nil {
 		return nil, err
 	}
@@ -77,25 +75,14 @@ func (bd *Downloader) ShowInfo(link string, config shared.Config, callback share
 	return &playList, nil
 }
 
-func (bd *Downloader) GetMeta(config shared.Config, part *shared.Part, callback shared.Callback) error {
-
-	client, err := utils.GetClient(config.ProxyURL, config.UseProxy)
-	if err != nil {
-		return err
-	}
-
-	// 初始化Client
-	bd.Client = client
-
-	// 获取登录信息
-	bd.getUserStates(config.SESSDATA)
+func (bd *Downloader) GetMeta(part *shared.Part, callback shared.Callback) error {
 
 	// 提取分P索引 如果有的话, 没有就是0
 	index, _ := extractIndex(part.Url)
 	aid, bvid := extractAidBvid(part.Url)
 
 	// 获取视频基础信息
-	biliPlayList, err := getPlaylistInfo(*bd.Client, aid, bvid, config.SESSDATA)
+	biliPlayList, err := bd.client.GetPlaylistInfo(aid, bvid)
 	if err != nil {
 		return fmt.Errorf("获取播放列表信息失败: %v", err.Error())
 	}
@@ -114,7 +101,7 @@ func (bd *Downloader) GetMeta(config shared.Config, part *shared.Part, callback 
 	part.Author = biliBase.author
 	part.Index = biliBase.index
 	part.Title = utils.SanitizeFileName(biliBase.title)
-	part.MagicName = utils.MagicName(config.MagicName, part.WorkDirName, part.Title, part.Index+1)
+	part.MagicName = utils.MagicName(bd.magicName, part.WorkDirName, part.Title, part.Index+1)
 	part.Path = filepath.Join(part.DownloadDir, part.MagicName+".mp4")
 	coverPath := filepath.Join(part.DownloadDir, biliBase.coverName)
 
@@ -126,7 +113,7 @@ func (bd *Downloader) GetMeta(config shared.Config, part *shared.Part, callback 
 	}
 
 	// 获取视频下载信息
-	biliDownInfo, err := getVideoDownloadInfo(*bd.Client, biliBase.bvid, biliBase.cid, config.SESSDATA)
+	biliDownInfo, err := bd.client.GetVideoDownloadInfo(biliBase.bvid, biliBase.cid)
 	if err != nil {
 		return fmt.Errorf("获取视频下载信息失败: %v", err.Error())
 	}
@@ -158,7 +145,6 @@ func (bd *Downloader) GetMeta(config shared.Config, part *shared.Part, callback 
 	bd.biliDownloadParams = biliDownloadParams{
 		videoUrl: videoUrl,
 		audioUrl: audioUrl,
-		sessdata: config.SESSDATA,
 		index:    index,
 	}
 
@@ -175,7 +161,7 @@ func (bd *Downloader) GetMeta(config shared.Config, part *shared.Part, callback 
 func (bd *Downloader) DownloadThumbnail(part *shared.Part, callback shared.Callback) error {
 	// 缩略图
 	thumbnailPath := filepath.Join(part.DownloadDir, "data", "thumbnail_"+part.MagicName+".jpg")
-	thumbnailLocalPath, err := utils.GetThumbnail(bd.Client, bd.biliThumbnailParams.thumbnailUrl, thumbnailPath)
+	thumbnailLocalPath, err := utils.GetThumbnail(bd.client.HTTPClient, bd.biliThumbnailParams.thumbnailUrl, thumbnailPath)
 	if err != nil {
 		return err
 	}
@@ -183,7 +169,7 @@ func (bd *Downloader) DownloadThumbnail(part *shared.Part, callback shared.Callb
 
 	// 封面
 	if _, err = os.Stat(bd.coverPath); os.IsNotExist(err) {
-		_, err := utils.GetCover(bd.Client, bd.biliThumbnailParams.coverUrl, bd.coverPath)
+		_, err := utils.GetCover(bd.client.HTTPClient, bd.biliThumbnailParams.coverUrl, bd.coverPath)
 		if err != nil {
 			return fmt.Errorf("缓存封面失败: %v", err.Error())
 		}
@@ -231,5 +217,24 @@ func (bd *Downloader) StopDownload(part *shared.Part, callback shared.Callback) 
 	return nil
 }
 func (bd *Downloader) PauseDownload(part *shared.Part, callback shared.Callback) error {
+	return nil
+}
+
+func (bd *Downloader) download(part *shared.Part, link, ext string, callback shared.Callback) error {
+	tempPath := filepath.Join(part.DownloadDir, fmt.Sprintf("%s_temp.%s", part.MagicName, ext))
+
+	req, err := bd.client.NewRequest("Get", link, nil)
+
+	if err != nil {
+
+		return err
+	}
+	mediaUrl, err := url.Parse(link)
+	if err != nil {
+
+		return err
+	}
+	req.URL = mediaUrl
+	utils.ReqWriter(bd.ctx, bd.client.HTTPClient, req, part, tempPath, callback)
 	return nil
 }

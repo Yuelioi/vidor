@@ -30,14 +30,14 @@ type TaskResult struct {
 2. 调用展示信息函数
 */
 func (a *App) ShowDownloadInfo(link string) *shared.PlaylistInfo {
-	downloader, err := newDownloader(a.downloaders, a.Notice, link)
+	downloader, err := newDownloader(a.downloaders, *a.config, a.Notice, link)
 	// 没有下载器 直接返回空
 	if err != nil {
 		a.Logger.Info(err)
 		return new(shared.PlaylistInfo)
 	}
 
-	pi, err := downloader.ShowInfo(link, *a.config, a.Callback)
+	pi, err := downloader.ShowInfo(link, a.Callback)
 	if err != nil {
 		a.Logger.Warn(err)
 		return new(shared.PlaylistInfo)

@@ -34,7 +34,7 @@ func autoSetBatchSize(contentLength int64) int64 {
 	return batchSize
 }
 
-func ReqWriter(ctx context.Context, client *http.Client, req *http.Request, part *shared.Part, path string, callback shared.Callback) error {
+func ReqWriter(ctx context.Context, client *http.Client, req *http.Request, part *shared.Part, tempPath string, callback shared.Callback) error {
 
 	req.Header.Set("Accept-Ranges", "bytes")
 	resp, err := client.Do(req)
@@ -44,7 +44,7 @@ func ReqWriter(ctx context.Context, client *http.Client, req *http.Request, part
 	defer resp.Body.Close()
 
 	// 创建文件
-	out, err := os.Create(path)
+	out, err := os.Create(tempPath)
 	if err != nil {
 		log.Println("创建文件失败：", err)
 		return err

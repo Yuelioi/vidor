@@ -83,7 +83,7 @@ func (tq *TaskQueue) worker() {
 			}
 
 			// 创建下载器
-			downloader, err := newDownloader(tq.app.downloaders, tq.app.Notice, task.part.Url)
+			downloader, err := newDownloader(tq.app.downloaders, *tq.app.config, tq.app.Notice, task.part.Url)
 
 			if err != nil {
 				continue
@@ -222,7 +222,7 @@ func (tq *TaskQueue) handleTask(task *Task) {
 
 	// 获取视频元数据
 	if task.state == Working {
-		if err := task.downloader.GetMeta(*tq.app.config, task.part, tq.app.Callback); err != nil {
+		if err := task.downloader.GetMeta(task.part, tq.app.Callback); err != nil {
 			tq.handleDownloadError(tq.app.Logger, task, err)
 			updateTaskConfig(tq.app.Logger, task, tq.app.tasks, tq.app.configDir)
 			return

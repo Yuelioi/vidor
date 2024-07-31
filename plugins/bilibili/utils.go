@@ -1,13 +1,8 @@
 package bilibili
 
 import (
-	"encoding/json"
-	"errors"
 	"fmt"
-	"io"
 	"net/http"
-	"net/url"
-	"path/filepath"
 	"regexp"
 	"sort"
 	"strconv"
@@ -15,45 +10,6 @@ import (
 	"github.com/Yuelioi/vidor/shared"
 	"github.com/Yuelioi/vidor/utils"
 )
-
-func (bd *Downloader) getUserStates(sessdata string) {
-	apiUrl := apiURL + "/x/vip/web/user/info"
-
-	data, err := doBiliReq(*bd.Client, apiUrl, sessdata)
-	if err != nil {
-		return
-	}
-
-	var userInfo userInfo
-	err = json.Unmarshal(data, &userInfo)
-	if err != nil {
-		return
-	}
-
-	if userInfo.Data.VIPStatus == 1 {
-		bd.userState = Vip
-		return
-	}
-	bd.userState = Login
-}
-
-func (bd *Downloader) download(part *shared.Part, link, ext string, callback shared.Callback) error {
-	path := filepath.Join(part.DownloadDir, fmt.Sprintf("%s_temp.%s", part.MagicName, ext))
-
-	req, err := downloadReq(bd.sessdata)
-	if err != nil {
-
-		return err
-	}
-	mediaUrl, err := url.Parse(link)
-	if err != nil {
-
-		return err
-	}
-	req.URL = mediaUrl
-	utils.ReqWriter(bd.ctx, bd.Client, req, part, path, callback)
-	return nil
-}
 
 // 获取合集信息
 func processSeasonData(data biliPlayListData, aid int, bvid_input string) biliBaseParams {
@@ -171,71 +127,6 @@ func extractAidBvid(link string) (aid int, bvid string) {
 		bvid = bvidMatches[0]
 	}
 	return
-}
-
-func doBiliReq(client http.Client, link, sessdata string) (body []byte, err error) {
-	req, err := http.NewRequest("GET", link, nil)
-	if err != nil {
-		return
-	}
-
-	req.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36 Edg/126.0.0.0")
-	req.Header.Set("Referer", "https://www.bilibili.com/vedio")
-
-	if len(sessdata) > 0 {
-		req.Header.Set("Cookie", "SESSDATA="+sessdata)
-	}
-
-	resp, err := client.Do(req)
-
-	if err != nil {
-		fmt.Println("Error fetching data:", err)
-		return
-	}
-	defer resp.Body.Close()
-
-	body, err = io.ReadAll(resp.Body)
-	if err != nil {
-		fmt.Println("Error reading response body:", err)
-		return
-	}
-	return
-}
-
-func getPlaylistInfo(client http.Client, aid int, bvid, sessdata string) (*biliPlaylistInfo, error) {
-	var bv biliPlaylistInfo
-
-	body, err := doBiliReq(client, fmt.Sprintf(`%s/x/web-interface/view?aid=%d&bvid=%s`, apiURL, aid, bvid), sessdata)
-	if err != nil {
-		fmt.Println("Error cannot fetch Aid:", err)
-		return nil, err
-	}
-	err = json.Unmarshal(body, &bv)
-	if err != nil {
-		fmt.Println("Error  JSON:", err)
-		return nil, err
-	}
-
-	if bv.Code != 0 {
-		return nil, errors.New(bv.Message)
-	}
-
-	return &bv, nil
-
-}
-
-func getVideoDownloadInfo(client http.Client, bvid string, cid int, sessdata string) (*biliDownloadInfo, error) {
-	body, err := doBiliReq(client, fmt.Sprintf("%s/x/player/wbi/playurl?bvid=%s&cid=%d&fnval=4048&fourk=1", apiURL, bvid, cid), sessdata)
-	if err != nil {
-		fmt.Println("Error reading response body:", err)
-		return nil, err
-	}
-
-	bi := biliDownloadInfo{}
-	if err = json.Unmarshal(body, &bi); err != nil {
-		return nil, err
-	}
-	return &bi, nil
 }
 
 // B站视频列表信息转为通用的列表信息

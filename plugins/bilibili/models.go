@@ -116,7 +116,6 @@ type biliDownloadParams struct {
 	videoUrl string
 	audioUrl string
 	index    int
-	sessdata string
 }
 
 // 视频封面参数

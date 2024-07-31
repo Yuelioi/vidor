@@ -9,8 +9,8 @@ import (
 type Downloader interface {
 	PluginMeta() PluginMeta // 获取插件信息
 
-	ShowInfo(link string, config Config, callback Callback) (*PlaylistInfo, error) // 主页搜索展示信息
-	GetMeta(config Config, part *Part, callback Callback) error                    // 获取后续下载所需要的所有信息 应该由插件实例维护
+	ShowInfo(link string, callback Callback) (*PlaylistInfo, error) // 主页搜索展示信息
+	GetMeta(part *Part, callback Callback) error                    // 获取后续下载所需要的所有信息 应该由插件实例维护
 
 	DownloadThumbnail(part *Part, callback Callback) error // 下载封面/图片工作
 	DownloadVideo(part *Part, callback Callback) error     // 下载视频
@@ -25,15 +25,9 @@ type Downloader interface {
 
 type InputInfo struct {
 	Link     string
-	Config   Config
 	Callback Callback
 }
 
-type DownloadArgsWithConfig struct {
-	Config   Config
-	Part     *Part
-	Callback Callback
-}
 type DownloadArgs struct {
 	Part     *Part
 	Callback Callback
@@ -55,16 +49,15 @@ func (g *DownloaderRPC) PluginMeta() PluginMeta {
 	return *resp
 }
 
-func (g *DownloaderRPC) ShowInfo(link string, config Config, callback Callback) (*PlaylistInfo, error) {
+func (g *DownloaderRPC) ShowInfo(link string, callback Callback) (*PlaylistInfo, error) {
 	var resp PlaylistInfo
-	err := g.client.Call("Plugin.ShowInfo", InputInfo{Link: link, Config: config, Callback: callback}, &resp)
+	err := g.client.Call("Plugin.ShowInfo", InputInfo{Link: link, Callback: callback}, &resp)
 	return &resp, err
 }
 
-func (g *DownloaderRPC) GetMeta(config Config, part *Part, callback Callback) (*Part, error) {
+func (g *DownloaderRPC) GetMeta(part *Part, callback Callback) (*Part, error) {
 	var resp Part
-	err := g.client.Call("Plugin.GetMeta", DownloadArgsWithConfig{
-		Config:   config,
+	err := g.client.Call("Plugin.GetMeta", DownloadArgs{
 		Part:     part,
 		Callback: callback,
 	}, &resp)
@@ -113,7 +106,7 @@ func (s *DownloaderRPCServer) PluginMeta(args struct{}, resp *PluginMeta) error 
 }
 
 func (s *DownloaderRPCServer) ShowInfo(args InputInfo, resp *PlaylistInfo) error {
-	info, err := s.Impl.ShowInfo(args.Link, args.Config, args.Callback)
+	info, err := s.Impl.ShowInfo(args.Link, args.Callback)
 	if err != nil {
 		return err
 	}
@@ -121,8 +114,8 @@ func (s *DownloaderRPCServer) ShowInfo(args InputInfo, resp *PlaylistInfo) error
 	return nil
 }
 
-func (s *DownloaderRPCServer) GetMeta(args *DownloadArgsWithConfig, resp *struct{}) error {
-	return s.Impl.GetMeta(args.Config, args.Part, args.Callback)
+func (s *DownloaderRPCServer) GetMeta(args *DownloadArgs, resp *struct{}) error {
+	return s.Impl.GetMeta(args.Part, args.Callback)
 }
 
 func (s *DownloaderRPCServer) DownloadThumbnail(args *DownloadArgs, resp *struct{}) error {

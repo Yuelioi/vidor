@@ -63,6 +63,7 @@ type PlaylistInfo struct {
 	StreamInfos []StreamInfo // 分段合集
 }
 
+// 流媒体所有信息
 type StreamInfo struct {
 	TaskID     string
 	Thumbnails []Thumbnail
@@ -99,7 +100,7 @@ type PluginMeta struct {
 	Name   string
 	Type   string // System/ThirdPart
 	Regexs []*regexp.Regexp
-	Impl   func(notice Notice) Downloader
+	Impl   func(config Config, notice Notice) Downloader
 }
 
 // 任务状态
