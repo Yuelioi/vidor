@@ -12,19 +12,6 @@ type page struct {
 	} `json:"dimension"`
 }
 
-type userInfo struct {
-	Code    int    `json:"code"`
-	Message string `json:"message"`
-	Data    struct {
-		MID       int `json:"mid"`
-		VIPType   int `json:"vip_type"`
-		VIPStatus int `json:"vip_status"`
-		Label     struct {
-			Text string `json:"text"`
-		} `json:"label"`
-	} `json:"data"`
-}
-
 type biliPlayListData struct {
 	TName   string `json:"tname"`
 	AID     int    `json:"aid"`
@@ -106,31 +93,31 @@ type biliBaseParams struct {
 	pubDate  int
 	duration int
 
-	coverUrl     string
+	coverURL     string
 	coverName    string
-	thumbnailUrl string
+	thumbnailURL string
 }
 
 // 视频下载参数
 type biliDownloadParams struct {
-	videoUrl string
-	audioUrl string
+	videoURL string
+	audioURL string
 	index    int
 }
 
 // 视频封面参数
 type biliThumbnailParams struct {
-	thumbnailUrl string
+	thumbnailURL string
 	coverPath    string
-	coverUrl     string
+	coverURL     string
 }
 
 type Video struct {
 	ID        int      `json:"id"`
-	BaseUrl   string   `json:"baseUrl"`
-	BaseURL   string   `json:"base_url"`
-	BackupUrl []string `json:"backupUrl"`
-	BackupURL []string `json:"backup_url"`
+	BaseURL   string   `json:"baseURL"`
+	BaseUrl   string   `json:"base_url"`
+	BackupURL []string `json:"backupURL"`
+	BackupUrl []string `json:"backup_url"`
 	Codecs    string   `json:"codecs"`
 	Width     int      `json:"width"`
 	Height    int      `json:"height"`
@@ -138,10 +125,11 @@ type Video struct {
 }
 
 type Audio struct {
-	BaseUrl   string   `json:"baseUrl"`
-	BaseURL   string   `json:"base_url"`
-	BackupUrl []string `json:"backupUrl"`
-	BackupURL []string `json:"backup_url"`
+	ID        int      `json:"id"`
+	BaseURL   string   `json:"baseURL"`
+	BaseUrl   string   `json:"base_url"`
+	BackupURL []string `json:"backupURL"`
+	BackupUrl []string `json:"backup_url"`
 	Bandwidth int      `json:"bandwidth"`
 	Codecs    string   `json:"codecs"`
 }

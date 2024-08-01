@@ -7,8 +7,6 @@
                 class="ml-2 grow"
                 v-model.lazy="config.MagicName"
                 placeholder="下载文件魔法名称" />
-
-            <input type="checkbox" v-model="config.UseProxy" class="checkbox" />
         </label>
         <label class="flex items-center gap-2 input input-bordered">
             <span class="pr-2 label-text text-nowrap">并行</span>

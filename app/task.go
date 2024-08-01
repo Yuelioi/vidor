@@ -83,7 +83,7 @@ func (tq *TaskQueue) worker() {
 			}
 
 			// 创建下载器
-			downloader, err := newDownloader(tq.app.downloaders, *tq.app.config, tq.app.Notice, task.part.Url)
+			downloader, err := newDownloader(tq.app.downloaders, *tq.app.config, tq.app.Notice, task.part.URL)
 
 			if err != nil {
 				continue

@@ -20,7 +20,7 @@ func processSeasonData(data biliPlayListData, aid int, bvid_input string) biliBa
 			index = epid
 		}
 	}
-	workDirname := data.UgcSeason.Title
+	workDirname := utils.SanitizeFileName(data.UgcSeason.Title)
 	coverName := fmt.Sprintf("%02d_%s.jpg", index+1, utils.SanitizeFileName(workDirname))
 
 	return biliBaseParams{
@@ -32,15 +32,15 @@ func processSeasonData(data biliPlayListData, aid int, bvid_input string) biliBa
 		pubDate:  episodes[index].Arc.Pubdate,
 		duration: episodes[index].Arc.Duration,
 
-		coverUrl:     data.UgcSeason.Cover,
+		coverURL:     data.UgcSeason.Cover,
 		coverName:    coverName,
-		thumbnailUrl: episodes[index].Arc.Pic,
+		thumbnailURL: episodes[index].Arc.Pic,
 	}
 }
 
 // 获取普通分p信息
 func processPagesData(bpi biliPlayListData, index int) biliBaseParams {
-	var title, thumbnailUrl string
+	var title, thumbnailURL string
 
 	if len(bpi.Pages) == 1 {
 		title = bpi.Title
@@ -49,9 +49,9 @@ func processPagesData(bpi biliPlayListData, index int) biliBaseParams {
 	}
 
 	if bpi.Pages[index].Thumbnail != "" {
-		thumbnailUrl = bpi.Pages[index].Thumbnail
+		thumbnailURL = bpi.Pages[index].Thumbnail
 	} else {
-		thumbnailUrl = bpi.Pic
+		thumbnailURL = bpi.Pic
 	}
 
 	workDirname := bpi.Title
@@ -62,9 +62,9 @@ func processPagesData(bpi biliPlayListData, index int) biliBaseParams {
 		bvid:         bpi.BVID,
 		title:        utils.SanitizeFileName(title),
 		author:       bpi.Owner.Name,
-		coverUrl:     bpi.Pic,
+		coverURL:     bpi.Pic,
 		coverName:    utils.SanitizeFileName(workDirname) + ".jpg",
-		thumbnailUrl: thumbnailUrl,
+		thumbnailURL: thumbnailURL,
 	}
 }
 
@@ -133,7 +133,7 @@ func extractAidBvid(link string) (aid int, bvid string) {
 func biliPlaylistInfoToPlaylistInfo(biliInfo biliPlaylistInfo) shared.PlaylistInfo {
 	var videoInfo shared.PlaylistInfo
 
-	videoInfo.Url = fmt.Sprintf("https://www.bilibili.com/video/%s", biliInfo.Data.BVID)
+	videoInfo.URL = fmt.Sprintf("https://www.bilibili.com/video/%s", biliInfo.Data.BVID)
 	videoInfo.WorkDirName = utils.SanitizeFileName(biliInfo.Data.Title)
 	videoInfo.Author = biliInfo.Data.Owner.Name
 	videoInfo.Description = biliInfo.Data.Desc
@@ -144,27 +144,32 @@ func biliPlaylistInfoToPlaylistInfo(biliInfo biliPlaylistInfo) shared.PlaylistIn
 }
 
 // B站分P视频列表信息转为通用的列表信息
-func biliPageToPlaylistInfo(biliInfo biliPlaylistInfo) shared.PlaylistInfo {
+func biliPageToPlaylistInfo(bvid string, biliInfo biliPlaylistInfo) shared.PlaylistInfo {
 	videoInfo := biliPlaylistInfoToPlaylistInfo(biliInfo)
+
+	videoInfo.Author = biliInfo.Data.Owner.Name
+	videoInfo.WorkDirName = utils.SanitizeFileName(biliInfo.Data.Title)
+	videoInfo.PubDate = time.Unix(int64(biliInfo.Data.PubDate), 0)
+	videoInfo.StreamInfos = make([]shared.StreamInfo, 0)
 
 	for _, page := range biliInfo.Data.Pages {
 
 		videoInfo.StreamInfos = append(videoInfo.StreamInfos, shared.StreamInfo{
-			Name: page.Title,
-			Videos: shared.Stream{Formats: []shared.Format{
+			ID:        bvid,
+			SessionId: fmt.Sprint(page.CID),
+			Name:      page.Title,
+			Videos: []shared.Format{
 				{
-					IDtag:    99999,
-					Quality:  "最高画质",
-					Selected: true,
+					IDtag:   9999,
+					Quality: "尚未解析", Selected: true,
 				},
-			}},
-			Audios: shared.Stream{Formats: []shared.Format{
+			},
+			Audios: []shared.Format{
 				{
-					IDtag:    99999,
-					Quality:  "最高音质",
-					Selected: true,
+					IDtag:   9999,
+					Quality: "尚未解析", Selected: true,
 				},
-			}},
+			},
 			Captions:   []shared.CaptionTrack{{Name: "需要解析"}},
 			Thumbnails: []shared.Thumbnail{{URL: page.Thumbnail}},
 		})
@@ -186,26 +191,21 @@ func biliSeasonToPlaylistInfo(biliInfo biliPlaylistInfo) shared.PlaylistInfo {
 	for _, episode := range biliInfo.Data.UgcSeason.Sections[0].Episodes {
 
 		videoInfo.StreamInfos = append(videoInfo.StreamInfos, shared.StreamInfo{
-			Name: episode.Title,
-			Videos: shared.Stream{Formats: []shared.Format{
+			ID:        episode.Bvid,
+			SessionId: fmt.Sprint(episode.CID),
+			Name:      episode.Title,
+			Videos: []shared.Format{
 				{
-					IDtag:   99999,
-					Quality: "最高画质", Selected: true,
+					IDtag:   9999,
+					Quality: "尚未解析", Selected: true,
 				},
+			},
+			Audios: []shared.Format{
 				{
-					IDtag:   99999,
-					Quality: "最低画质",
+					IDtag:   9999,
+					Quality: "尚未解析", Selected: true,
 				},
-			}},
-			Audios: shared.Stream{Formats: []shared.Format{
-				{
-					IDtag:   99999,
-					Quality: "最高音质", Selected: true,
-				}, {
-					IDtag:   99999,
-					Quality: "最低音质",
-				},
-			}},
+			},
 			Captions:   []shared.CaptionTrack{{Name: "需要解析"}},
 			Thumbnails: []shared.Thumbnail{{URL: episode.Arc.Pic}},
 		})

@@ -6,7 +6,7 @@
                 class="fixed top-0 left-0 z-40 w-screen h-screen bg-base-300 opacity-50 overlay base-300"></div>
         </transition>
         <transition name="bounce">
-            <div v-if="show" class="fixed inset-0 flex items-center justify-center z-50">
+            <div v-if="show" class="fixed inset-0 flex items-center justify-center z-40">
                 <div
                     ref="dialogRef"
                     class="w-[80%] overflow-hidden min-w-[375px] min-h-[500px] max-h-[75vh] flex flex-col rounded-lg bg-base-200 overflow-y-auto">

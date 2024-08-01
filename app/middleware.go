@@ -38,12 +38,30 @@ func (a *App) ShowDownloadInfo(link string) *shared.PlaylistInfo {
 	}
 
 	pi, err := downloader.ShowInfo(link, a.Callback)
+
 	if err != nil {
 		a.Logger.Warn("ShowDownloadInfo: 获取主页搜索展示信息失败", err)
 		return new(shared.PlaylistInfo)
 	}
 
 	a.Logger.Infof("下载: 获取视频元数据成功%s", link)
+	return pi
+}
+
+func (a *App) ParsePlaylist(playList *shared.PlaylistInfo) *shared.PlaylistInfo {
+	downloader, err := newDownloader(a.downloaders, *a.config, a.Notice, playList.URL)
+	// 没有下载器 直接返回空
+	if err != nil {
+		a.Logger.Info("ShowDownloadInfo: 获取下载器失败", err)
+		return new(shared.PlaylistInfo)
+	}
+
+	pi, err := downloader.ParsePlaylist(playList)
+	if err != nil {
+		a.Logger.Warn("ShowDownloadInfo: 获取主页搜索展示信息失败", err)
+		return new(shared.PlaylistInfo)
+	}
+
 	return pi
 }
 
@@ -62,8 +80,8 @@ func (a *App) AddDownloadTasks(parts []shared.Part, workName string) []shared.Pa
 	var tasks = make([]*Task, 0)
 
 	for _, part := range parts {
-		if taskExists(a.tasks, part.Url) {
-			logger.Info("任务", "任务已存在", part.Url)
+		if taskExists(a.tasks, part.URL) {
+			logger.Info("任务", "任务已存在", part.URL)
 			continue
 		} else {
 

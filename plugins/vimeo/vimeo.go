@@ -46,7 +46,7 @@ type Config struct {
 		ID       int    `json:"id"`
 		Width    int    `json:"width"`
 		Height   int    `json:"height"`
-		Url      string `json:"url"`
+		URL      string `json:"url"`
 		Title    string `json:"title"`
 		Duration int    `json:"duration"`
 		Thumbs   struct {
@@ -145,26 +145,22 @@ func (vd *VimeoDownloader) ShowInfo(link string, config shared.Config) (*shared.
 
 func (vd *VimeoDownloader) GetMeta(ctx context.Context, part *shared.Part) error {
 
-	clipMainUrl := vd.videoConfig.Request.Files.Dash.CDNs.AkfireInterconnectQuic.URL
-	clip, err := fetchClip(*vd.Client, clipMainUrl)
+	clipMainURL := vd.videoConfig.Request.Files.Dash.CDNs.AkfireInterconnectQuic.URL
+	clip, err := fetchClip(*vd.Client, clipMainURL)
 	if err != nil {
 		return err
 	}
 
-	baseUrl, err := resolveURL(clipMainUrl, clip.BaseURL)
+	baseURL, err := resolveURL(clipMainURL, clip.BaseURL)
 	if err != nil {
 		return err
 	}
-	clipBaseUrl := baseUrl
-
-	// todo
-	targetHeight, _ := utils.GetQualityID(part.Quality, []shared.StreamQuality{})
-	part.Quality, _ = utils.GetQualityLabel(targetHeight, []shared.StreamQuality{})
+	clipBaseURL := baseURL
 
 	part.Thumbnail = vd.videoConfig.Video.Thumbs.Size1280
 	part.Title = vd.videoConfig.Video.Title
 	part.Author = vd.videoConfig.Video.Owner.Name
-	part.Url = vd.videoConfig.Video.Url
+	part.URL = vd.videoConfig.Video.URL
 
 	taskDir := filepath.Join(part.DownloadDir, utils.SanitizeFileName(part.Title))
 	filePureName := utils.SanitizeFileName(part.Title)
@@ -181,7 +177,7 @@ func (vd *VimeoDownloader) GetMeta(ctx context.Context, part *shared.Part) error
 		}
 	}
 
-	bestVideo := getTargetVimeoVideo(clip.Videos, targetHeight)
+	bestVideo := getTargetVimeoVideo(clip.Videos, 0)
 	bestAudio := getBestVimeoAudio(clip.Audios)
 
 	// 先不要带后缀
@@ -190,7 +186,7 @@ func (vd *VimeoDownloader) GetMeta(ctx context.Context, part *shared.Part) error
 	input_v := filepath.Join(part.DownloadDir, fmt.Sprintf("%s_temp.mp4", filePureName))
 	input_a := filepath.Join(part.DownloadDir, fmt.Sprintf("%s_temp.mp3", filePureName))
 
-	videosTemp, err := vd.downloadSegments(part, bestVideo.InitSegment, bestVideo.Segments, clipBaseUrl, bestVideo.BaseURL, path_pure, "m4s")
+	videosTemp, err := vd.downloadSegments(part, bestVideo.InitSegment, bestVideo.Segments, clipBaseURL, bestVideo.BaseURL, path_pure, "m4s")
 	if err != nil {
 		return err
 	}
@@ -198,7 +194,7 @@ func (vd *VimeoDownloader) GetMeta(ctx context.Context, part *shared.Part) error
 	utils.CombineSegments(videosTemp, input_v, map[string]interface{}{"v": 1, "a": 0})
 
 	part.Status = "音频片段下载中"
-	audiosTemp, err := vd.downloadSegments(part, bestAudio.InitSegment, bestAudio.Segments, clipBaseUrl, bestAudio.BaseURL, path_pure, "mp3")
+	audiosTemp, err := vd.downloadSegments(part, bestAudio.InitSegment, bestAudio.Segments, clipBaseURL, bestAudio.BaseURL, path_pure, "mp3")
 	if err != nil {
 		return err
 	}
@@ -223,14 +219,14 @@ func start(client http.Client, link string, config shared.Config) (*shared.Playl
 
 	pli := shared.PlaylistInfo{}
 
-	masterUrl, err := getVimeoConfigURL(link, config)
+	masterURL, err := getVimeoConfigURL(link, config)
 	if err != nil {
 		log.Printf("获取配置URL时出错: %v", err)
 		return nil, nil, err
 	}
 
 	// 读取配置
-	videoConfig, err := masterConfig(client, masterUrl)
+	videoConfig, err := masterConfig(client, masterURL)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -238,7 +234,7 @@ func start(client http.Client, link string, config shared.Config) (*shared.Playl
 	pli.Cover = videoConfig.Video.Thumbs.Size1280
 	pli.WorkDirName = videoConfig.Video.Title
 	pli.Author = videoConfig.Video.Owner.Name
-	pli.Url = videoConfig.Video.Url
+	pli.URL = videoConfig.Video.URL
 	// todo
 	// pli.Qualities = utils.GetQualities(videoConfig.Video.Height)
 
@@ -316,9 +312,9 @@ func getVimeoConfigURL(videoURL string, config shared.Config) (string, error) {
 	return configURL, nil
 }
 
-func masterConfig(client http.Client, masterUrl string) (*Config, error) {
+func masterConfig(client http.Client, masterURL string) (*Config, error) {
 
-	req, err := http.NewRequest("GET", masterUrl, nil)
+	req, err := http.NewRequest("GET", masterURL, nil)
 	if err != nil {
 		fmt.Println("Error creating request:", err)
 		return nil, err
@@ -423,7 +419,7 @@ func (vd *VimeoDownloader) downloadSeg(link string, initSegmentData []byte, file
 
 }
 
-func (vd *VimeoDownloader) downloadSegments(part *shared.Part, initSegment string, segs []Segment, clipBaseUrl, baseUrl, path, ext string) ([]string, error) {
+func (vd *VimeoDownloader) downloadSegments(part *shared.Part, initSegment string, segs []Segment, clipBaseURL, baseURL, path, ext string) ([]string, error) {
 	// 下载初始化段
 
 	var temps []string
@@ -436,9 +432,9 @@ func (vd *VimeoDownloader) downloadSegments(part *shared.Part, initSegment strin
 
 	// 下载视频片段并将初始化段写入每个片段文件
 	for index, seg := range segs {
-		absUrl, _ := resolveURL(clipBaseUrl, baseUrl)
-		absUrl, _ = resolveURL(absUrl, seg.URL)
-		realLink, _ := url.QueryUnescape(absUrl)
+		absURL, _ := resolveURL(clipBaseURL, baseURL)
+		absURL, _ = resolveURL(absURL, seg.URL)
+		realLink, _ := url.QueryUnescape(absURL)
 		filepath := fmt.Sprintf("%s_%d.%s", path, index, ext)
 		temps = append(temps, filepath)
 		vd.downloadSeg(realLink, initSegData, filepath)
@@ -449,14 +445,14 @@ func (vd *VimeoDownloader) downloadSegments(part *shared.Part, initSegment strin
 	return temps, nil
 }
 
-func resolveURL(baseUrl, relative string) (string, error) {
+func resolveURL(baseURL, relative string) (string, error) {
 	// Parse the m3u8 URL
-	baseURL, err := url.Parse(baseUrl)
+	baseUrl, err := url.Parse(baseURL)
 	if err != nil {
 		return "", fmt.Errorf("error parsing URL: %v", err)
 	}
 
 	// Resolve the relative segment URL against the m3u8 base URL
-	segmentAbsURL := baseURL.ResolveReference(&url.URL{Path: relative})
+	segmentAbsURL := baseUrl.ResolveReference(&url.URL{Path: relative})
 	return segmentAbsURL.String(), nil
 }

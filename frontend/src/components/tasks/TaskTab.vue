@@ -45,7 +45,7 @@
                                 <span
                                     :class="'group-hover:' + tab.color"
                                     class="group-hover:link font-bold"
-                                    @click="BrowserOpenURL(task.Url)">
+                                    @click="BrowserOpenURL(task.URL)">
                                     {{ task.Title ? task.Title : '标题正在加载中...' }}
                                 </span>
                             </h2>

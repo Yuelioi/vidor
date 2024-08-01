@@ -1,10 +1,9 @@
-package plugins
+package plugin_youtube
 
 import (
 	"context"
 	"errors"
 	"fmt"
-	"net/http"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -51,7 +50,7 @@ func (yd *YouTubeDownloader) ShowInfo(link string, config shared.Config) (*share
 	yd.Client = ytbClient
 	var pi shared.PlaylistInfo
 
-	pi.Url = link
+	pi.URL = link
 	pi.StreamInfos = make([]shared.StreamInfo, 0)
 
 	cacheThumbnail := ""
@@ -75,7 +74,7 @@ func (yd *YouTubeDownloader) ShowInfo(link string, config shared.Config) (*share
 
 		parts := []struct {
 			Index     int
-			Url       string
+			URL       string
 			Title     string
 			MaxHeight int
 		}{}
@@ -96,12 +95,12 @@ func (yd *YouTubeDownloader) ShowInfo(link string, config shared.Config) (*share
 
 				parts = append(parts, struct {
 					Index     int
-					Url       string
+					URL       string
 					Title     string
 					MaxHeight int
 				}{
 					Index:     index,
-					Url:       fmt.Sprintf("https://www.youtube.com/watch?v=%s", v.ID),
+					URL:       fmt.Sprintf("https://www.youtube.com/watch?v=%s", v.ID),
 					Title:     v.Title,
 					MaxHeight: bestHeight,
 				})
@@ -123,8 +122,8 @@ func (yd *YouTubeDownloader) ShowInfo(link string, config shared.Config) (*share
 
 		for _, part := range parts {
 			pi.StreamInfos = append(pi.StreamInfos, shared.StreamInfo{
-				TaskID: part.Title,
-				// Url:   part.Url,
+				Name: part.Title,
+				// URL:   part.URL,
 				// Title: part.Title,
 			})
 		}
@@ -162,7 +161,7 @@ func (yd *YouTubeDownloader) ShowInfo(link string, config shared.Config) (*share
 
 func (yd *YouTubeDownloader) GetMeta(ctx context.Context, part *shared.Part, callback shared.Callback) error {
 
-	video, err := yd.getVideoDataByID(extractID(part.Url))
+	video, err := yd.getVideoDataByID(extractID(part.URL))
 	if err != nil {
 		return err
 	}
@@ -188,24 +187,19 @@ func (yd *YouTubeDownloader) GetMeta(ctx context.Context, part *shared.Part, cal
 
 	part.Status = "获取封面"
 
-	targetHeight, _ := utils.GetQualityID(part.Quality, []shared.StreamQuality{})
-	part.Quality, _ = utils.GetQualityLabel(targetHeight, []shared.StreamQuality{})
-
 	part.Status = "获取元数据"
 
-	format_v := getTargetYtbVideo(targetHeight, video.Formats)
-	part.Quality = format_v.QualityLabel
 	// filePureName := utils.SanitizeFileName(part.Title)
 
 	// input_v := filepath.Join(part.DownloadDir, fmt.Sprintf("%s_temp.mp4", filePureName))
 	// input_a := filepath.Join(part.DownloadDir, fmt.Sprintf("%s_temp.mp3", filePureName))
 
 	// 下载视频
-	req_v, err := http.NewRequestWithContext(ctx, "GET", format_v.URL, nil)
-	if err != nil {
-		return err
-	}
-	req_v.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36 Edg/126.0.0.0")
+	// req_v, err := http.NewRequestWithContext(ctx, "GET", format_v.URL, nil)
+	// if err != nil {
+	// 	return err
+	// }
+	// req_v.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36 Edg/126.0.0.0")
 
 	// if err = utils.ReqWriter(yd.Client.HTTPClient, req_v, part, input_v, make(chan struct{}), callback); err != nil {
 	// 	part.Status = "下载视频出错"

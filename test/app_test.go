@@ -14,7 +14,7 @@ func (a *App) AddDownloadTasks(parts []Part, workName string) {
 	var tasks = make([]*Task, 0)
 
 	for _, part := range parts {
-		if taskExists(a.tasks, part.Url) {
+		if taskExists(a.tasks, part.URL) {
 			continue
 		} else {
 
@@ -104,14 +104,14 @@ func Test_AddDownloadTasks(t *testing.T) {
 	a := App{}
 
 	parts := []Part{
-		{TaskID: "1", Url: "1"},
-		{TaskID: "2", Url: "2"},
-		{TaskID: "3", Url: "3"},
+		{TaskID: "1", URL: "1"},
+		{TaskID: "2", URL: "2"},
+		{TaskID: "3", URL: "3"},
 	}
 	parts2 := []Part{
-		{TaskID: "4", Url: "4"},
-		{TaskID: "5", Url: "5"},
-		{TaskID: "6", Url: "6"},
+		{TaskID: "4", URL: "4"},
+		{TaskID: "5", URL: "5"},
+		{TaskID: "6", URL: "6"},
 	}
 	a.AddDownloadTasks(parts, "workName")
 
@@ -124,14 +124,14 @@ func Test_RemoveTask(t *testing.T) {
 	a := App{}
 
 	parts := []Part{
-		{TaskID: "1", Url: "1"},
-		{TaskID: "2", Url: "2"},
-		{TaskID: "3", Url: "3"},
+		{TaskID: "1", URL: "1"},
+		{TaskID: "2", URL: "2"},
+		{TaskID: "3", URL: "3"},
 	}
 	parts2 := []Part{
-		{TaskID: "4", Url: "4"},
-		{TaskID: "5", Url: "5"},
-		{TaskID: "6", Url: "6"},
+		{TaskID: "4", URL: "4"},
+		{TaskID: "5", URL: "5"},
+		{TaskID: "6", URL: "6"},
 	}
 	a.AddDownloadTasks(parts, "workName")
 	a.AddDownloadTasks(parts2, "workName")
@@ -147,14 +147,14 @@ func Test_RemoveAllTask(t *testing.T) {
 	a := App{}
 
 	parts := []Part{
-		{TaskID: "1", Url: "1"},
-		{TaskID: "2", Url: "2"},
-		{TaskID: "3", Url: "3"},
+		{TaskID: "1", URL: "1"},
+		{TaskID: "2", URL: "2"},
+		{TaskID: "3", URL: "3"},
 	}
 	parts2 := []Part{
-		{TaskID: "4", Url: "4"},
-		{TaskID: "5", Url: "5"},
-		{TaskID: "6", Url: "6"},
+		{TaskID: "4", URL: "4"},
+		{TaskID: "5", URL: "5"},
+		{TaskID: "6", URL: "6"},
 	}
 	a.AddDownloadTasks(parts, "workName")
 	a.AddDownloadTasks(parts2, "workName")
@@ -174,7 +174,7 @@ func Test_RemoveAllTask(t *testing.T) {
 
 func taskExists(tasks []*Task, url string) bool {
 	for _, existingTask := range tasks {
-		if existingTask.part.Url == url {
+		if existingTask.part.URL == url {
 			return true
 		}
 	}

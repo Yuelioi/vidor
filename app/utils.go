@@ -127,11 +127,12 @@ func createNewTask(part shared.Part, downloadDir, workName string) (*Task, error
 		part: &shared.Part{
 			TaskID:      uuid.New().String(),
 			DownloadDir: filepath.Join(downloadDir, workName),
-			Url:         part.Url,
+			URL:         part.URL,
 			Title:       part.Title,
 			Thumbnail:   part.Thumbnail,
+			Video:       part.Video,
+			Audio:       part.Audio,
 			Status:      shared.TaskStatus.Queue,
-			Quality:     part.Quality,
 			CreatedAt:   time.Now(),
 			State:       shared.TaskStatus.Queue,
 		},
@@ -141,7 +142,7 @@ func createNewTask(part shared.Part, downloadDir, workName string) (*Task, error
 // 基于app任务的url判断任务是否存在
 func taskExists(tasks []*Task, url string) bool {
 	for _, existingTask := range tasks {
-		if existingTask.part.Url == url {
+		if existingTask.part.URL == url {
 			return true
 		}
 	}

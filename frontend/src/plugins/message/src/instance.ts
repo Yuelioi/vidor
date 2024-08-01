@@ -26,7 +26,7 @@ export function Message(msgProps: Partial<MessageProps>) {
             margin-top: 2rem;
             top: 2rem;
             right: 2rem;
-            z-index: 50;
+            z-index: 999;
         `
         document.body.appendChild(container)
     }

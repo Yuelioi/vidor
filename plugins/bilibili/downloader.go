@@ -7,6 +7,8 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"strconv"
+	"sync"
 
 	"github.com/Yuelioi/vidor/shared"
 	"github.com/Yuelioi/vidor/utils"
@@ -18,7 +20,6 @@ type Downloader struct {
 	client    *Client
 	magicName string
 	Notice    shared.Notice
-	userState userStatus // 0未登录 1已登录 2Vip
 	biliDownloadParams
 	biliThumbnailParams
 }
@@ -60,7 +61,7 @@ func (bd *Downloader) ShowInfo(link string, callback shared.Callback) (*shared.P
 	if biliPlayList.Data.IsSeason {
 		playList = biliSeasonToPlaylistInfo(*biliPlayList)
 	} else {
-		playList = biliPageToPlaylistInfo(*biliPlayList)
+		playList = biliPageToPlaylistInfo(biliPlayList.Data.BVID, *biliPlayList)
 	}
 
 	thumbnailPath := filepath.Join(os.TempDir(), "vidor", "info_thumbnail.jpg")
@@ -77,11 +78,73 @@ func (bd *Downloader) ShowInfo(link string, callback shared.Callback) (*shared.P
 	return &playList, nil
 }
 
+func (bd *Downloader) ParsePlaylist(playlist *shared.PlaylistInfo) (*shared.PlaylistInfo, error) {
+	var wg sync.WaitGroup
+	var mu sync.Mutex
+	errors := make(chan error, len(playlist.StreamInfos))
+
+	for index, streamInfo := range playlist.StreamInfos {
+		if !streamInfo.Selected {
+			continue
+		}
+
+		wg.Add(1)
+		go func(streamInfo shared.StreamInfo, index int) {
+			defer wg.Done()
+
+			cid, err := strconv.Atoi(streamInfo.SessionId)
+			if err != nil {
+				errors <- err
+				return
+			}
+
+			biliDownInfo, err := bd.client.GetVideoDownloadInfo(streamInfo.ID, cid)
+			if err != nil {
+				errors <- err
+				return
+			}
+
+			mu.Lock()
+			playlist.StreamInfos[index].Videos = make([]shared.Format, 0)
+			playlist.StreamInfos[index].Audios = make([]shared.Format, 0)
+			mu.Unlock()
+
+			mu.Lock()
+			for _, format := range biliDownInfo.Data.SupportFormats {
+				playlist.StreamInfos[index].Videos = append(playlist.StreamInfos[index].Videos, shared.Format{
+					IDtag:   format.Quality,
+					Quality: format.DisplayDesc,
+					Codecs:  format.Codecs,
+				})
+			}
+			for _, audio := range biliDownInfo.Data.Dash.Audios {
+				playlist.StreamInfos[index].Audios = append(playlist.StreamInfos[index].Audios, shared.Format{
+					IDtag:   audio.ID,
+					Quality: fmt.Sprint(audio.Bandwidth),
+					Codecs:  []string{audio.Codecs},
+				})
+			}
+			mu.Unlock()
+		}(streamInfo, index)
+	}
+
+	wg.Wait()
+	close(errors)
+
+	for err := range errors {
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return playlist, nil
+}
+
 func (bd *Downloader) GetMeta(part *shared.Part, callback shared.Callback) error {
 
 	// 提取分P索引 如果有的话, 没有就是0
-	index, _ := extractIndex(part.Url)
-	aid, bvid := extractAidBvid(part.Url)
+	index, _ := extractIndex(part.URL)
+	aid, bvid := extractAidBvid(part.URL)
 
 	// 获取视频基础信息
 	biliPlayList, err := bd.client.GetPlaylistInfo(aid, bvid)
@@ -109,9 +172,9 @@ func (bd *Downloader) GetMeta(part *shared.Part, callback shared.Callback) error
 
 	// 获取封面参数
 	bd.biliThumbnailParams = biliThumbnailParams{
-		thumbnailUrl: biliBase.thumbnailUrl,
+		thumbnailURL: biliBase.thumbnailURL,
 		coverPath:    coverPath,
-		coverUrl:     biliBase.coverUrl,
+		coverURL:     biliBase.coverURL,
 	}
 
 	// 获取视频下载信息
@@ -124,36 +187,37 @@ func (bd *Downloader) GetMeta(part *shared.Part, callback shared.Callback) error
 	}
 
 	// 开始下载
-	targetID, err := utils.GetQualityID(part.Quality, qualities)
-	if err != nil {
-		return err
-	}
+	targetID := 0
+	// targetID, err := utils.GetQualityID(part.Quality, qualities)
+	// if err != nil {
+	// 	return err
+	// }
 
-	var videoUrl, audioUrl string
+	var videoURL, audioURL string
 	video := getTargetVideo(targetID, biliDownInfo.Data.Dash.Videos)
 	if video == nil {
-		videoUrl = ""
+		videoURL = ""
 	} else {
-		videoUrl = video.BaseURL
+		videoURL = video.BaseURL
 	}
 
 	audio := getTargetAudio(biliDownInfo.Data.Dash.Audios)
 	if audio == nil {
-		audioUrl = ""
+		audioURL = ""
 	} else {
-		audioUrl = audio.BaseURL
+		audioURL = audio.BaseURL
 	}
 
 	bd.biliDownloadParams = biliDownloadParams{
-		videoUrl: videoUrl,
-		audioUrl: audioUrl,
+		videoURL: videoURL,
+		audioURL: audioURL,
 		index:    index,
 	}
 
-	part.Quality, err = utils.GetQualityLabel(targetID, qualities)
-	if err != nil {
-		return err
-	}
+	// part.Quality, err = utils.GetQualityLabel(targetID, qualities)
+	// if err != nil {
+	// 	return err
+	// }
 
 	part.Status = "加载元数据成功"
 	callback(shared.NoticeData{EventName: "updateInfo", Message: part})
@@ -163,7 +227,7 @@ func (bd *Downloader) GetMeta(part *shared.Part, callback shared.Callback) error
 func (bd *Downloader) DownloadThumbnail(part *shared.Part, callback shared.Callback) error {
 	// 缩略图
 	thumbnailPath := filepath.Join(part.DownloadDir, "data", "thumbnail_"+part.MagicName+".jpg")
-	thumbnailLocalPath, err := utils.GetThumbnail(bd.client.HTTPClient, bd.biliThumbnailParams.thumbnailUrl, thumbnailPath)
+	thumbnailLocalPath, err := utils.GetThumbnail(bd.client.HTTPClient, bd.biliThumbnailParams.thumbnailURL, thumbnailPath)
 	if err != nil {
 		return err
 	}
@@ -171,7 +235,7 @@ func (bd *Downloader) DownloadThumbnail(part *shared.Part, callback shared.Callb
 
 	// 封面
 	if _, err = os.Stat(bd.coverPath); os.IsNotExist(err) {
-		_, err := utils.GetCover(bd.client.HTTPClient, bd.biliThumbnailParams.coverUrl, bd.coverPath)
+		_, err := utils.GetCover(bd.client.HTTPClient, bd.biliThumbnailParams.coverURL, bd.coverPath)
 		if err != nil {
 			return fmt.Errorf("缓存封面失败: %v", err.Error())
 		}
@@ -182,12 +246,12 @@ func (bd *Downloader) DownloadThumbnail(part *shared.Part, callback shared.Callb
 func (bd *Downloader) DownloadVideo(part *shared.Part, callback shared.Callback) error {
 	part.Status = "下载视频"
 	callback(shared.NoticeData{EventName: "updateInfo", Message: part})
-	return bd.download(part, bd.biliDownloadParams.videoUrl, "mp4", callback)
+	return bd.download(part, bd.biliDownloadParams.videoURL, "mp4", callback)
 }
 func (bd *Downloader) DownloadAudio(part *shared.Part, callback shared.Callback) error {
 	part.Status = "下载音频"
 	callback(shared.NoticeData{EventName: "updateInfo", Message: part})
-	return bd.download(part, bd.biliDownloadParams.audioUrl, "mp3", callback)
+	return bd.download(part, bd.biliDownloadParams.audioURL, "mp3", callback)
 }
 
 func (bd *Downloader) DownloadSubtitle(part *shared.Part, callback shared.Callback) error {
@@ -231,12 +295,12 @@ func (bd *Downloader) download(part *shared.Part, link, ext string, callback sha
 
 		return err
 	}
-	mediaUrl, err := url.Parse(link)
+	mediaURL, err := url.Parse(link)
 	if err != nil {
 
 		return err
 	}
-	req.URL = mediaUrl
+	req.URL = mediaURL
 	utils.ReqWriter(bd.ctx, bd.client.HTTPClient, req, part, tempPath, callback)
 	return nil
 }

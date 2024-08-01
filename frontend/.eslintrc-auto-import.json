@@ -142,6 +142,7 @@
     "watchPostEffect": true,
     "watchSyncEffect": true,
     "Config": true,
-    "MessageData": true
+    "MessageData": true,
+    "ParsePlaylist": true
   }
 }

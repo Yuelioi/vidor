@@ -37,7 +37,7 @@
 
             <div class="px-4">
                 <h2 class="p-2 py-3 font-bold">下载选项</h2>
-                <div class="flex flex-wrap gap-y-3 items-center select-none">
+                <div class="flex flex-wrap gap-y-3 items-center select-none py-4">
                     <div class="px-2 basis-1/4">
                         <div class="tooltip tooltip-top flex items-center" data-tip="视频">
                             <label for="downloadVideo" class="flex items-center cursor-pointer">
@@ -87,106 +87,150 @@
                         </div>
                     </div>
                 </div>
+
+                <div class="py-4 pl-2">
+                    <label
+                        class="flex gap-2 items-center justify-between px-0 input input-bordered">
+                        <span class="px-4">魔法名称</span>
+                        <input
+                            type="text"
+                            class="grow"
+                            v-model.lazy="config.MagicName"
+                            placeholder="下载文件魔法名称" />
+                        <button class="btn" @click="applyMagicName">应用</button>
+                    </label>
+                </div>
             </div>
 
             <div class="overflow-y-hidden px-4">
                 <h2 class="p-2 py-3 font-bold">分P选择</h2>
-                <table class="table">
-                    <thead>
-                        <tr>
-                            <th>
-                                <label>
-                                    <input
-                                        type="checkbox"
-                                        class="checkbox"
-                                        :checked="isSelectAll(videoInfo.StreamInfos)"
-                                        @change="handleSelectedAll(videoInfo.StreamInfos)" />
-                                </label>
-                            </th>
-                            <th>序号</th>
-                            <th>标题</th>
-                            <th>画质</th>
-                            <th>音质</th>
-                            <th>编码</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr
-                            v-for="(streamInfo, index) in videoInfo.StreamInfos"
-                            :key="index"
-                            class="px-2 mb-2">
-                            <th>
-                                <label>
-                                    <input
-                                        type="checkbox"
-                                        class="checkbox"
-                                        :checked="streamInfo.Selected" />
-                                </label>
-                            </th>
-                            <td>
-                                {{ index + 1 }}
-                            </td>
-                            <td>
-                                <div class="font-bold">{{ streamInfo.Name }}</div>
-                            </td>
+                <div class="flex flex-col">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>
+                                    <label>
+                                        <input
+                                            type="checkbox"
+                                            class="checkbox"
+                                            :checked="isSelectAll(videoInfo.StreamInfos)"
+                                            @change="handleSelectedAll(videoInfo.StreamInfos)" />
+                                    </label>
+                                </th>
+                                <th>序号</th>
+                                <th>
+                                    <button
+                                        :class="!showMagicName ? 'font-bold text-sm' : ''"
+                                        @click="showMagicName = !showMagicName">
+                                        标题
+                                    </button>
+                                    /
+                                    <button
+                                        :class="showMagicName ? 'font-bold' : ''"
+                                        @click="showMagicName = !showMagicName">
+                                        魔法名称
+                                    </button>
+                                </th>
+                                <th>画质</th>
+                                <th>音质</th>
+                                <th>编码</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr
+                                v-for="(streamInfo, index) in videoInfo.StreamInfos"
+                                :key="index"
+                                class="px-2 mb-2">
+                                <th>
+                                    <label>
+                                        <input
+                                            type="checkbox"
+                                            class="checkbox"
+                                            :checked="streamInfo.Selected"
+                                            @change="streamInfo.Selected = !streamInfo.Selected" />
+                                    </label>
+                                </th>
+                                <td>
+                                    {{ index + 1 }}
+                                </td>
+                                <td class="w-full">
+                                    <div class="font-bold" v-if="!showMagicName">
+                                        {{ streamInfo.Name }}
+                                    </div>
+                                    <div class="font-bold" v-if="showMagicName">
+                                        <input
+                                            type="text"
+                                            name=""
+                                            class="input w-full"
+                                            id=""
+                                            v-model="streamInfo.MagicName" />
+                                    </div>
+                                </td>
 
-                            <th class="relative group">
-                                <div tabindex="0" role="button" class="btn btn-sm btn-outline">
-                                    {{ currentFormat(streamInfo.Videos.Formats) }}
-                                </div>
+                                <th class="relative group">
+                                    <div
+                                        tabindex="0"
+                                        role="button"
+                                        class="min-w-max btn btn-sm btn-outline">
+                                        {{ currentFormat(streamInfo.Videos) }}
+                                    </div>
 
-                                <ul
-                                    tabindex="0"
-                                    class="dropdown-content duration-500 transition-opacity absolute rounded-lg opacity-0 invisible group-hover:visible group-hover:opacity-100 group-hover:block top-[80%] w-full menu bg-base-300 z-[1]">
-                                    <template
-                                        v-for="(format, index) in streamInfo.Videos.Formats"
-                                        :key="index">
-                                        <button
-                                            :class="format.Selected ? '' : ''"
-                                            class="py-1 btn btn-xs"
-                                            @click="selectFormat(streamInfo.Videos.Formats, index)">
-                                            {{ format.Quality }}
-                                        </button>
-                                    </template>
-                                </ul>
-                            </th>
-                            <th class="relative group">
-                                <div tabindex="0" role="button" class="btn btn-sm btn-outline">
-                                    {{ currentFormat(streamInfo.Audios.Formats) }}
-                                </div>
+                                    <ul
+                                        tabindex="0"
+                                        class="dropdown-content duration-500 transition-opacity absolute rounded-lg opacity-0 invisible group-hover:visible group-hover:opacity-100 group-hover:block top-[80%] w-full menu bg-base-300 z-[1]">
+                                        <template
+                                            v-for="(format, index) in streamInfo.Videos"
+                                            :key="index">
+                                            <button
+                                                :class="format.Selected ? '' : ''"
+                                                class="py-1 btn btn-xs"
+                                                @click="selectFormat(streamInfo.Videos, index)">
+                                                {{ format.Quality }}
+                                            </button>
+                                        </template>
+                                    </ul>
+                                </th>
+                                <th class="relative group">
+                                    <div
+                                        tabindex="0"
+                                        role="button"
+                                        class="min-w-max btn btn-sm btn-outline">
+                                        {{ currentFormat(streamInfo.Audios) }}
+                                    </div>
 
-                                <ul
-                                    tabindex="0"
-                                    class="dropdown-content duration-500 transition-opacity absolute rounded-lg opacity-0 invisible group-hover:visible group-hover:opacity-100 group-hover:block top-[80%] w-full menu bg-base-300 z-[1]">
-                                    <template
-                                        v-for="(format, index) in streamInfo.Audios.Formats"
-                                        :key="index">
-                                        <button
-                                            :class="format.Selected ? '' : ''"
-                                            class="py-1 btn btn-xs"
-                                            @click="selectFormat(streamInfo.Audios.Formats, index)">
-                                            {{ format.Quality }}
-                                        </button>
-                                    </template>
-                                </ul>
-                            </th>
-                            <th>
-                                <button class="btn btn-ghost btn-xs">下版本支持</button>
-                            </th>
-                        </tr>
-                    </tbody>
-                    <!-- foot -->
-                    <tfoot>
-                        <tr>
-                            <th></th>
-                            <th>Index</th>
-                            <th>Title</th>
-                            <th>Video</th>
-                            <th>Audio</th>
-                            <th>Code</th>
-                        </tr>
-                    </tfoot>
-                </table>
+                                    <ul
+                                        tabindex="0"
+                                        class="dropdown-content duration-500 transition-opacity absolute rounded-lg opacity-0 invisible group-hover:visible group-hover:opacity-100 group-hover:block top-[80%] w-full menu bg-base-300 z-[1]">
+                                        <template
+                                            v-for="(format, index) in streamInfo.Audios"
+                                            :key="index">
+                                            <button
+                                                :class="format.Selected ? '' : ''"
+                                                class="py-1 btn btn-xs"
+                                                @click="selectFormat(streamInfo.Audios, index)">
+                                                {{ format.Quality }}
+                                            </button>
+                                        </template>
+                                    </ul>
+                                </th>
+                                <th>
+                                    <button class="btn btn-ghost btn-xs min-w-max">暂不支持</button>
+                                </th>
+                            </tr>
+                        </tbody>
+                        <!-- foot -->
+                        <tfoot>
+                            <tr>
+                                <th></th>
+                                <th>Index</th>
+                                <th>Title</th>
+                                <th>Video</th>
+                                <th>Audio</th>
+                                <th>Code</th>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
             </div>
         </div>
         <template #footer>
@@ -203,11 +247,21 @@
                             全选
                         </span>
                     </label>
-                    <button class="btn btn-sm mx-4" @click="showPlaylistInfo = false">解析</button>
+                    <button
+                        class="btn btn-sm mx-4"
+                        @click="parsePlaylistInfo"
+                        :disabled="isSelectAtLessOne(videoInfo.StreamInfos)">
+                        解析
+                    </button>
                     <button class="btn btn-sm ml-auto mx-4" @click="showPlaylistInfo = false">
                         取消
                     </button>
-                    <button class="btn btn-primary btn-sm mr-2" @click="addTasks">下载</button>
+                    <button
+                        class="btn btn-primary btn-sm mr-2"
+                        @click="addTasks"
+                        :disabled="isSelectAtLessOne(videoInfo.StreamInfos)">
+                        下载
+                    </button>
                 </div>
             </div>
         </template>
@@ -216,19 +270,26 @@
 <script lang="ts" setup>
 import { VDialog } from '@/plugins/dialog/index.js'
 import { Format, Part, PlaylistInfo, StreamInfo } from '@/models/go'
-import { ShowDownloadInfo, AddDownloadTasks } from '@wailsjs/go/app/App'
+import { ShowDownloadInfo, AddDownloadTasks, ParsePlaylist } from '@wailsjs/go/app/App'
+import { MagicName } from '@/utils/util'
 
 const { config, tasks } = storeToRefs(useBasicStore())
 const isDownloadBtnDisabled = ref(false)
 const link = ref('')
 
 const showPlaylistInfo = ref(false)
+const showMagicName = ref(false)
 const videoInfo = reactive<PlaylistInfo>(new PlaylistInfo())
 
 const router = useRouter()
 
 function isSelectAll(streamInfos: StreamInfo[]) {
     return streamInfos.every((streamInfo: StreamInfo) => {
+        return streamInfo.Selected
+    })
+}
+function isSelectAtLessOne(streamInfos: StreamInfo[]) {
+    return !streamInfos.some((streamInfo: StreamInfo) => {
         return streamInfo.Selected
     })
 }
@@ -247,7 +308,7 @@ function extractPlaylistInfo() {
         if (vi.WorkDirName == '') {
             Message({ message: '获取视频信息失败, 请检查设置, 以及日志文件', type: 'warn' })
         } else {
-            videoInfo.Url = vi.Url
+            videoInfo.URL = vi.URL
             videoInfo.Cover = vi.Cover
             videoInfo.WorkDirName = vi.WorkDirName
             videoInfo.Author = vi.Author
@@ -260,20 +321,56 @@ function extractPlaylistInfo() {
     })
 }
 
+function parsePlaylistInfo() {
+    console.log(videoInfo)
+
+    ParsePlaylist(videoInfo).then((vi: PlaylistInfo) => {
+        if (vi.WorkDirName == '') {
+            Message({ message: '获取视频信息失败, 请检查设置, 以及日志文件', type: 'warn' })
+        } else {
+            Message({ message: '解析成功', type: 'success' })
+
+            videoInfo.URL = vi.URL
+            videoInfo.Cover = vi.Cover
+            videoInfo.WorkDirName = vi.WorkDirName
+            videoInfo.Author = vi.Author
+            videoInfo.StreamInfos = vi.StreamInfos
+            videoInfo.Description = vi.Description
+            videoInfo.PubDate = vi.PubDate
+
+            selectBest(videoInfo)
+        }
+    })
+}
+
+// 选择最高画质
+function selectBest(videoInfo: PlaylistInfo) {
+    videoInfo.StreamInfos.forEach((element) => {
+        element.Videos[0].Selected = true
+        element.Audios[0].Selected = true
+    })
+}
+
 function addTasks() {
     isDownloadBtnDisabled.value = true
     const parts: Part[] = []
-    // for (let i = 0; i < selectedVideos.value.length; i++) {
-    //     const video = selectedVideos.value[i]
+    for (let i = 0; i < videoInfo.StreamInfos.length; i++) {
+        const streamInfo = videoInfo.StreamInfos[i]
 
-    //     const part = new Part(
-    //         video['Url'],
-    //         video['Title'],
-    //         video['Thumbnail'],
-    //         selectedFormat.value
-    //     )
-    //     parts.push(part)
-    // }
+        if (!streamInfo.Selected) {
+            continue
+        }
+
+        //    streamInfo.Videos.
+
+        //     const part = new Part(
+        //         video['Url'],
+        //         video['Title'],
+        //         video['Thumbnail'],
+        //         selectedFormat.value
+        //     )
+        //     parts.push(part)
+    }
 
     setTimeout(() => {
         isDownloadBtnDisabled.value = false
@@ -291,6 +388,19 @@ function addTasks() {
                 name: 'task'
             })
         }
+    })
+}
+
+function applyMagicName() {
+    videoInfo.StreamInfos.forEach((element, index) => {
+        console.log(config.value.MagicName, videoInfo.WorkDirName, element.Name, index + 1)
+
+        element.MagicName = MagicName(
+            config.value.MagicName,
+            videoInfo.WorkDirName,
+            element.Name,
+            index + 1
+        )
     })
 }
 

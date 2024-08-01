@@ -23,7 +23,7 @@ export interface Config {
 
 export class Task {
     path: string // 下载后的路径
-    url: string // 原始Url
+    url: string // 原始URL
     author: string
     title: string
     thumbnail: string
@@ -45,7 +45,7 @@ export class Task {
 }
 // 直接获取播放列表信息
 export class PlaylistInfo {
-    Url: string = ''
+    URL: string = ''
     Cover: string = ''
     WorkDirName: string = ''
     Author: string = ''
@@ -55,51 +55,27 @@ export class PlaylistInfo {
 }
 
 export class StreamInfo {
+    ID: string = '' // youtubeID bilibiliID...
+    SessionId: string = '' // biliCID...
+    URL = ''
     Name = ''
-    TaskID = ''
+    MagicName: string = ''
     Selected: boolean = false
     Thumbnails: Thumbnail[] = []
-    Videos: Stream = new Stream()
-    Audios: Stream = new Stream()
+    Videos: Format[] = []
+    Audios: Format[] = []
     Captions = []
 }
 
-export class Stream {
-    ID = '' // youtubeID bilibiliID...
-    SessionId = '' // biliCID...
-    URL = ''
-    Title = ''
-    Description = ''
-    Author = ''
-    ChannelID = ''
-    Views = 0
-    Duration = 0 // You can convert this to a proper duration format if needed
-    PublishDate = new Date()
-    Formats: Format[] = []
-    DASHManifestURL = '' // URI of the DASH manifest file
-    HLSManifestURL = '' // URI of the HLS manifest file
+export class StreamQuality {
+    IDtag = 0
+    Label = ''
 }
 
 export class Format {
     IDtag = 0 // 标签ID
-    URL = '' // 链接
-    MimeType = '' // video/mp4...
     Quality = '' // 质量标签
-    ContentLength = 0 // 内容长度
-    DurationMs = 0 // 时长
     Selected = false
-
-    // 图片+视频
-    Width = 0
-    Height = 0
-
-    // 仅视频
-    FPS = 0 // FPS
-    Bitrate = 0 // 码率
-    AverageBitrate = 0 // 平均码率
-
-    // 仅音频
-    AudioSampleRate = '' // 音频码率
 }
 
 export class Thumbnail {
@@ -123,24 +99,28 @@ export class Part {
 
     Author: string
     Title: string
-    Url: string
+    URL: string
     Quality: string
     Resolution: number
     State: string
     Status: string
     Description: string
 
+    Thumbnail: string
+    Video: StreamQuality = new StreamQuality()
+    AQuality: StreamQuality = new StreamQuality()
+    Subtitle: string = '' // todo
+
     Size: number
     Path: string
 
-    Thumbnail: string
     CreatedAt: Date
     PubDate: Date
     DownloadPercent: number
     DownloadSpeed: number
 
     constructor(url: string, title: string, Thumbnail: string, quality: string) {
-        this.Url = url
+        this.URL = url
         this.Title = title
         this.Quality = quality
         this.Thumbnail = Thumbnail

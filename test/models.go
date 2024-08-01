@@ -11,7 +11,7 @@ import (
 type Part struct {
 	State  int
 	TaskID string
-	Url    string
+	URL    string
 }
 
 type App struct {

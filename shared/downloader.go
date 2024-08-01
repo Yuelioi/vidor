@@ -10,7 +10,9 @@ type Downloader interface {
 	PluginMeta() PluginMeta // 获取插件信息
 
 	ShowInfo(link string, callback Callback) (*PlaylistInfo, error) // 主页搜索展示信息
-	GetMeta(part *Part, callback Callback) error                    // 获取后续下载所需要的所有信息 应该由插件实例维护
+	ParsePlaylist(*PlaylistInfo) (*PlaylistInfo, error)
+
+	GetMeta(part *Part, callback Callback) error // 获取后续下载所需要的所有信息 应该由插件实例维护
 
 	DownloadThumbnail(part *Part, callback Callback) error // 下载封面/图片工作
 	DownloadVideo(part *Part, callback Callback) error     // 下载视频

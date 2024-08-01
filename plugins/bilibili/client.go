@@ -19,12 +19,6 @@ var defaultClient = clientInfo{
 	referer:   "https://www.bilibili.com",
 }
 
-func (c *Client) assureClient() {
-	if c.HTTPClient == nil {
-		c.HTTPClient = http.DefaultClient
-	}
-}
-
 type clientInfo struct {
 	userAgent string
 	referer   string
@@ -86,8 +80,8 @@ func (c *Client) Get(url string, body io.Reader) ([]byte, error) {
 func (c *Client) GetPlaylistInfo(aid int, bvid string) (*biliPlaylistInfo, error) {
 	var bv biliPlaylistInfo
 
-	playListApiUrl := fmt.Sprintf(`%s/x/web-interface/view?aid=%d&bvid=%s`, apiURL, aid, bvid)
-	body, err := c.Get(playListApiUrl, nil)
+	playListApiURL := fmt.Sprintf(`%s/x/web-interface/view?aid=%d&bvid=%s`, apiURL, aid, bvid)
+	body, err := c.Get(playListApiURL, nil)
 	if err != nil {
 		return nil, fmt.Errorf("GetPlaylistInfo cannot fetch Aid :%s", err)
 	}
@@ -107,8 +101,8 @@ func (c *Client) GetPlaylistInfo(aid int, bvid string) (*biliPlaylistInfo, error
 
 func (c *Client) GetVideoDownloadInfo(bvid string, cid int) (*biliDownloadInfo, error) {
 
-	downloadApiUrl := fmt.Sprintf("%s/x/player/wbi/playurl?bvid=%s&cid=%d&fnval=4048&fourk=1", apiURL, bvid, cid)
-	body, err := c.Get(downloadApiUrl, nil)
+	downloadApiURL := fmt.Sprintf("%s/x/player/wbi/playurl?bvid=%s&cid=%d&fnval=4048&fourk=1", apiURL, bvid, cid)
+	body, err := c.Get(downloadApiURL, nil)
 	if err != nil {
 		fmt.Println("Error reading response body:", err)
 		return nil, err

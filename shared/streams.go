@@ -1,31 +1,14 @@
 package shared
 
-import "time"
-
-type Stream struct {
-	ID              string // youtubeID bilibiliID...
-	SessionId       string // biliCID...
-	URL             string
-	Title           string
-	Description     string
-	Author          string
-	ChannelID       string
-	Views           int
-	Duration        time.Duration
-	PublishDate     time.Time
-	Formats         []Format
-	DASHManifestURL string // URI of the DASH manifest file
-	HLSManifestURL  string // URI of the HLS manifest file
-}
-
 type Format struct {
-	IDtag         int    // 标签ID
-	URL           string // 链接
-	MimeType      string // video/mp4...
-	Quality       string // 质量标签
-	ContentLength int64  // 内容长度
-	DurationMs    int    // 时长
-	Selected      bool   // 是否选中当前格式
+	IDtag         int      // ★ 标签ID
+	Quality       string   // ★ 质量标签
+	Selected      bool     // ★ 是否选中当前格式
+	URL           string   // 链接
+	MimeType      string   // video/mp4...
+	ContentLength int64    // 内容长度
+	DurationMs    int      // 时长
+	Codecs        []string // 编码类型
 
 	// 图片+视频
 
