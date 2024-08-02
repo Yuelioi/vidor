@@ -73,14 +73,16 @@ type PlaylistInfo struct {
 
 // 流媒体所有信息
 type StreamInfo struct {
-	ID        string // youtubeID bilibiliID...
-	SessionId string // biliCID...
+	ID        string // ★ youtubeID bilibiliBVID...
+	SessionId string // ★ biliCID...
 	Name      string // ★
 	MagicName string // ★
 	URL       string // ★
 	Selected  bool   // ★
 
-	Title           string
+	Videos []Format // ★★
+	Audios []Format // ★★
+
 	Description     string
 	Author          string
 	ChannelID       string
@@ -91,8 +93,6 @@ type StreamInfo struct {
 	HLSManifestURL  string // URI of the HLS manifest file
 
 	Thumbnails []Thumbnail
-	Videos     []Format
-	Audios     []Format
 	Captions   []CaptionTrack
 }
 

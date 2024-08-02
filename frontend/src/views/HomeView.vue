@@ -361,15 +361,13 @@ function addTasks() {
             continue
         }
 
-        //    streamInfo.Videos.
-
-        //     const part = new Part(
-        //         video['Url'],
-        //         video['Title'],
-        //         video['Thumbnail'],
-        //         selectedFormat.value
-        //     )
-        //     parts.push(part)
+        // const part = new Part(
+        //     video['Url'],
+        //     video['Title'],
+        //     video['Thumbnail'],
+        //     selectedFormat.value
+        // )
+        // parts.push(part)
     }
 
     setTimeout(() => {

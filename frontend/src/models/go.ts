@@ -61,6 +61,7 @@ export class StreamInfo {
     Name = ''
     MagicName: string = ''
     Selected: boolean = false
+
     Thumbnails: Thumbnail[] = []
     Videos: Format[] = []
     Audios: Format[] = []

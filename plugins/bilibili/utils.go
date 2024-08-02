@@ -143,37 +143,33 @@ func biliPlaylistInfoToPlaylistInfo(biliInfo biliPlaylistInfo) shared.PlaylistIn
 	return videoInfo
 }
 
-// B站分P视频列表信息转为通用的列表信息
-func biliPageToPlaylistInfo(bvid string, biliInfo biliPlaylistInfo) shared.PlaylistInfo {
+func biliInfoToPlaylistInfo(biliInfo biliPlaylistInfo) shared.PlaylistInfo {
 	videoInfo := biliPlaylistInfoToPlaylistInfo(biliInfo)
 
 	videoInfo.Author = biliInfo.Data.Owner.Name
 	videoInfo.WorkDirName = utils.SanitizeFileName(biliInfo.Data.Title)
 	videoInfo.PubDate = time.Unix(int64(biliInfo.Data.PubDate), 0)
 	videoInfo.StreamInfos = make([]shared.StreamInfo, 0)
+	return videoInfo
+}
 
+// B站分P视频列表信息转为通用的列表信息
+func biliPageToPlaylistInfo(bvid string, biliInfo biliPlaylistInfo) shared.PlaylistInfo {
+	videoInfo := biliInfoToPlaylistInfo(biliInfo)
 	for _, page := range biliInfo.Data.Pages {
-
 		videoInfo.StreamInfos = append(videoInfo.StreamInfos, shared.StreamInfo{
 			ID:        bvid,
 			SessionId: fmt.Sprint(page.CID),
 			Name:      page.Title,
 			Videos: []shared.Format{
-				{
-					IDtag:   9999,
-					Quality: "尚未解析", Selected: true,
-				},
+				shared.DefaultFormat,
 			},
 			Audios: []shared.Format{
-				{
-					IDtag:   9999,
-					Quality: "尚未解析", Selected: true,
-				},
+				shared.DefaultFormat,
 			},
 			Captions:   []shared.CaptionTrack{{Name: "需要解析"}},
 			Thumbnails: []shared.Thumbnail{{URL: page.Thumbnail}},
 		})
-
 	}
 
 	return videoInfo
@@ -181,30 +177,17 @@ func biliPageToPlaylistInfo(bvid string, biliInfo biliPlaylistInfo) shared.Playl
 
 // B站合集视频列表信息转为通用的列表信息
 func biliSeasonToPlaylistInfo(biliInfo biliPlaylistInfo) shared.PlaylistInfo {
-	videoInfo := biliPlaylistInfoToPlaylistInfo(biliInfo)
-
-	videoInfo.Author = biliInfo.Data.Owner.Name
-	videoInfo.WorkDirName = utils.SanitizeFileName(biliInfo.Data.Title)
-	videoInfo.PubDate = time.Unix(int64(biliInfo.Data.PubDate), 0)
-	videoInfo.StreamInfos = make([]shared.StreamInfo, 0)
-
+	videoInfo := biliInfoToPlaylistInfo(biliInfo)
 	for _, episode := range biliInfo.Data.UgcSeason.Sections[0].Episodes {
-
 		videoInfo.StreamInfos = append(videoInfo.StreamInfos, shared.StreamInfo{
 			ID:        episode.Bvid,
 			SessionId: fmt.Sprint(episode.CID),
 			Name:      episode.Title,
 			Videos: []shared.Format{
-				{
-					IDtag:   9999,
-					Quality: "尚未解析", Selected: true,
-				},
+				shared.DefaultFormat,
 			},
 			Audios: []shared.Format{
-				{
-					IDtag:   9999,
-					Quality: "尚未解析", Selected: true,
-				},
+				shared.DefaultFormat,
 			},
 			Captions:   []shared.CaptionTrack{{Name: "需要解析"}},
 			Thumbnails: []shared.Thumbnail{{URL: episode.Arc.Pic}},

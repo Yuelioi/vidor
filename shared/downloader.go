@@ -9,20 +9,17 @@ import (
 type Downloader interface {
 	PluginMeta() PluginMeta // 获取插件信息
 
-	ShowInfo(link string, callback Callback) (*PlaylistInfo, error) // 主页搜索展示信息
+	// 主页搜索展示信息
+	//
+	// 必须获取 PlaylistInfo 所有信息
+	// 其中 StreamInfo ★字段需要获取,★★字段需要初始化
+	ShowInfo(link string, callback Callback) (*PlaylistInfo, error)
 	ParsePlaylist(*PlaylistInfo) (*PlaylistInfo, error)
 
-	GetMeta(part *Part, callback Callback) error // 获取后续下载所需要的所有信息 应该由插件实例维护
-
-	DownloadThumbnail(part *Part, callback Callback) error // 下载封面/图片工作
-	DownloadVideo(part *Part, callback Callback) error     // 下载视频
-	DownloadAudio(part *Part, callback Callback) error     // 下载音频
-	DownloadSubtitle(part *Part, callback Callback) error  // 下载字幕
-	Combine(ffmpegPath string, part *Part) error           // 合并
+	Download(part *Part, callback Callback) error
 
 	PauseDownload(part *Part, callback Callback) error // 暂停下载
 	StopDownload(part *Part, callback Callback) error  // 停止下载
-	Clear(part *Part, callback Callback) error         // 下载结束后清理工作
 }
 
 type InputInfo struct {
@@ -116,36 +113,12 @@ func (s *DownloaderRPCServer) ShowInfo(args InputInfo, resp *PlaylistInfo) error
 	return nil
 }
 
-func (s *DownloaderRPCServer) GetMeta(args *DownloadArgs, resp *struct{}) error {
-	return s.Impl.GetMeta(args.Part, args.Callback)
-}
-
-func (s *DownloaderRPCServer) DownloadThumbnail(args *DownloadArgs, resp *struct{}) error {
-	return s.Impl.DownloadThumbnail(args.Part, args.Callback)
-}
-
-func (s *DownloaderRPCServer) DownloadVideo(args *DownloadArgs, resp *struct{}) error {
-	return s.Impl.DownloadVideo(args.Part, args.Callback)
-}
-
-func (s *DownloaderRPCServer) DownloadAudio(args *DownloadArgs, resp *struct{}) error {
-	return s.Impl.DownloadAudio(args.Part, args.Callback)
-}
-
-func (s *DownloaderRPCServer) DownloadSubtitle(args *DownloadArgs, resp *struct{}) error {
-	return s.Impl.DownloadSubtitle(args.Part, args.Callback)
+func (s *DownloaderRPCServer) Download(args *DownloadArgs, resp *struct{}) error {
+	return s.Impl.Download(args.Part, args.Callback)
 }
 
 func (s *DownloaderRPCServer) StopDownload(args *DownloadArgs, resp *struct{}) error {
 	return s.Impl.StopDownload(args.Part, args.Callback)
-}
-
-func (s *DownloaderRPCServer) Combine(args *CombineArgs, resp *struct{}) error {
-	return s.Impl.Combine(args.ffmpegPath, args.Part)
-}
-
-func (s *DownloaderRPCServer) Clear(args *DownloadArgs, resp *struct{}) error {
-	return s.Impl.Clear(args.Part, args.Callback)
 }
 
 type DownloaderRPCPlugin struct {

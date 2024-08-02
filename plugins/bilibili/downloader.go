@@ -18,6 +18,7 @@ type Downloader struct {
 	ctx       context.Context
 	cancel    context.CancelFunc
 	client    *Client
+	config    shared.Config
 	magicName string
 	Notice    shared.Notice
 	biliDownloadParams
@@ -138,6 +139,10 @@ func (bd *Downloader) ParsePlaylist(playlist *shared.PlaylistInfo) (*shared.Play
 	}
 
 	return playlist, nil
+}
+
+func (bd *Downloader) Download(part *shared.Part, callback shared.Callback) error {
+	return nil
 }
 
 func (bd *Downloader) GetMeta(part *shared.Part, callback shared.Callback) error {

@@ -8,3 +8,9 @@ var HandshakeConfig = plugin.HandshakeConfig{
 	MagicCookieKey:   "VIDOR_PLUGIN",
 	MagicCookieValue: "DOWNLOADER",
 }
+
+var DefaultFormat = Format{
+	IDtag:    9999,
+	Quality:  "尚未解析",
+	Selected: true,
+}

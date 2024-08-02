@@ -220,77 +220,11 @@ func (tq *TaskQueue) handleTask(task *Task) {
 
 	tq.taskStart(tq.app.Logger, task.part)
 
-	// 获取视频元数据
 	if task.state == Working {
-		if err := task.downloader.GetMeta(task.part, tq.app.Callback); err != nil {
+		if err := task.downloader.Download(task.part, tq.app.Callback); err != nil {
 			tq.handleDownloadError(tq.app.Logger, task, err)
 			updateTaskConfig(tq.app.Logger, task, tq.app.tasks, tq.app.configDir)
 			return
-		}
-	}
-
-	// 默认下封面 又不大!
-	if task.state == Working {
-		if err := task.downloader.DownloadThumbnail(task.part, tq.app.Callback); err != nil {
-			tq.handleDownloadError(tq.app.Logger, task, err)
-			return
-		}
-	}
-
-	if task.state == Working {
-		if tq.app.config.DownloadVideo && task.part.State != shared.TaskStatus.Stopped {
-			task.part.Status = shared.TaskStatus.DownloadingVideo
-			if err := task.downloader.DownloadVideo(task.part, tq.app.Callback); err != nil {
-				tq.handleDownloadError(tq.app.Logger, task, err)
-				updateTaskConfig(tq.app.Logger, task, tq.app.tasks, tq.app.configDir)
-				return
-			}
-		}
-	}
-	if task.state == Working {
-		if tq.app.config.DownloadAudio && task.part.State != shared.TaskStatus.Stopped {
-			task.part.Status = shared.TaskStatus.DownloadingAudio
-			if err := task.downloader.DownloadAudio(task.part, tq.app.Callback); err != nil {
-				tq.handleDownloadError(tq.app.Logger, task, err)
-				updateTaskConfig(tq.app.Logger, task, tq.app.tasks, tq.app.configDir)
-				return
-			}
-		}
-	}
-	if task.state == Working {
-		if tq.app.config.DownloadSubtitle && task.part.State != shared.TaskStatus.Stopped {
-			task.part.Status = shared.TaskStatus.DownloadingSubtitle
-			if err := task.downloader.DownloadSubtitle(task.part, tq.app.Callback); err != nil {
-				tq.handleDownloadError(tq.app.Logger, task, err)
-				updateTaskConfig(tq.app.Logger, task, tq.app.tasks, tq.app.configDir)
-				return
-			}
-		}
-	}
-
-	// 合并
-	if task.state == Working {
-		if tq.app.config.DownloadCombine && task.part.State != shared.TaskStatus.Stopped {
-			task.part.Status = shared.TaskStatus.Merging
-			tq.app.Callback(shared.NoticeData{
-				EventName: "updateInfo",
-				Message:   task.part,
-			})
-			if err := task.downloader.Combine(tq.app.config.FFMPEG, task.part); err != nil {
-				tq.handleDownloadError(tq.app.Logger, task, err)
-				updateTaskConfig(tq.app.Logger, task, tq.app.tasks, tq.app.configDir)
-				return
-			}
-		}
-	}
-
-	// 清理工作
-	if task.state == Working {
-		if err := task.downloader.Clear(task.part, tq.app.Callback); err != nil {
-			tq.handleDownloadError(tq.app.Logger, task, err)
-			return
-		} else {
-			tq.app.Logger.Info("清理工作完成")
 		}
 	}
 
