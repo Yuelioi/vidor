@@ -1,6 +1,7 @@
 package shared
 
 import (
+	"context"
 	"regexp"
 	"time"
 )
@@ -118,7 +119,7 @@ type PluginMeta struct {
 	Name   string
 	Type   string // System/ThirdPart
 	Regexs []*regexp.Regexp
-	Impl   func(config Config, notice Notice) Downloader
+	New    func(context.Context, Config) Downloader
 }
 
 // 任务状态

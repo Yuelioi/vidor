@@ -175,7 +175,7 @@ func (tq *TaskQueue) removeQueueTasks(tasks []*Task) {
 
 func (tq *TaskQueue) stopTask(task *Task) {
 	// 停止下载器 并标记为完成
-	task.downloader.StopDownload(task.part, tq.app.Callback)
+	task.downloader.Cancel(context.Background(), task.part)
 	task.state = Finished
 }
 
@@ -221,7 +221,7 @@ func (tq *TaskQueue) handleTask(task *Task) {
 	tq.taskStart(tq.app.Logger, task.part)
 
 	if task.state == Working {
-		if err := task.downloader.Download(task.part, tq.app.Callback); err != nil {
+		if err := task.downloader.Do(context.Background(), task.part); err != nil {
 			tq.handleDownloadError(tq.app.Logger, task, err)
 			updateTaskConfig(tq.app.Logger, task, tq.app.tasks, tq.app.configDir)
 			return

@@ -1,6 +1,7 @@
 package app
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -108,7 +109,7 @@ func newDownloader(plugins []shared.PluginMeta, config shared.Config, notice sha
 	for _, plugin := range plugins {
 		for _, regex := range plugin.Regexs {
 			if regex.MatchString(link) {
-				return plugin.Impl(config, notice), nil
+				return plugin.New(context.Background(), config), nil
 			}
 		}
 	}

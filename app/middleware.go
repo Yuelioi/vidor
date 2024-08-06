@@ -1,6 +1,7 @@
 package app
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"os/exec"
@@ -37,7 +38,7 @@ func (a *App) ShowDownloadInfo(link string) *shared.PlaylistInfo {
 		return new(shared.PlaylistInfo)
 	}
 
-	pi, err := downloader.ShowInfo(link, a.Callback)
+	pi, err := downloader.Show(context.Background(), link)
 
 	if err != nil {
 		a.Logger.Warn("ShowDownloadInfo: 获取主页搜索展示信息失败", err)
@@ -56,7 +57,7 @@ func (a *App) ParsePlaylist(playList *shared.PlaylistInfo) *shared.PlaylistInfo 
 		return new(shared.PlaylistInfo)
 	}
 
-	pi, err := downloader.ParsePlaylist(playList)
+	pi, err := downloader.Parse(context.Background(), playList)
 	if err != nil {
 		a.Logger.Warn("ShowDownloadInfo: 获取主页搜索展示信息失败", err)
 		return new(shared.PlaylistInfo)
@@ -173,7 +174,7 @@ func (a *App) RemoveAllTask(parts []shared.Part) bool {
 				} else {
 					// 直接调用停止函数
 					a.Logger.Info("任务移除(下载中):", task.part.Title)
-					task.downloader.StopDownload(task.part, a.Callback)
+					task.downloader.Cancel(context.Background(), task.part)
 				}
 			}
 

@@ -13,7 +13,7 @@ func SystemPlugins(notice shared.Notice) []shared.PluginMeta {
 		Name:   bd.PluginMeta().Name,
 		Regexs: bd.PluginMeta().Regexs,
 		Type:   "System",
-		Impl:   plugin_bilibili.New,
+		New:    plugin_bilibili.New,
 	}
 
 	plugins = append(plugins, plugin)

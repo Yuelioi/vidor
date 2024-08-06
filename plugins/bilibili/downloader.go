@@ -25,13 +25,12 @@ type Downloader struct {
 	biliThumbnailParams
 }
 
-func New(config shared.Config, notice shared.Notice) shared.Downloader {
+func New(ctx context.Context, config shared.Config) shared.Downloader {
 
 	client := NewClient(config.SESSDATA)
 	ctx, cancel := context.WithCancel(context.Background())
 
 	return &Downloader{
-		Notice:    notice,
 		ctx:       ctx,
 		magicName: config.MagicName,
 		cancel:    cancel,
@@ -48,7 +47,7 @@ func (bd *Downloader) PluginMeta() shared.PluginMeta {
 	}
 }
 
-func (bd *Downloader) ShowInfo(link string, callback shared.Callback) (*shared.PlaylistInfo, error) {
+func (bd *Downloader) Show(ctx context.Context, link string) (*shared.PlaylistInfo, error) {
 
 	// 获取b站播放列表信息
 	aid, bvid := extractAidBvid(link)
@@ -79,7 +78,7 @@ func (bd *Downloader) ShowInfo(link string, callback shared.Callback) (*shared.P
 	return &playList, nil
 }
 
-func (bd *Downloader) ParsePlaylist(playlist *shared.PlaylistInfo) (*shared.PlaylistInfo, error) {
+func (bd *Downloader) Parse(ctx context.Context, playlist *shared.PlaylistInfo) (*shared.PlaylistInfo, error) {
 	var wg sync.WaitGroup
 	var mu sync.Mutex
 	errors := make(chan error, len(playlist.StreamInfos))
@@ -141,7 +140,7 @@ func (bd *Downloader) ParsePlaylist(playlist *shared.PlaylistInfo) (*shared.Play
 	return playlist, nil
 }
 
-func (bd *Downloader) Download(part *shared.Part, callback shared.Callback) error {
+func (bd *Downloader) Do(ctx context.Context, part *shared.Part) error {
 	return nil
 }
 
@@ -273,21 +272,21 @@ func (bd *Downloader) Combine(ffmpegPath string, part *shared.Part) error {
 	return nil
 }
 
-func (bd *Downloader) Clear(part *shared.Part, callback shared.Callback) error {
+func (bd *Downloader) Clear(ctx context.Context, part *shared.Part) error {
 	return nil
 }
 
-func (bd *Downloader) StopDownload(part *shared.Part, callback shared.Callback) error {
+func (bd *Downloader) Cancel(ctx context.Context, part *shared.Part) error {
 	bd.cancel()
 
-	callback(shared.NoticeData{
-		EventName: "updateInfo",
-		Message:   part,
-	})
+	// callback(shared.NoticeData{
+	// 	EventName: "updateInfo",
+	// 	Message:   part,
+	// })
 
 	return nil
 }
-func (bd *Downloader) PauseDownload(part *shared.Part, callback shared.Callback) error {
+func (bd *Downloader) Pause(ctx context.Context, part *shared.Part) error {
 	return nil
 }
 
