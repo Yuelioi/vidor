@@ -17,3 +17,5 @@ logs
 # Others
 Note.md
 temp.*
+
+*.pb.go
