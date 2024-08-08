@@ -2,9 +2,7 @@ package shared
 
 import (
 	"context"
-	"net/rpc"
-
-	"github.com/hashicorp/go-plugin"
+	// "github.com/hashicorp/go-plugin"
 )
 
 type Downloader interface {
@@ -26,7 +24,7 @@ type DownloadArgs struct {
 	Part *Part
 }
 
-type DownloaderRPC struct{ client *rpc.Client }
+// type DownloaderRPC struct{ client *rpc.Client }
 
 // ---------------------------------- TODO 插件系统 晚点搞 ------------------------------
 
@@ -96,14 +94,14 @@ type DownloaderRPCServer struct {
 // 	return s.Impl.Cancel(args.Part, args.Callback)
 // }
 
-type DownloaderRPCPlugin struct {
-	Impl Downloader
-}
+// type DownloaderRPCPlugin struct {
+// 	Impl Downloader
+// }
 
-func (p *DownloaderRPCPlugin) Server(*plugin.MuxBroker) (interface{}, error) {
-	return &DownloaderRPCServer{Impl: p.Impl}, nil
-}
+// func (p *DownloaderRPCPlugin) Server(*plugin.MuxBroker) (interface{}, error) {
+// 	return &DownloaderRPCServer{Impl: p.Impl}, nil
+// }
 
-func (DownloaderRPCPlugin) Client(b *plugin.MuxBroker, c *rpc.Client) (interface{}, error) {
-	return &DownloaderRPC{client: c}, nil
-}
+// func (DownloaderRPCPlugin) Client(b *plugin.MuxBroker, c *rpc.Client) (interface{}, error) {
+// 	return &DownloaderRPC{client: c}, nil
+// }
