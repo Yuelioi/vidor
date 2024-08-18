@@ -1,0 +1,12 @@
+{
+  "manifest_version": 1,
+  "name": "Bilibili",
+  "description": "B站下载器",
+  "author": "Yueli",
+  "version": "1.0.0",
+  "url": "",
+  "docs_url": "",
+  "download_url": "",
+  "matches": ["https://www.bilibili.com/video/BV.+", "https://www.bilibili.com/video/av.+"],
+  "settings": ["SESSDATA"]
+}

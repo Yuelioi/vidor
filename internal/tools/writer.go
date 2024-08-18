@@ -12,7 +12,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/Yuelioi/vidor/shared"
+	"github.com/Yuelioi/vidor/internal/shared"
 )
 
 const (

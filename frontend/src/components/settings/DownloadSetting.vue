@@ -41,18 +41,6 @@
                 <span class="icon-[lucide--folder-search]"></span>
             </button>
         </label>
-        <label class="flex items-center input input-bordered">
-            FFmpeg
-            <input
-                type="text"
-                class="ml-4 truncate grow"
-                v-model.lazy="config.FFMPEG"
-                @change="checkFFmpeg"
-                placeholder="设置ffmpeg文件路径" />
-            <button class="btn btn-sm btn-square" @click="ffmpegChange">
-                <span class="icon-[lucide--folder-search]"></span>
-            </button>
-        </label>
     </TabCard>
 </template>
 
@@ -66,25 +54,6 @@ function openDownloadDir() {
             config.value.DownloadDir = result
         } else {
             Message({ message: '用户取消', type: 'warn' })
-        }
-    })
-}
-function ffmpegChange() {
-    SetFFmpegPath('请选择FFmpeg文件夹').then((result) => {
-        if (result != '') {
-            config.value.FFMPEG = result
-            Message({ message: '设置成功', type: 'success' })
-        } else {
-            Message({ message: '用户取消/路径无效', type: 'warn' })
-        }
-    })
-}
-function checkFFmpeg() {
-    CheckFFmpeg(config.value.FFMPEG).then((result) => {
-        if (result) {
-            Message({ message: '设置成功', type: 'success' })
-        } else {
-            Message({ message: '用户取消/路径无效', type: 'warn' })
         }
     })
 }

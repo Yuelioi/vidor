@@ -1,7 +1,6 @@
 package app
 
 import (
-	"context"
 	"fmt"
 	"os"
 	"os/exec"
@@ -9,8 +8,8 @@ import (
 
 	cmdRuntime "runtime"
 
-	"github.com/Yuelioi/vidor/shared"
-	"github.com/Yuelioi/vidor/utils"
+	"github.com/Yuelioi/vidor/internal/shared"
+	utils "github.com/Yuelioi/vidor/internal/tools"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
 
@@ -31,39 +30,39 @@ type TaskResult struct {
 2. 调用展示信息函数
 */
 func (a *App) ShowDownloadInfo(link string) *shared.PlaylistInfo {
-	downloader, err := newDownloader(a.downloaders, *a.config, a.Notice, link)
-	// 没有下载器 直接返回空
-	if err != nil {
-		a.Logger.Info("ShowDownloadInfo: 获取下载器失败", err)
-		return new(shared.PlaylistInfo)
-	}
+	// downloader, err := newDownloader(a.downloaders, *a.config, a.Notice, link)
+	// // 没有下载器 直接返回空
+	// if err != nil {
+	// 	a.Logger.Info("ShowDownloadInfo: 获取下载器失败", err)
+	// 	return new(shared.PlaylistInfo)
+	// }
 
-	pi, err := downloader.Show(context.Background(), link)
+	// pi, err := downloader.Show(context.Background(), link)
 
-	if err != nil {
-		a.Logger.Warn("ShowDownloadInfo: 获取主页搜索展示信息失败", err)
-		return new(shared.PlaylistInfo)
-	}
+	// if err != nil {
+	// 	a.Logger.Warn("ShowDownloadInfo: 获取主页搜索展示信息失败", err)
+	// 	return new(shared.PlaylistInfo)
+	// }
 
-	a.Logger.Infof("下载: 获取视频元数据成功%s", link)
-	return pi
+	// a.Logger.Infof("下载: 获取视频元数据成功%s", link)
+	return nil
 }
 
 func (a *App) ParsePlaylist(playList *shared.PlaylistInfo) *shared.PlaylistInfo {
-	downloader, err := newDownloader(a.downloaders, *a.config, a.Notice, playList.URL)
-	// 没有下载器 直接返回空
-	if err != nil {
-		a.Logger.Info("ShowDownloadInfo: 获取下载器失败", err)
-		return new(shared.PlaylistInfo)
-	}
+	// downloader, err := newDownloader(a.downloaders, *a.config, a.Notice, playList.URL)
+	// // 没有下载器 直接返回空
+	// if err != nil {
+	// 	a.Logger.Info("ShowDownloadInfo: 获取下载器失败", err)
+	// 	return new(shared.PlaylistInfo)
+	// }
 
-	pi, err := downloader.Parse(context.Background(), playList)
-	if err != nil {
-		a.Logger.Warn("ShowDownloadInfo: 获取主页搜索展示信息失败", err)
-		return new(shared.PlaylistInfo)
-	}
+	// pi, err := downloader.Parse(context.Background(), playList)
+	// if err != nil {
+	// 	a.Logger.Warn("ShowDownloadInfo: 获取主页搜索展示信息失败", err)
+	// 	return new(shared.PlaylistInfo)
+	// }
 
-	return pi
+	return nil
 }
 
 /*
@@ -74,41 +73,43 @@ func (a *App) ParsePlaylist(playList *shared.PlaylistInfo) *shared.PlaylistInfo 
 3. 保存任务信息
 */
 func (a *App) AddDownloadTasks(parts []shared.Part, workName string) []shared.Part {
-	if len(parts) == 0 {
-		return make([]shared.Part, 0)
-	}
+	// if len(parts) == 0 {
+	// 	return make([]shared.Part, 0)
+	// }
 
-	var tasks = make([]*Task, 0)
+	// var tasks = make([]*Task, 0)
 
-	for _, part := range parts {
-		if taskExists(a.tasks, part.URL) {
-			logger.Info("任务", "任务已存在", part.URL)
-			continue
-		} else {
+	// for _, part := range parts {
+	// 	if taskExists(a.tasks, part.URL) {
+	// 		logger.Info("任务", "任务已存在", part.URL)
+	// 		continue
+	// 	} else {
 
-			task, err := createNewTask(part, a.config.DownloadDir, workName)
-			if err != nil {
-				a.Logger.Warnf("任务: 创建任务失败%s", err)
-				continue
-			}
-			tasks = append(tasks, task)
-			a.tasks = append(a.tasks, task)
-		}
-	}
-	// 添加到队列
-	if a.taskQueue == nil || a.taskQueue.state == Finished {
-		println("任务队列 重新创建")
-		a.taskQueue = NewTaskQueue(a, tasks)
-	} else {
-		println("任务队列 还在使用")
-		a.taskQueue.AddTasks(tasks)
-	}
+	// 		task, err := createNewTask(part, a.config.DownloadDir, workName)
+	// 		if err != nil {
+	// 			a.Logger.Warnf("任务: 创建任务失败%s", err)
+	// 			continue
+	// 		}
+	// 		tasks = append(tasks, task)
+	// 		a.tasks = append(a.tasks, task)
+	// 	}
+	// }
+	// // 添加到队列
+	// if a.taskQueue == nil || a.taskQueue.state == Finished {
+	// 	println("任务队列 重新创建")
+	// 	a.taskQueue = NewTaskQueue(a, tasks)
+	// } else {
+	// 	println("任务队列 还在使用")
+	// 	a.taskQueue.AddTasks(tasks)
+	// }
 
-	if err := saveTasks(a.tasks, a.configDir); err != nil {
-		a.Logger.Warnf("添加任务:保存配置失败 %s", err)
-	}
+	// if err := saveTasks(a.tasks, a.configDir); err != nil {
+	// 	a.Logger.Warnf("添加任务:保存配置失败 %s", err)
+	// }
 
-	return tasksToParts(tasks)
+	return []shared.Part{}
+
+	// return tasksToParts(tasks)
 }
 
 /*
@@ -122,30 +123,30 @@ func (a *App) AddDownloadTasks(parts []shared.Part, workName string) []shared.Pa
 */
 func (a *App) RemoveTask(uid string) bool {
 
-	for i, task := range a.tasks {
-		if task.part.TaskID == uid {
+	// for i, task := range a.tasks {
+	// 	if task.part.TaskID == uid {
 
-			if checkTaskQueueWorking(a) {
-				if task.state == Queue {
-					// 1. 正在队列中
-					a.Logger.Info("任务移除(队列中):", task.part.Title)
-					a.taskQueue.removeQueueTasks([]*Task{task})
-				} else {
-					// 2. 正在下载中
-					a.Logger.Info("任务移除(下载中):", task.part.Title)
-					a.taskQueue.stopTask(task)
-				}
-			}
+	// 		if checkTaskQueueWorking(a) {
+	// 			if task.state == Queue {
+	// 				// 1. 正在队列中
+	// 				a.Logger.Info("任务移除(队列中):", task.part.Title)
+	// 				a.taskQueue.removeQueueTasks([]*Task{task})
+	// 			} else {
+	// 				// 2. 正在下载中
+	// 				a.Logger.Info("任务移除(下载中):", task.part.Title)
+	// 				a.taskQueue.stopTask(task)
+	// 			}
+	// 		}
 
-			// 3. 直接删除
-			a.tasks = append(a.tasks[:i], a.tasks[i+1:]...)
+	// 		// 3. 直接删除
+	// 		a.tasks = append(a.tasks[:i], a.tasks[i+1:]...)
 
-			if err := saveTasks(a.tasks, a.configDir); err != nil {
-				a.Logger.Warn(err)
-			}
-			return true
-		}
-	}
+	// 		if err := saveTasks(a.tasks, a.configDir); err != nil {
+	// 			a.Logger.Warn(err)
+	// 		}
+	// 		return true
+	// 	}
+	// }
 	return false
 }
 
@@ -155,49 +156,50 @@ func (a *App) RemoveTask(uid string) bool {
 // 移除队列中任务: 清理缓存队列的queueTasks
 func (a *App) RemoveAllTask(parts []shared.Part) bool {
 
-	newTasks := make([]*Task, 0)
-	delQueueTasks := make([]*Task, 0)
+	// newTasks := make([]*Task, 0)
+	// delQueueTasks := make([]*Task, 0)
 
-	partTaskIDs := make(map[string]shared.Part)
+	// partTaskIDs := make(map[string]shared.Part)
 
-	for _, part := range parts {
-		partTaskIDs[part.TaskID] = part
-	}
+	// for _, part := range parts {
+	// 	partTaskIDs[part.TaskID] = part
+	// }
 
-	for i, task := range a.tasks {
-		if _, found := partTaskIDs[task.part.TaskID]; found {
+	// for i, task := range a.tasks {
+	// 	if _, found := partTaskIDs[task.part.TaskID]; found {
 
-			if checkTaskQueueWorking(a) {
-				if task.state == Queue {
-					// 添加到待删队列
-					delQueueTasks = append(delQueueTasks, task)
-				} else {
-					// 直接调用停止函数
-					a.Logger.Info("任务移除(下载中):", task.part.Title)
-					task.downloader.Cancel(context.Background(), task.part)
-				}
-			}
+	// 		if checkTaskQueueWorking(a) {
+	// 			if task.state == Queue {
+	// 				// 添加到待删队列
+	// 				delQueueTasks = append(delQueueTasks, task)
+	// 			} else {
+	// 				// 直接调用停止函数
+	// 				a.Logger.Info("任务移除(下载中):", task.part.Title)
+	// 				task.downloader.Cancel(context.Background(), task.part)
+	// 			}
+	// 		}
 
-		} else {
-			newTasks = append(newTasks, a.tasks[i])
-		}
-	}
+	// 	} else {
+	// 		newTasks = append(newTasks, a.tasks[i])
+	// 	}
+	// }
 
-	// 移除队列中任务
-	if checkTaskQueueWorking(a) {
-		a.taskQueue.removeQueueTasks(delQueueTasks)
-	}
+	// // 移除队列中任务
+	// if checkTaskQueueWorking(a) {
+	// 	a.taskQueue.removeQueueTasks(delQueueTasks)
+	// }
 
-	// 保存任务清单
-	a.tasks = newTasks
-	if err := saveTasks(newTasks, a.configDir); err != nil {
-		a.Logger.Warn(err)
-	}
+	// // 保存任务清单
+	// a.tasks = newTasks
+	// if err := saveTasks(newTasks, a.configDir); err != nil {
+	// 	a.Logger.Warn(err)
+	// }
 	return true
 }
 
 func checkTaskQueueWorking(a *App) bool {
-	return a.taskQueue != nil && a.taskQueue.state != Finished
+	// return a.taskQueue != nil && a.taskQueue.state != Finished
+	return true
 }
 
 func (a *App) SetDownloadDir(title string) string {
@@ -284,31 +286,35 @@ func (a *App) OpenFileWithSystemPlayer(filePath string) error {
 }
 
 func (a *App) GetConfig() *shared.Config {
-	return a.config
+	// return a.config
+	return nil
 }
 
 // 获取前端任务片段
 func (a *App) GetTaskParts() []shared.Part {
-	return tasksToParts(a.tasks)
+	// return tasksToParts(a.tasks)
+	return []shared.Part{}
 }
 
 func (a *App) SaveConfig(config *shared.Config) bool {
-	a.config = config
-	err := saveConfig(a.configDir, *config)
-	if err != nil {
-		a.Logger.Warnf("保存设置失败%s", err)
-	} else {
-		a.Logger.Info("保存设置成功")
-	}
+	// a.config = config
+	// err := saveConfig(a.configDir, *config)
+	// if err != nil {
+	// 	a.Logger.Warnf("保存设置失败%s", err)
+	// } else {
+	// 	a.Logger.Info("保存设置成功")
+	// }
 
-	return err == nil
+	// return err == nil
+	return false
 }
 
 // 任务转任务片段
 func tasksToParts(tasks []*Task) []shared.Part {
-	parts := make([]shared.Part, len(tasks))
-	for i, task := range tasks {
-		parts[i] = *task.part
-	}
-	return parts
+	// parts := make([]shared.Part, len(tasks))
+	// for i, task := range tasks {
+	// 	parts[i] = *task.part
+	// }
+	// return parts
+	return []shared.Part{}
 }
