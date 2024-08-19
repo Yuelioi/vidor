@@ -8,6 +8,7 @@ import (
 
 	cmdRuntime "runtime"
 
+	pb "github.com/Yuelioi/vidor/internal/proto"
 	"github.com/Yuelioi/vidor/internal/shared"
 	utils "github.com/Yuelioi/vidor/internal/tools"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
@@ -17,7 +18,6 @@ type MessageData struct {
 	Message     string `json:"message"`
 	MessageType string `json:"messageType"`
 }
-
 type TaskResult struct {
 	Success bool   `json:"success"`
 	Message string `json:"message"`
@@ -29,7 +29,7 @@ type TaskResult struct {
 1. 获取下载器
 2. 调用展示信息函数
 */
-func (a *App) ShowDownloadInfo(link string) *shared.PlaylistInfo {
+func (a *App) ShowDownloadInfo(link string) *pb.ShowResponse {
 	// downloader, err := newDownloader(a.downloaders, *a.config, a.Notice, link)
 	// // 没有下载器 直接返回空
 	// if err != nil {
@@ -48,7 +48,7 @@ func (a *App) ShowDownloadInfo(link string) *shared.PlaylistInfo {
 	return nil
 }
 
-func (a *App) ParsePlaylist(playList *shared.PlaylistInfo) *shared.PlaylistInfo {
+func (a *App) ParsePlaylist() *pb.ParseResponse {
 	// downloader, err := newDownloader(a.downloaders, *a.config, a.Notice, playList.URL)
 	// // 没有下载器 直接返回空
 	// if err != nil {
@@ -285,7 +285,7 @@ func (a *App) OpenFileWithSystemPlayer(filePath string) error {
 	return cmd.Start()
 }
 
-func (a *App) GetConfig() *shared.Config {
+func (a *App) GetConfig() *Config {
 	// return a.config
 	return nil
 }
@@ -296,7 +296,7 @@ func (a *App) GetTaskParts() []shared.Part {
 	return []shared.Part{}
 }
 
-func (a *App) SaveConfig(config *shared.Config) bool {
+func (a *App) SaveConfig(config *Config) bool {
 	// a.config = config
 	// err := saveConfig(a.configDir, *config)
 	// if err != nil {

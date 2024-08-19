@@ -1,117 +1,126 @@
 syntax = "proto3";
 
-import "google/protobuf/timestamp.proto";
-import "google/protobuf/duration.proto";
+// import "google/protobuf/timestamp.proto";
+// import "google/protobuf/duration.proto";
+import "google/protobuf/empty.proto";
 
-option go_package = ".;downloader";
+option go_package = ".;proto";
 
-// service 可以当做函数
-service SearchService {
-  rpc Show(RequestShow) returns (PlaylistInfo) {}
-  rpc Parse(RequestParse) returns (PlaylistInfo) {}
-  rpc Download(stream PlaylistInfo) returns (stream DownloadResponse) {}
-  rpc Stop(RequestStop) returns (ResponseStop) {}
+// Service for handling downloads
+service DownloadService {
+  rpc Init(google.protobuf.Empty)returns (google.protobuf.Empty) {}
+  rpc Shutdown(google.protobuf.Empty)returns (google.protobuf.Empty) {}
 
-  rpc Shutdown(Empty) returns (Empty);
+  // ShowInfo sends metadata about the downloadable content.
+  rpc Show(ShowRequest) returns (ShowResponse) {}
+
+
+  rpc Parse(ParseRequest) returns (ParseResponse) {}
+
+  // Download starts the download process and streams download progress.
+  rpc Download(DownloadRequest) returns (stream DownloadProgress) {}
+
+  // StopDownload stops an ongoing download.
+  rpc StopDownload(StopDownloadRequest) returns (StopDownloadResponse) {}
 }
 
-// ---------------------------- 请求 ----------------------------
-message RequestShow {
-  map<string, string> entries = 1;
-  string url = 2;
-}
-message RequestParse {
-  map<string, string> entries = 1;
-  PlaylistInfo playlist = 2;
+// ---------------------------- Requests ----------------------------
+
+
+// Request to show information about the downloadable content.
+message ShowRequest {
+  string url = 1; // The URL to fetch information from.
 }
 
-message RequestStop { string id = 1; }
-// ---------------------------- 响应 ----------------------------
+message ParseRequest{
+  string id = 1;               // Unique identifier for the download job.
+  repeated StreamInfo stream_infos = 4; // Available formats for download.
+}
 
-message ResponseStop {
+// Request to start a download.
+message DownloadRequest {
+  string id = 1;               // Unique identifier for the download job.
+  repeated Format formats = 2; // Selected formats to download.
+}
+
+// Request to stop a download.
+message StopDownloadRequest {
+  StreamInfo stream_info = 1;
+}
+
+// ---------------------------- Responses ----------------------------
+
+
+// Response containing information about the downloadable content.
+message ShowResponse {
+  string title = 1;            // Title of the content.
+  string cover = 2;            // Cover image URL.
+  string author = 3;           // Author of the content.
+  repeated StreamInfo stream_infos = 4; // Available formats for download.
+}
+
+// Progress information during the download process.
+message DownloadProgress {
+  string id = 1;               // Unique identifier for the download job.
+  int64 bytes_transferred = 2; // Number of bytes transferred.
+  int64 total_bytes = 3;       // Total number of bytes to be transferred.
+  string speed = 4;            // Current download speed.
+}
+
+message ParseResponse{
+  string id = 1;               // Unique identifier for the download job.
+  repeated StreamInfo stream_infos = 4; // Available formats for download.
+}
+
+// Response for stopping a download.
+message StopDownloadResponse {
+  string id = 1;    // Unique identifier for the download job.
+  string state = 2; // State of the download after stopping.
+}
+
+// ---------------------------- Models ----------------------------
+
+message StreamInfo{
   string id = 1;
-  string state = 2;
+  string url =2;
+  string session_id = 3;
+  string title = 4; 
+  repeated Stream streams = 5;
+}
+message Stream{
+  string mime_type = 2;
+  repeated Format formats = 3;
 }
 
-// ---------------------------- 模型 ----------------------------
-
-message Empty {}
-
-// Home页面搜索展示所需信息
-message PlaylistInfo {
-  string URL = 1;                        // 下载链接
-  string Cover = 2;                      // 封面
-  string WorkDirName = 3;                // 工作路径名
-  string Author = 4;                     // 作者
-  string Description = 5;                // 描述
-  google.protobuf.Timestamp PubDate = 6; // 发布日期
-  repeated StreamInfo StreamInfos = 7;   // 分段合集
-}
-// 流媒体所有信息
-message StreamInfo {
-  string id = 1;              // ★ youtubeID bilibiliBVID
-  string session_id = 2;      // ★ biliCID...
-  string name = 3;            // ★
-  string magic_name = 4;      // ★
-  string url = 5;             // ★
-  repeated Format videos = 6; // ★★
-  repeated Format audios = 7; // ★★
-  repeated Thumbnail thumbnails = 8;
-  repeated CaptionTrack captions = 9;
-  string description = 10;
-  string author = 11;
-  int32 views = 12;
-  google.protobuf.Duration duration = 13;
-  google.protobuf.Timestamp pub_date = 14;
-}
-
-message DownloadResponse {
-  string status = 1;
-  string speed = 2;
-  int64 progress = 3; // 下载进度
-}
-
+// Represents a format that can be downloaded.
 message Format {
-  int32 id_tag = 1;           // ★ 标签ID
-  string quality = 2;         // ★ 质量标签
-  bool selected = 3;          // ★ 是否选中当前格式
-  string url = 4;             // 链接
-  string mime_type = 5;       // video/mp4...
-  int64 content_length = 6;   // 内容长度
-  int32 duration_ms = 7;      // 时长
-  repeated string codecs = 8; // 编码类型
-
-  // 图片+视频
-  int32 width = 9;
-  int32 height = 10;
-
-  // 仅视频
-  int32 fps = 11;             // FPS
-  int32 bitrate = 12;         // 码率
-  int32 average_bitrate = 13; // 平均码率
-
-  // 仅音频
-  string audio_sample_rate = 14; // 音频码率
+  int64 id = 1;            // Identifier for the format.
+  string mime_type = 2;     // MIME type of the format.
+  string label = 3; // Media label (e.g., "720p").
+  string code = 4;  //  (e.g., "mp4/mov","flac/mp3","png/jpg").
+  string url = 5;           // URL for downloading this format.
 }
 
+// Represents a thumbnail for the content.
 message Thumbnail {
-  string url = 1;
-  string label = 2;
-  uint32 width = 3;
-  uint32 height = 4;
+  string url = 1;    // URL of the thumbnail.
+  uint32 width = 2;  // Width of the thumbnail.
+  uint32 height = 3; // Height of the thumbnail.
 }
 
+// Represents a caption track.
 message CaptionTrack {
-  string url = 1;
-  string name = 2;
-  string language_code = 3;
-  string kind = 4;
-  bool is_translatable = 5;
+  string url = 1;      // URL of the caption track.
+  string language = 2; // Language code for the caption track.
+  string name = 3;     // Name of the caption track.
 }
 
-message KeyValue {
-  string key = 1;
-  string value = 2;
+// Represents metadata about the downloadable content.
+message ContentMetadata {
+  string title = 1;                         // Title of the content.
+  string cover = 2;                         // Cover image URL.
+  string author = 3;                        // Author of the content.
+  repeated Format formats = 4;              // Available formats for download.
+  repeated Thumbnail thumbnails = 5;        // Thumbnails for the content.
+  repeated CaptionTrack caption_tracks = 6; // Caption tracks for the content.
 }
-
-message KeyValueMap { map<string, string> entries = 1; }

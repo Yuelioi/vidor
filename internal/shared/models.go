@@ -1,29 +1,8 @@
 package shared
 
 import (
-	"context"
-	"regexp"
 	"time"
 )
-
-// 软件配置信息
-type Config struct {
-	Theme       string
-	ScaleFactor int
-
-	ProxyURL         string
-	UseProxy         bool
-	FFMPEG           string
-	MagicName        string
-	DownloadDir      string
-	DownloadVideo    bool
-	DownloadAudio    bool
-	DownloadSubtitle bool
-	DownloadCombine  bool
-	DownloadLimit    int
-
-	SESSDATA string
-}
 
 type StreamQuality struct {
 	IDtag int
@@ -59,85 +38,4 @@ type Part struct {
 	CreatedAt       time.Time // 任务创建日期
 	DownloadPercent int       // 下载百分比
 	DownloadSpeed   string    // 下载速度
-}
-
-// Home页面搜索展示所需信息
-type PlaylistInfo struct {
-	URL         string       // 下载链接
-	Cover       string       // 封面
-	WorkDirName string       // 工作路径名 一般是视频标题/合集标题 后续用来创建下载文件夹
-	Author      string       // 作者
-	Description string       // 描述
-	PubDate     time.Time    // 发布日期
-	StreamInfos []StreamInfo // 分段合集
-}
-
-// 流媒体所有信息
-type StreamInfo struct {
-	ID        string // ★ youtubeID bilibiliBVID...
-	SessionId string // ★ biliCID...
-	Name      string // ★
-	MagicName string // ★
-	URL       string // ★
-	Selected  bool   // ★
-
-	Videos []Format // ★★
-	Audios []Format // ★★
-
-	Description     string
-	Author          string
-	ChannelID       string
-	Views           int
-	Duration        time.Duration
-	PublishDate     time.Time
-	DASHManifestURL string // URI of the DASH manifest file
-	HLSManifestURL  string // URI of the HLS manifest file
-
-	Thumbnails []Thumbnail
-	Captions   []CaptionTrack
-}
-
-type status struct {
-	Queue       string
-	Downloading string
-	Pause       string
-	Finished    string
-
-	Stopped              string
-	GettingMetadata      string
-	DownloadingVideo     string
-	DownloadingAudio     string
-	DownloadingSubtitle  string
-	DownloadingThumbnail string
-	Merging              string
-	Failed               string
-	Unknown              string
-}
-
-// 插件信息
-type PluginMeta struct {
-	Name   string
-	Type   string // System/ThirdPart
-	Regexs []*regexp.Regexp
-	New    func(context.Context, Config) Downloader
-}
-
-// 任务状态
-var TaskStatus = status{
-	// 任务本体状态
-	Queue:       "队列中",
-	Downloading: "下载中",
-	Pause:       "已暂停",
-	Finished:    "已完成",
-
-	// 任务下载状态
-	Stopped:              "已取消",
-	GettingMetadata:      "获取元数据",
-	DownloadingThumbnail: "下载封面",
-	DownloadingVideo:     "下载视频",
-	DownloadingAudio:     "下载音频",
-	DownloadingSubtitle:  "下载字幕",
-	Merging:              "合并中",
-	Failed:               "下载失败",
-	Unknown:              "未知状态",
 }

@@ -1,0 +1,17 @@
+version: "3"
+
+dotenv: [".env", "{{.ENV}}/.env.", "{{.HOME}}/.env"]
+
+tasks:
+  generate:
+    dir: "./internal/proto"
+    cmds:
+      - buf generate
+    desc: "生成proto产物"
+    aliases: [gen]
+  update:
+    dir: "./internal/proto"
+    cmds:
+      - buf dep update
+    desc: "更新"
+    aliases: [up]
