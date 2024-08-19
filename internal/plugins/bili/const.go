@@ -1,7 +1,5 @@
 package main
 
-import pb "bilibili/proto"
-
 const (
 	apiURL = "https://api.bilibili.com"
 )
@@ -14,11 +12,7 @@ const (
 	Vip
 )
 
-var DefaultFormat = pb.Format{
-	IdTag:    9999,
-	Quality:  "尚未解析",
-	Selected: true,
-}
+
 
 // https://github.com/SocialSisterYi/bilibili-API-collect/blob/master/docs/video/videostream_url.md
 // {ID: 6, Label: "240P"},      // 仅 MP4 格式支持, 仅 platform=html5 时有效
