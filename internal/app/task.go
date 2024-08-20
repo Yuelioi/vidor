@@ -24,7 +24,7 @@ type taskQueue struct {
 }
 
 // New 创建一个新的任务队列
-func New() TaskQueue {
+func NewTaskQueue() TaskQueue {
 	return &taskQueue{
 		tasks: make(map[string]Task),
 	}

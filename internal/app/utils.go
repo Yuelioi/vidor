@@ -4,8 +4,11 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+
+	utils "github.com/Yuelioi/vidor/internal/tools"
 )
 
+// 获取当前exe所在目录
 func ExePath() string {
 	exePath, err := os.Executable()
 	if err != nil {
@@ -16,4 +19,13 @@ func ExePath() string {
 	exeDir := filepath.Dir(exePath)
 
 	return exeDir
+}
+
+// 检查是否存在FFmpeg
+func CheckFFmpeg(target string) bool {
+	if err := utils.SetFFmpegPath(target); err != nil {
+		logger.Error(err)
+		return false
+	}
+	return true
 }

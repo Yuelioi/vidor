@@ -10,7 +10,6 @@ import (
 
 	pb "github.com/Yuelioi/vidor/internal/proto"
 	"github.com/Yuelioi/vidor/internal/shared"
-	utils "github.com/Yuelioi/vidor/internal/tools"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
 
@@ -216,38 +215,6 @@ func (a *App) SetDownloadDir(title string) string {
 		return ""
 	}
 	return target
-}
-
-func (a *App) SetFFmpegPath(title string) string {
-	home, _ := os.UserHomeDir()
-	downloadsFolder := filepath.Join(home, "Downloads")
-
-	target, err := runtime.OpenFileDialog(a.ctx, runtime.OpenDialogOptions{
-		Title:                title,
-		DefaultDirectory:     downloadsFolder,
-		CanCreateDirectories: true,
-	})
-
-	if err != nil {
-		a.Logger.Error(err)
-		return ""
-	}
-
-	if err := utils.SetFFmpegPath(target); err != nil {
-		a.Logger.Error(err)
-		return ""
-	}
-
-	return target
-}
-
-func (a *App) CheckFFmpeg(target string) bool {
-	if err := utils.SetFFmpegPath(target); err != nil {
-		a.Logger.Error(err)
-		return false
-	}
-
-	return true
 }
 
 func (a *App) OpenExplorer(dir string) error {

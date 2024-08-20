@@ -1,14 +1,10 @@
 package main
 
 import (
-	pb "bilibili/proto"
 	"context"
 	"fmt"
 	"net/url"
-	"os"
 	"path/filepath"
-	"strconv"
-	"sync"
 )
 
 type Downloader struct {
@@ -18,105 +14,6 @@ type Downloader struct {
 	configs   []string
 	magicName string
 	biliDownloadParams
-}
-
-func New(ctx context.Context, configs map[string]string) *Downloader {
-
-	client := NewClient(configs["sessdata"])
-	ctx, cancel := context.WithCancel(ctx)
-
-	return &Downloader{
-		ctx:    ctx,
-		cancel: cancel,
-		client: client,
-	}
-}
-
-func (bd *Downloader) Show(link string) (*pb.PlaylistInfo, error) {
-
-	// 获取b站播放列表信息
-	aid, bvid := extractAidBvid(link)
-	biliPlayList, err := bd.client.GetPlaylistInfo(aid, bvid)
-	if err != nil {
-		return nil, fmt.Errorf("ShowInfo %s", err)
-	}
-
-	// 填充列表信息
-	var playList pb.PlaylistInfo
-	if biliPlayList.Data.IsSeason {
-		playList = *biliSeasonToPlaylistInfo(*biliPlayList)
-	} else {
-		playList = *biliPageToPlaylistInfo(biliPlayList.Data.BVID, *biliPlayList)
-	}
-
-	thumbnailPath := filepath.Join(os.TempDir(), "vidor", "info_thumbnail.jpg")
-	fmt.Printf("thumbnailPath: %v\n", thumbnailPath)
-
-	img, err := bd.client.GetImage(playList.Cover, thumbnailPath)
-	if err != nil {
-		return nil, err
-	}
-	playList.Cover = img
-
-	return &playList, nil
-}
-
-func (bd *Downloader) Parse(ctx context.Context, playlist *pb.PlaylistInfo) (*pb.PlaylistInfo, error) {
-	var wg sync.WaitGroup
-	var mu sync.Mutex
-	errors := make(chan error, len(playlist.StreamInfos))
-
-	for index, streamInfo := range playlist.StreamInfos {
-		wg.Add(1)
-		go func(streamInfo *pb.StreamInfo, index int) {
-			defer wg.Done()
-
-			cid, err := strconv.Atoi(streamInfo.SessionId)
-			if err != nil {
-				errors <- err
-				return
-			}
-
-			biliDownInfo, err := bd.client.GetVideoDownloadInfo(streamInfo.Id, cid)
-			if err != nil {
-				errors <- err
-				return
-			}
-
-			mu.Lock()
-			playlist.StreamInfos[index].Videos = make([]*pb.Format, 0)
-			playlist.StreamInfos[index].Audios = make([]*pb.Format, 0)
-			mu.Unlock()
-
-			mu.Lock()
-			for _, format := range biliDownInfo.Data.SupportFormats {
-				playlist.StreamInfos[index].Videos = append(playlist.StreamInfos[index].Videos, &pb.Format{
-					IdTag:   int32(format.Quality),
-					Quality: format.DisplayDesc,
-					Codecs:  format.Codecs,
-				})
-			}
-			for _, format := range biliDownInfo.Data.Dash.Audios {
-				playlist.StreamInfos[index].Audios = append(playlist.StreamInfos[index].Audios, &pb.Format{
-					IdTag:   int32(format.ID),
-					Quality: fmt.Sprint(format.Bandwidth),
-					Codecs:  []string{format.Codecs},
-				})
-			}
-			mu.Unlock()
-		}(streamInfo, index)
-	}
-
-	wg.Wait()
-	close(errors)
-
-	for err := range errors {
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	return playlist, nil
 }
 
 // func (bd *Downloader) GetMeta() error {

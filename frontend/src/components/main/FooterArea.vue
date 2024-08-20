@@ -28,21 +28,7 @@ onMounted(async () => {
     // 加载配置
     const fetchedConfig = (await GetConfig()) as Config
     if (fetchedConfig) {
-        config.value.Theme = fetchedConfig.Theme
-        config.value.ProxyURL = fetchedConfig.ProxyURL
-        config.value.UseProxy = fetchedConfig.UseProxy
-        config.value.MagicName = fetchedConfig.MagicName
-        config.value.DownloadDir = fetchedConfig.DownloadDir
-        config.value.DownloadVideo = fetchedConfig.DownloadVideo
-        config.value.DownloadAudio = fetchedConfig.DownloadAudio
-        config.value.DownloadSubtitle = fetchedConfig.DownloadSubtitle
-        config.value.DownloadCombine = fetchedConfig.DownloadCombine
-
-        config.value.SESSDATA = fetchedConfig.SESSDATA
-
-        config.value.ScaleFactor = fetchedConfig.ScaleFactor
-        config.value.FFMPEG = fetchedConfig.FFMPEG
-        config.value.DownloadLimit = fetchedConfig.DownloadLimit
+        Object.assign(config, fetchedConfig)
     }
 
     // 加载任务
@@ -50,10 +36,10 @@ onMounted(async () => {
     tasks.value.splice(0, tasks.value.length, ...fetchedTasks)
 
     // 切换主题
-    switchTheme(config.value.Theme)
+    switchTheme(config.value.system.theme)
 
     // 设置字体大小
-    const scale = Math.min(Math.max(config.value.ScaleFactor, 12), 32)
+    const scale = Math.min(Math.max(config.value.system.scale_factor, 12), 32)
     document.documentElement.style.fontSize = `${scale}px`
 
     // 禁用页面缩放

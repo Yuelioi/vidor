@@ -12,8 +12,6 @@ const (
 	Vip
 )
 
-
-
 // https://github.com/SocialSisterYi/bilibili-API-collect/blob/master/docs/video/videostream_url.md
 // {ID: 6, Label: "240P"},      // 仅 MP4 格式支持, 仅 platform=html5 时有效
 // {ID: 16, Label: "360P"},     // 流畅

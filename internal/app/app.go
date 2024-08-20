@@ -4,7 +4,6 @@ import (
 	"context"
 	"log"
 	"os"
-	"path/filepath"
 
 	"github.com/energye/systray"
 
@@ -14,28 +13,21 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-// 软件基础信息 aa
-type appInfo struct {
-	name       string
-	version    string
-	appDir     string
-	configDir  string
-	pluginsDir string
-	tempDir    string
-	logDir     string
-}
-
 // 应用实例
 type App struct {
-	appInfo
+	appInfo   AppInfo
 	ctx       context.Context
-	config    *Config    // 软件配置信息
-	taskQueue *TaskQueue // 任务队列 用于分发任务 同一时刻只会出现一个队列
+	config    *Config   // 软件配置信息
+	taskQueue TaskQueue // 任务队列 用于分发任务 同一时刻只会出现一个队列
 	Logger    *logrus.Logger
 }
 
 func init() {
 	Application = NewApp()
+	Application.appInfo = *NewAppInfo()
+	Application.config = NewConfig()
+	Application.taskQueue = NewTaskQueue()
+	Application.Logger = logrus.New()
 }
 
 func NewApp() *App {
@@ -43,13 +35,9 @@ func NewApp() *App {
 }
 
 func (a *App) Startup(ctx context.Context) {
-	// 初始化app信息 创建必要文件夹
-	if err := a.initAppInfo(); err != nil {
-		log.Fatal("init: ", err.Error())
-	}
 
 	// 创建日志
-	appLogger, err := utils.CreateLogger(a.logDir)
+	appLogger, err := utils.CreateLogger(a.config.logDir)
 	if err != nil {
 		log.Fatal("init: ", err.Error())
 	}
@@ -106,35 +94,3 @@ func systemTray() {
 	systray.SetOnClick(func(menu systray.IMenu) { runtime.WindowShow(Application.ctx) })
 	systray.SetOnRClick(func(menu systray.IMenu) { menu.ShowMenu() })
 }
-
-// 初始化创建一些必要文件夹
-func (a *App) initAppInfo() (err error) {
-
-	exePath, err := os.Executable()
-	if err != nil {
-		log.Fatal("Error:", err)
-		return
-	}
-
-	appDir := filepath.Dir(exePath)
-
-	a.appInfo = appInfo{
-		name:       name,
-		version:    version,
-		appDir:     appDir,
-		configDir:  filepath.Join(appDir, "config"),
-		pluginsDir: string(filepath.Separator) + "plugins",
-
-		tempDir: filepath.Join(appDir, "tmp"),
-		logDir:  filepath.Join(appDir, "log"),
-	}
-
-	if err = utils.CreateDirs([]string{
-		a.configDir, a.tempDir,
-		a.pluginsDir, a.logDir}); err != nil {
-		return
-	}
-	return
-}
-
-// 启动时加载App任务列表

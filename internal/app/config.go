@@ -8,17 +8,65 @@ import (
 	"path/filepath"
 )
 
-func NewConfig() *Config {
+type Config struct {
+	logDir        string
+	configDir     string
+	pluginsDir    string
+	SystemConfig  SystemConfig   `json:"system"`
+	PluginConfigs []PluginConfig `json:"plugins"`
+}
 
+type SystemConfig struct {
+	Theme            string `json:"theme"`
+	ScaleFactor      int    `json:"scale_factor"`
+	ProxyURL         string `json:"proxy_url"`
+	UseProxy         bool   `json:"use_proxy"`
+	MagicName        string `json:"magic_name"`
+	DownloadDir      string `json:"download_dir"`
+	DownloadVideo    bool   `json:"download_video"`
+	DownloadAudio    bool   `json:"download_audio"`
+	DownloadSubtitle bool   `json:"download_subtitle"`
+	DownloadCombine  bool   `json:"download_combine"`
+	DownloadLimit    int    `json:"download_limit"`
+}
+
+type PluginConfig struct {
+	ManifestVersion int      `json:"manifest_version"`
+	Name            string   `json:"name"`
+	Description     string   `json:"description"`
+	Author          string   `json:"author"`
+	Version         string   `json:"version"`
+	URL             string   `json:"url"`
+	DocsURL         string   `json:"docs_url"`
+	DownloadURL     string   `json:"download_url"`
+	Matches         []string `json:"matches"`
+	Settings        []string `json:"settings"`
+}
+
+func NewConfig() *Config {
 	c := &Config{}
 	appDir := ExePath()
+
 	c.configDir = filepath.Join(appDir, "configs")
 	c.pluginsDir = filepath.Join(appDir, "plugins")
+	c.logDir = filepath.Join(appDir, "logs")
+
+	mkDirs(c.logDir, c.configDir, c.pluginsDir)
 
 	c.loadConfig()
 	return c
 }
 
+func mkDirs(dirs ...string) {
+	for _, dir := range dirs {
+		err := os.MkdirAll(dir, os.ModePerm)
+		if err != nil {
+			log.Fatal("无法创建文件夹")
+		}
+	}
+}
+
+// 保存配置
 func (c *Config) SaveConfig() error {
 	config := map[string]interface{}{
 		"system":  c.SystemConfig,
@@ -110,38 +158,4 @@ func mapToStruct(data map[string]interface{}, result interface{}) error {
 		return err
 	}
 	return json.Unmarshal(configData, result)
-}
-
-type Config struct {
-	configDir     string
-	pluginsDir    string
-	SystemConfig  SystemConfig   `json:"system"`
-	PluginConfigs []PluginConfig `json:"plugins"`
-}
-
-type SystemConfig struct {
-	Theme            string `json:"theme"`
-	ScaleFactor      int    `json:"scale_factor"`
-	ProxyURL         string `json:"proxy_url"`
-	UseProxy         bool   `json:"use_proxy"`
-	MagicName        string `json:"magic_name"`
-	DownloadDir      string `json:"download_dir"`
-	DownloadVideo    bool   `json:"download_video"`
-	DownloadAudio    bool   `json:"download_audio"`
-	DownloadSubtitle bool   `json:"download_subtitle"`
-	DownloadCombine  bool   `json:"download_combine"`
-	DownloadLimit    int    `json:"download_limit"`
-}
-
-type PluginConfig struct {
-	ManifestVersion int      `json:"manifest_version"`
-	Name            string   `json:"name"`
-	Description     string   `json:"description"`
-	Author          string   `json:"author"`
-	Version         string   `json:"version"`
-	URL             string   `json:"url"`
-	DocsURL         string   `json:"docs_url"`
-	DownloadURL     string   `json:"download_url"`
-	Matches         []string `json:"matches"`
-	Settings        []string `json:"settings"`
 }

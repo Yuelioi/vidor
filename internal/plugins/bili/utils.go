@@ -1,7 +1,6 @@
 package main
 
 import (
-	pb "bilibili/proto"
 	"context"
 	"fmt"
 	"os"
@@ -12,7 +11,6 @@ import (
 	"strings"
 
 	ffmpeg_go "github.com/u2takey/ffmpeg-go"
-	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 // 获取合集信息
@@ -131,75 +129,6 @@ func extractAidBvid(link string) (aid int, bvid string) {
 		bvid = bvidMatches[0]
 	}
 	return
-}
-
-// B站视频列表信息转为通用的列表信息
-func biliPlaylistInfoToPlaylistInfo(biliInfo biliPlaylistInfo) *pb.PlaylistInfo {
-	var videoInfo pb.PlaylistInfo
-
-	videoInfo.URL = fmt.Sprintf("https://www.bilibili.com/video/%s", biliInfo.Data.BVID)
-	videoInfo.WorkDirName = SanitizeFileName(biliInfo.Data.Title)
-	videoInfo.Author = biliInfo.Data.Owner.Name
-	videoInfo.Description = biliInfo.Data.Desc
-	videoInfo.Cover = biliInfo.Data.Pic
-
-	videoInfo.StreamInfos = make([]*pb.StreamInfo, 0)
-	return &videoInfo
-}
-
-func biliInfoToPlaylistInfo(biliInfo biliPlaylistInfo) *pb.PlaylistInfo {
-	videoInfo := biliPlaylistInfoToPlaylistInfo(biliInfo)
-
-	videoInfo.Author = biliInfo.Data.Owner.Name
-	videoInfo.WorkDirName = SanitizeFileName(biliInfo.Data.Title)
-	videoInfo.PubDate = &timestamppb.Timestamp{Seconds: int64(biliInfo.Data.PubDate)}
-	videoInfo.StreamInfos = make([]*pb.StreamInfo, 0)
-	return videoInfo
-}
-
-// B站分P视频列表信息转为通用的列表信息
-func biliPageToPlaylistInfo(bvid string, biliInfo biliPlaylistInfo) *pb.PlaylistInfo {
-	videoInfo := biliInfoToPlaylistInfo(biliInfo)
-	for _, page := range biliInfo.Data.Pages {
-		videoInfo.StreamInfos = append(videoInfo.StreamInfos, &pb.StreamInfo{
-			Id:        bvid,
-			SessionId: fmt.Sprint(page.CID),
-			Name:      page.Title,
-			Videos: []*pb.Format{
-				&DefaultFormat,
-			},
-			Audios: []*pb.Format{
-				&DefaultFormat,
-			},
-			Captions:   []*pb.CaptionTrack{{Name: "需要解析"}},
-			Thumbnails: []*pb.Thumbnail{{Url: page.Thumbnail}},
-		})
-	}
-
-	return videoInfo
-}
-
-// B站合集视频列表信息转为通用的列表信息
-func biliSeasonToPlaylistInfo(biliInfo biliPlaylistInfo) *pb.PlaylistInfo {
-	videoInfo := biliInfoToPlaylistInfo(biliInfo)
-	for _, episode := range biliInfo.Data.UgcSeason.Sections[0].Episodes {
-		videoInfo.StreamInfos = append(videoInfo.StreamInfos, &pb.StreamInfo{
-			Id:        episode.Bvid,
-			SessionId: fmt.Sprint(episode.CID),
-			Name:      episode.Title,
-			Videos: []*pb.Format{
-				&DefaultFormat,
-			},
-			Audios: []*pb.Format{
-				&DefaultFormat,
-			},
-			Captions:   []*pb.CaptionTrack{{Name: "需要解析"}},
-			Thumbnails: []*pb.Thumbnail{{Url: episode.Arc.Pic}},
-		})
-
-	}
-
-	return videoInfo
 }
 
 // 合并音频与视频

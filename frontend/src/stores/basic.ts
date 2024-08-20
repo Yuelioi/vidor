@@ -1,24 +1,14 @@
 import { defineStore } from 'pinia'
-import { Part } from '@/models/go'
+// import { Part } from '@/models/go'
+import { Config, SystemConfig } from '@/models/go'
 
 export const useBasicStore = defineStore('basic', () => {
     const config = reactive<Config>({
-        Theme: '',
-        ProxyURL: '',
-        UseProxy: false,
-        DownloadDir: '',
-        MagicName: '',
-        DownloadVideo: false,
-        DownloadAudio: false,
-        DownloadSubtitle: false,
-        DownloadCombine: false,
-        SESSDATA: '',
-        FFMPEG: '',
-        ScaleFactor: 16,
-        DownloadLimit: 1
+        system: new SystemConfig(),
+        plugins: []
     })
 
-    const tasks = reactive<Part[]>([])
+    const tasks = reactive([])
 
     return { config, tasks }
 })

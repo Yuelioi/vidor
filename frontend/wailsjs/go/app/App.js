@@ -6,10 +6,6 @@ export function AddDownloadTasks(arg1, arg2) {
   return window['go']['app']['App']['AddDownloadTasks'](arg1, arg2);
 }
 
-export function CheckFFmpeg(arg1) {
-  return window['go']['app']['App']['CheckFFmpeg'](arg1);
-}
-
 export function GetConfig() {
   return window['go']['app']['App']['GetConfig']();
 }
@@ -26,8 +22,8 @@ export function OpenFileWithSystemPlayer(arg1) {
   return window['go']['app']['App']['OpenFileWithSystemPlayer'](arg1);
 }
 
-export function ParsePlaylist(arg1) {
-  return window['go']['app']['App']['ParsePlaylist'](arg1);
+export function ParsePlaylist() {
+  return window['go']['app']['App']['ParsePlaylist']();
 }
 
 export function RemoveAllTask(arg1) {
@@ -44,10 +40,6 @@ export function SaveConfig(arg1) {
 
 export function SetDownloadDir(arg1) {
   return window['go']['app']['App']['SetDownloadDir'](arg1);
-}
-
-export function SetFFmpegPath(arg1) {
-  return window['go']['app']['App']['SetFFmpegPath'](arg1);
 }
 
 export function ShowDownloadInfo(arg1) {

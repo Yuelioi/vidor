@@ -6,5 +6,15 @@ var (
 
 )
 
-type Info struct {
+// 软件基础信息 aa
+type AppInfo struct {
+	name    string
+	version string
+}
+
+func NewAppInfo() *AppInfo {
+	return &AppInfo{
+		name:    name,
+		version: version,
+	}
 }
