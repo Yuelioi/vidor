@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"sync"
 
 	cmdRuntime "runtime"
 
@@ -28,37 +29,75 @@ type TaskResult struct {
 
 1. 获取下载器
 2. 调用展示信息函数
+3. 缓存数据
 */
-func (a *App) ShowDownloadInfo(link string) *pb.ShowResponse {
+func (a *App) ShowDownloadInfo(link string) *pb.VideoInfoResponse {
+	var wg sync.WaitGroup
 
-	response, err := a.plugins[0].Service.Show(context.Background(), &pb.ShowRequest{
+	// 清理上次查询缓存
+	a.cache.Clear()
+
+	// 获取下载器
+	plugin := a.plugins[0]
+	logger.Infof("检测到可用插件%s", plugin.Name)
+
+	// 获取展示信息
+	response, err := plugin.Service.GetVideoInfo(context.Background(), &pb.VideoInfoRequest{
 		Url: link,
 	})
 
 	if err != nil {
+		logger.Infof("获取视频信息失败%+v", err)
 		return nil
 	}
+	fmt.Printf("Show Response: %v\n", response)
 
-	fmt.Printf("response: %v\n", response)
+	// 缓存数据
+	for _, info := range response.Tasks {
+		wg.Add(1)
+		go func(info *pb.Task) {
+			defer wg.Done()
+			a.cache.Set(info.Id, info)
+		}(info)
+	}
+	wg.Wait()
 
 	return response
 }
 
+/*
+解析数据
+*/
 func (a *App) ParsePlaylist(ids []string) *pb.ParseResponse {
-	// downloader, err := newDownloader(a.downloaders, *a.config, a.Notice, playList.URL)
-	// // 没有下载器 直接返回空
-	// if err != nil {
-	// 	a.Logger.Info("ShowDownloadInfo: 获取下载器失败", err)
-	// 	return new(shared.PlaylistInfo)
-	// }
 
-	// pi, err := downloader.Parse(context.Background(), playList)
-	// if err != nil {
-	// 	a.Logger.Warn("ShowDownloadInfo: 获取主页搜索展示信息失败", err)
-	// 	return new(shared.PlaylistInfo)
-	// }
+	// 获取缓存数据
+	var wg sync.WaitGroup
 
-	return nil
+	infos := []*pb.Task{}
+	for _, id := range ids {
+		wg.Add(1)
+		go func(id string) {
+			defer wg.Done()
+			info, ok := a.cache.Get(id)
+			if ok {
+				infos = append(infos, info)
+			}
+		}(id)
+	}
+
+	wg.Wait()
+
+	// 获取下载器
+	plugin := a.plugins[0]
+
+	// 解析
+	parseResponse, err := plugin.Service.ParseEpisodes(context.Background(), &pb.ParseRequest{Tasks: infos})
+
+	if err != nil {
+		return &pb.ParseResponse{}
+	}
+
+	return parseResponse
 }
 
 /*
@@ -68,7 +107,16 @@ func (a *App) ParsePlaylist(ids []string) *pb.ParseResponse {
 2. 创建/添加到任务队列
 3. 保存任务信息
 */
-func (a *App) AddDownloadTasks(parts []shared.Part, workName string) []shared.Part {
+func (a *App) AddDownloadTasks(infos []*pb.Task) []shared.Part {
+
+	_, err := a.plugins[0].Service.Download(context.Background(), &pb.DownloadRequest{
+		Tasks: infos,
+	})
+
+	if err != nil {
+		return []shared.Part{}
+	}
+
 	// if len(parts) == 0 {
 	// 	return make([]shared.Part, 0)
 	// }
@@ -270,6 +318,7 @@ func (a *App) SaveConfig(config *Config) bool {
 	}
 
 	return err == nil
+
 }
 
 // 任务转任务片段

@@ -15,10 +15,7 @@ func ExePath() string {
 		log.Fatal(err)
 	}
 
-	// 获取可执行文件所在目录
-	exeDir := filepath.Dir(exePath)
-
-	return exeDir
+	return filepath.Dir(exePath)
 }
 
 // 检查是否存在FFmpeg

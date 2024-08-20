@@ -31,16 +31,16 @@ export class Playlist {
   title?: string
   cover?: string
   author?: string
-  stream_infos?: StreamInfo[] = []
+  stream_infos?: Task[] = []
 }
 
-export class StreamInfo extends proto.StreamInfo {
+export class Task extends proto.Task {
   selected: boolean = false
   magicName = ''
-  streams: Stream[] = []
+  streams: Segment[] = []
 }
 
-export class Stream extends proto.Stream {
+export class Segment extends proto.Segment {
   selected: boolean = false
   formats?: Format[]
 }

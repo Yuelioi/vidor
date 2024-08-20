@@ -4,10 +4,10 @@ import (
 	"context"
 	"log"
 	"os"
+	"path/filepath"
 
 	"github.com/energye/systray"
 
-	utils "github.com/Yuelioi/vidor/internal/tools"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 
 	"github.com/sirupsen/logrus"
@@ -19,28 +19,36 @@ type App struct {
 	ctx       context.Context
 	config    *Config   // 软件配置信息
 	taskQueue TaskQueue // 任务队列 用于分发任务
-	plugins   []*Plugin
+	plugins   []*Plugin // 插件
+	cache     *Cache    // 缓存
 	Logger    *logrus.Logger
 }
 
 func init() {
 
 	Application = NewApp()
-	Application.appInfo = *NewAppInfo()
+	Application.appInfo = NewAppInfo()
 	Application.config = NewConfig()
 
 	// 创建日志
-	appLogger, err := utils.CreateLogger(Application.config.logDir)
+	appLogger, err := createLogger(Application.config.logDir)
 	if err != nil {
 		log.Fatal("init: ", err.Error())
 	}
 	logger = appLogger
 
 	Application.taskQueue = NewTaskQueue()
-	Application.Logger = logrus.New()
+	Application.cache = NewCache()
+	Application.Logger = appLogger
 
 	p, _ := LoadPlugin("bilibili", "location string", "_type string")
-	RunPlugin(p)
+	if err != nil {
+		logger.Errorf("加载插件失败%v", err)
+	}
+	p, err = RunPlugin(p)
+	if err != nil {
+		logger.Errorf("运行插件失败%v", err)
+	}
 
 	Application.plugins = append(Application.plugins, p)
 }
@@ -55,9 +63,7 @@ func (a *App) Startup(ctx context.Context) {
 	a.Logger = logger
 
 	// 添加托盘
-	go func() {
-		systray.Run(systemTray, func() {})
-	}()
+	systray.Run(systemTray, func() {})
 
 	// 加载任务列表
 
@@ -79,14 +85,13 @@ func (a *App) Startup(ctx context.Context) {
 
 func (a *App) Shutdown(ctx context.Context) {
 	a.taskQueue = nil
-	// a.SaveConfig(a.config)
 	systray.Quit()
 }
 
 // 系统托盘
 func systemTray() {
-
-	iconData, _ := os.ReadFile("./build/windows/icon.ico")
+	iconPath := filepath.Join(Application.config.assetsDir, "icon.ico")
+	iconData, _ := os.ReadFile(iconPath)
 
 	systray.SetIcon(iconData) // read the icon from a file
 

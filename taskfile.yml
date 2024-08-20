@@ -3,6 +3,14 @@ version: "3"
 dotenv: [".env", "{{.ENV}}/.env.", "{{.HOME}}/.env"]
 
 tasks:
+  dev:
+    cmds:
+      - wails dev -loglevel Error
+    desc: "运行wails"
+  build:
+    cmds:
+      - wails build -ldflags -H=windowsgui
+    desc: "打包wails"
   generate:
     dir: "./internal/proto"
     cmds:

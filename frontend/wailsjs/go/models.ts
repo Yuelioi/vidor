@@ -120,12 +120,12 @@ export namespace proto {
 	        this.url = source["url"];
 	    }
 	}
-	export class Stream {
+	export class Segment {
 	    mime_type?: string;
 	    formats?: Format[];
 	
 	    static createFrom(source: any = {}) {
-	        return new Stream(source);
+	        return new Segment(source);
 	    }
 	
 	    constructor(source: any = {}) {
@@ -152,15 +152,15 @@ export namespace proto {
 		    return a;
 		}
 	}
-	export class StreamInfo {
+	export class Task {
 	    id?: string;
 	    url?: string;
 	    session_id?: string;
 	    title?: string;
-	    streams?: Stream[];
+	    segments?: Segment[];
 	
 	    static createFrom(source: any = {}) {
-	        return new StreamInfo(source);
+	        return new Task(source);
 	    }
 	
 	    constructor(source: any = {}) {
@@ -169,7 +169,7 @@ export namespace proto {
 	        this.url = source["url"];
 	        this.session_id = source["session_id"];
 	        this.title = source["title"];
-	        this.streams = this.convertValues(source["streams"], Stream);
+	        this.segments = this.convertValues(source["segments"], Segment);
 	    }
 	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {
@@ -192,7 +192,7 @@ export namespace proto {
 	}
 	export class ParseResponse {
 	    id?: string;
-	    stream_infos?: StreamInfo[];
+	    tasks?: Task[];
 	
 	    static createFrom(source: any = {}) {
 	        return new ParseResponse(source);
@@ -201,7 +201,7 @@ export namespace proto {
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.id = source["id"];
-	        this.stream_infos = this.convertValues(source["stream_infos"], StreamInfo);
+	        this.tasks = this.convertValues(source["tasks"], Task);
 	    }
 	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {
@@ -222,14 +222,15 @@ export namespace proto {
 		    return a;
 		}
 	}
-	export class ShowResponse {
+	
+	export class VideoInfoResponse {
 	    title?: string;
 	    cover?: string;
 	    author?: string;
-	    stream_infos?: StreamInfo[];
+	    tasks?: Task[];
 	
 	    static createFrom(source: any = {}) {
-	        return new ShowResponse(source);
+	        return new VideoInfoResponse(source);
 	    }
 	
 	    constructor(source: any = {}) {
@@ -237,7 +238,7 @@ export namespace proto {
 	        this.title = source["title"];
 	        this.cover = source["cover"];
 	        this.author = source["author"];
-	        this.stream_infos = this.convertValues(source["stream_infos"], StreamInfo);
+	        this.tasks = this.convertValues(source["tasks"], Task);
 	    }
 	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {

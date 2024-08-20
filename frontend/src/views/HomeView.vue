@@ -167,14 +167,14 @@
                 <!-- 视频 -->
                 <th class="relative group">
                   <div tabindex="0" role="button" class="min-w-max btn btn-sm btn-outline">
-                    {{ currentFormat(videoStreams(streamInfo.streams, 'video').formats) }}
+                    {{ currentFormat(videoSegments(streamInfo.streams, 'video').formats) }}
                   </div>
 
                   <ul
                     tabindex="0"
                     class="dropdown-content duration-500 transition-opacity absolute rounded-lg opacity-0 invisible group-hover:visible group-hover:opacity-100 group-hover:block top-[80%] w-full menu bg-base-300 z-[1]">
                     <template
-                      v-for="(format, index) in videoStreams(streamInfo.streams, 'video').formats"
+                      v-for="(format, index) in videoSegments(streamInfo.streams, 'video').formats"
                       :key="index">
                       <button
                         :class="format.selected ? '' : ''"
@@ -242,9 +242,9 @@
 import { VDialog } from '@/plugins/dialog/index.js'
 import { proto } from '@wailsjs/go/models'
 
-import { Part, Playlist, StreamInfo, Stream, Format } from '@/models/go'
+import { Part, Playlist, Task, Segment, Format } from '@/models/go'
 import { ShowDownloadInfo, AddDownloadTasks, ParsePlaylist } from '@wailsjs/go/app/App'
-import { MagicName } from '@/utils/util'
+// import { MagicName } from '@/utils/util'
 
 const { config, tasks } = storeToRefs(useBasicStore())
 const isDownloadBtnDisabled = ref(false)
@@ -256,18 +256,18 @@ const videoInfo = reactive<Playlist>(new Playlist())
 
 const router = useRouter()
 
-function isSelectAll(streamInfos: StreamInfo[]) {
-  return streamInfos.every((streamInfo: StreamInfo) => {
+function isSelectAll(streamInfos: Task[]) {
+  return streamInfos.every((streamInfo: Task) => {
     return streamInfo.selected
   })
 }
-function isSelectAtLessOne(streamInfos: StreamInfo[]) {
-  return !streamInfos.some((streamInfo: StreamInfo) => {
+function isSelectAtLessOne(streamInfos: Task[]) {
+  return !streamInfos.some((streamInfo: Task) => {
     return streamInfo.selected
   })
 }
 
-function handleselectedAll(streamInfos: StreamInfo[]) {
+function handleselectedAll(streamInfos: Task[]) {
   const status = isSelectAll(streamInfos)
 
   streamInfos.forEach((streamInfo) => {
@@ -277,7 +277,7 @@ function handleselectedAll(streamInfos: StreamInfo[]) {
 
 function extractPlaylistInfo() {
   Message({ message: '获取视频信息中...请稍后', duration: 300 })
-  ShowDownloadInfo(link.value).then((vi: proto.ShowResponse) => {
+  ShowDownloadInfo(link.value).then((vi: proto.VideoInfoResponse) => {
     if (vi.title == '') {
       Message({ message: '获取视频信息失败, 请检查设置, 以及日志文件', type: 'warn' })
     } else {
@@ -302,18 +302,19 @@ function parsePlaylistInfo() {
   })
 }
 
-function videoStreams(streams: Stream[], mimeType: string) {
+function videoSegments(streams: Segment[], mimeType: string) {
   for (const stream of streams) {
     if ((stream.mime_type = mimeType)) {
       return stream
     }
   }
-  return new Stream()
+  return new Segment()
 }
 
 // 选择最高画质
 function selectBest(videoInfo: Playlist) {
   videoInfo.stream_infos.forEach((element) => {
+    element.streams
     // element.Videos[0].selected = true
     // element.Audios[0].selected = true
   })
@@ -321,7 +322,7 @@ function selectBest(videoInfo: Playlist) {
 
 function addTasks() {
   isDownloadBtnDisabled.value = true
-  const parts: Part[] = []
+  // const parts: Part[] = []
   for (let i = 0; i < videoInfo.stream_infos.length; i++) {
     const streamInfo = videoInfo.stream_infos[i]
 
@@ -342,7 +343,7 @@ function addTasks() {
     isDownloadBtnDisabled.value = false
   }, 1000)
 
-  AddDownloadTasks(parts, videoInfo.author).then((parts: Part[]) => {
+  AddDownloadTasks(videoInfo.stream_infos).then((parts: Part[]) => {
     console.log(parts)
 
     if (parts.length == 0) {
@@ -358,14 +359,14 @@ function addTasks() {
 }
 
 function applyMagicName() {
-  videoInfo.stream_infos.forEach((element, index) => {
-    // element.magicNamee = MagicName(
-    //   config.value.system.magic_name,
-    //   videoInfo.WorkDirName,
-    //   element.Name,
-    //   index + 1
-    // )
-  })
+  // videoInfo.stream_infos.forEach((element, index) => {
+  //   // element.magicNamee = MagicName(
+  //   //   config.value.system.magic_name,
+  //   //   videoInfo.WorkDirName,
+  //   //   element.Name,
+  //   //   index + 1
+  //   // )
+  // })
 }
 
 const currentFormat = (formats: Format[]) => {

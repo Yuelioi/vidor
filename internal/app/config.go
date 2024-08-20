@@ -2,6 +2,7 @@ package app
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
 	"os"
@@ -11,6 +12,7 @@ import (
 type Config struct {
 	logDir        string
 	configDir     string
+	assetsDir     string
 	pluginsDir    string
 	SystemConfig  SystemConfig   `json:"system"`
 	PluginConfigs []PluginConfig `json:"plugins"`
@@ -49,9 +51,10 @@ func NewConfig() *Config {
 
 	c.configDir = filepath.Join(appDir, "configs")
 	c.pluginsDir = filepath.Join(appDir, "plugins")
+	c.assetsDir = filepath.Join(appDir, "assets")
 	c.logDir = filepath.Join(appDir, "logs")
 
-	mkDirs(c.logDir, c.configDir, c.pluginsDir)
+	mkDirs(c.logDir, c.configDir, c.assetsDir, c.pluginsDir)
 
 	c.loadConfig()
 
@@ -72,6 +75,11 @@ func mkDirs(dirs ...string) {
 
 // 保存配置
 func (c *Config) SaveConfig() error {
+	// 防止还没有init 前端就监控配置变化？
+	if c.configDir == "" {
+		return errors.New("还没有初始化")
+	}
+
 	config := map[string]interface{}{
 		"system":  c.SystemConfig,
 		"plugins": c.PluginConfigs,
@@ -82,7 +90,9 @@ func (c *Config) SaveConfig() error {
 		return err
 	}
 
-	err = os.WriteFile(filepath.Join(c.configDir, "config.json"), configData, 0644)
+	configFile := filepath.Join(c.configDir, "config.json")
+
+	err = os.WriteFile(configFile, configData, 0644)
 	if err != nil {
 		return err
 	}

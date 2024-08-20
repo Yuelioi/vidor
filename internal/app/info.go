@@ -12,8 +12,8 @@ type AppInfo struct {
 	version string
 }
 
-func NewAppInfo() *AppInfo {
-	return &AppInfo{
+func NewAppInfo() AppInfo {
+	return AppInfo{
 		name:    name,
 		version: version,
 	}

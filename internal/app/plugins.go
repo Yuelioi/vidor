@@ -57,7 +57,7 @@ func RunPlugin(p *Plugin) (*Plugin, error) {
 	// 插件设置
 	LoadEnv()
 	value := os.Getenv("SESSDATA")
-	ctx := metadata.AppendToOutgoingContext(context.Background(), "plugin.sessdata", value)
+	ctx := metadata.AppendToOutgoingContext(context.Background(), "plugin.sessdata", value, "host", "vidor")
 
 	_, err = p.Service.Init(ctx, nil)
 	if err != nil {
@@ -93,7 +93,7 @@ func getAvailablePort() (int, error) {
 func LoadEnv() {
 
 	_, filename, _, _ := runtime.Caller(0)
-	env := filepath.Join(filepath.Dir(filename), "..", ".env")
+	env := filepath.Join(filepath.Dir(filename), "..", "..", ".env")
 
 	// Attempt to load the .env file
 	err := godotenv.Load(env)
