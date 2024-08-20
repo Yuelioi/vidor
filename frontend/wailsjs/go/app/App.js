@@ -22,8 +22,8 @@ export function OpenFileWithSystemPlayer(arg1) {
   return window['go']['app']['App']['OpenFileWithSystemPlayer'](arg1);
 }
 
-export function ParsePlaylist() {
-  return window['go']['app']['App']['ParsePlaylist']();
+export function ParsePlaylist(arg1) {
+  return window['go']['app']['App']['ParsePlaylist'](arg1);
 }
 
 export function RemoveAllTask(arg1) {

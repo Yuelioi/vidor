@@ -1,6 +1,7 @@
 package app
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"os/exec"
@@ -29,25 +30,21 @@ type TaskResult struct {
 2. 调用展示信息函数
 */
 func (a *App) ShowDownloadInfo(link string) *pb.ShowResponse {
-	// downloader, err := newDownloader(a.downloaders, *a.config, a.Notice, link)
-	// // 没有下载器 直接返回空
-	// if err != nil {
-	// 	a.Logger.Info("ShowDownloadInfo: 获取下载器失败", err)
-	// 	return new(shared.PlaylistInfo)
-	// }
 
-	// pi, err := downloader.Show(context.Background(), link)
+	response, err := a.plugins[0].Service.Show(context.Background(), &pb.ShowRequest{
+		Url: link,
+	})
 
-	// if err != nil {
-	// 	a.Logger.Warn("ShowDownloadInfo: 获取主页搜索展示信息失败", err)
-	// 	return new(shared.PlaylistInfo)
-	// }
+	if err != nil {
+		return nil
+	}
 
-	// a.Logger.Infof("下载: 获取视频元数据成功%s", link)
-	return nil
+	fmt.Printf("response: %v\n", response)
+
+	return response
 }
 
-func (a *App) ParsePlaylist() *pb.ParseResponse {
+func (a *App) ParsePlaylist(ids []string) *pb.ParseResponse {
 	// downloader, err := newDownloader(a.downloaders, *a.config, a.Notice, playList.URL)
 	// // 没有下载器 直接返回空
 	// if err != nil {
@@ -253,8 +250,8 @@ func (a *App) OpenFileWithSystemPlayer(filePath string) error {
 }
 
 func (a *App) GetConfig() *Config {
-	// return a.config
-	return nil
+	return a.config
+
 }
 
 // 获取前端任务片段
@@ -264,16 +261,15 @@ func (a *App) GetTaskParts() []shared.Part {
 }
 
 func (a *App) SaveConfig(config *Config) bool {
-	// a.config = config
-	// err := saveConfig(a.configDir, *config)
-	// if err != nil {
-	// 	a.Logger.Warnf("保存设置失败%s", err)
-	// } else {
-	// 	a.Logger.Info("保存设置成功")
-	// }
+	a.config = config
+	err := a.config.SaveConfig()
+	if err != nil {
+		a.Logger.Warnf("保存设置失败%s", err)
+	} else {
+		a.Logger.Info("保存设置成功")
+	}
 
-	// return err == nil
-	return false
+	return err == nil
 }
 
 // 任务转任务片段

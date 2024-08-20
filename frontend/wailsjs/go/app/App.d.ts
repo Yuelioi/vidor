@@ -14,7 +14,7 @@ export function OpenExplorer(arg1:string):Promise<void>;
 
 export function OpenFileWithSystemPlayer(arg1:string):Promise<void>;
 
-export function ParsePlaylist():Promise<proto.ParseResponse>;
+export function ParsePlaylist(arg1:Array<string>):Promise<proto.ParseResponse>;
 
 export function RemoveAllTask(arg1:Array<shared.Part>):Promise<boolean>;
 

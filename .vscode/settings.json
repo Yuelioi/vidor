@@ -10,6 +10,8 @@
     "hide-files.files": [
         "frontend/dist"
     ],
+    "editor.tabSize": 2,
+    "prettier.tabWidth": 2,
     "cSpell.words": [
         "assetserver",
         "Bili",

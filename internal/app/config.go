@@ -54,6 +54,10 @@ func NewConfig() *Config {
 	mkDirs(c.logDir, c.configDir, c.pluginsDir)
 
 	c.loadConfig()
+
+	// 加载插件配置
+
+	c.PluginConfigs = []PluginConfig{}
 	return c
 }
 

@@ -1,0 +1,16 @@
+{
+  "plugins": [],
+  "system": {
+    "theme": "dark",
+    "scale_factor": 16,
+    "proxy_url": "",
+    "use_proxy": false,
+    "magic_name": "{{Index}}-{{Title}}",
+    "download_dir": "C:\\Users\\yueli\\downloads",
+    "download_video": true,
+    "download_audio": true,
+    "download_subtitle": true,
+    "download_combine": true,
+    "download_limit": 5
+  }
+}

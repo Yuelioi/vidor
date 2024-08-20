@@ -5,7 +5,7 @@
             <input
                 type="text"
                 class="ml-2 grow"
-                v-model.lazy="config.MagicName"
+                v-model.lazy="config.system.magic_name"
                 placeholder="下载文件魔法名称" />
         </label>
         <label class="flex items-center gap-2 input input-bordered">
@@ -14,28 +14,28 @@
                 type="range"
                 min="1"
                 max="7"
-                v-model.number.lazy="config.DownloadLimit"
+                v-model.number.lazy="config.system.download_limit"
                 value="5"
                 class="range range-xs bg-primary [--range-shdw:#788091]"
                 step="1" />
-            <span class="pl-2 text-nowrap">{{ config.DownloadLimit }}</span>
+            <span class="pl-2 text-nowrap">{{ config.system.download_limit }}</span>
         </label>
         <label class="flex items-center gap-2 input input-bordered">
             代理
             <input
                 type="text"
                 class="ml-2 grow"
-                v-model.lazy="config.ProxyURL"
+                v-model.lazy="config.system.proxy_url"
                 placeholder="请输入代理链接" />
 
-            <input type="checkbox" v-model="config.UseProxy" class="checkbox" />
+            <input type="checkbox" v-model="config.system.use_proxy" class="checkbox" />
         </label>
         <label class="flex items-center input input-bordered">
             路径
             <input
                 type="text"
                 class="ml-2 truncate grow"
-                v-model.lazy="config.DownloadDir"
+                v-model.lazy="config.system.download_dir"
                 placeholder="设置下载文件夹" />
             <button class="btn btn-square btn-sm" @click="openDownloadDir">
                 <span class="icon-[lucide--folder-search]"></span>
@@ -51,7 +51,7 @@ const { config } = storeToRefs(useBasicStore())
 function openDownloadDir() {
     SetDownloadDir('请选择文件夹').then((result) => {
         if (result != '') {
-            config.value.DownloadDir = result
+            config.value.system.download_dir = result
         } else {
             Message({ message: '用户取消', type: 'warn' })
         }

@@ -18,16 +18,31 @@ type App struct {
 	appInfo   AppInfo
 	ctx       context.Context
 	config    *Config   // 软件配置信息
-	taskQueue TaskQueue // 任务队列 用于分发任务 同一时刻只会出现一个队列
+	taskQueue TaskQueue // 任务队列 用于分发任务
+	plugins   []*Plugin
 	Logger    *logrus.Logger
 }
 
 func init() {
+
 	Application = NewApp()
 	Application.appInfo = *NewAppInfo()
 	Application.config = NewConfig()
+
+	// 创建日志
+	appLogger, err := utils.CreateLogger(Application.config.logDir)
+	if err != nil {
+		log.Fatal("init: ", err.Error())
+	}
+	logger = appLogger
+
 	Application.taskQueue = NewTaskQueue()
 	Application.Logger = logrus.New()
+
+	p, _ := LoadPlugin("bilibili", "location string", "_type string")
+	RunPlugin(p)
+
+	Application.plugins = append(Application.plugins, p)
 }
 
 func NewApp() *App {
@@ -35,13 +50,6 @@ func NewApp() *App {
 }
 
 func (a *App) Startup(ctx context.Context) {
-
-	// 创建日志
-	appLogger, err := utils.CreateLogger(a.config.logDir)
-	if err != nil {
-		log.Fatal("init: ", err.Error())
-	}
-	logger = appLogger
 
 	a.ctx = ctx
 	a.Logger = logger

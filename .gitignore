@@ -17,5 +17,5 @@ logs
 # Others
 Note.md
 temp.*
-
+.env
 *.pb.go
