@@ -107,3 +107,8 @@ func systemTray() {
 	systray.SetOnClick(func(menu systray.IMenu) { runtime.WindowShow(Application.ctx) })
 	systray.SetOnRClick(func(menu systray.IMenu) { menu.ShowMenu() })
 }
+
+func (a *App) selectPlugin(url string) (*Plugin, error) {
+	// implement plugin selection logic based on URL scheme or content type
+	return a.plugins[0], nil
+}

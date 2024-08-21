@@ -95,13 +95,27 @@ export namespace app {
 		}
 	}
 	
+	
+	export class taskMap {
+	
+	
+	    static createFrom(source: any = {}) {
+	        return new taskMap(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	
+	    }
+	}
 
 }
 
 export namespace proto {
 	
 	export class Format {
-	    id?: number;
+	    id?: string;
+	    fid?: number;
 	    mime_type?: string;
 	    label?: string;
 	    code?: string;
@@ -114,6 +128,7 @@ export namespace proto {
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.id = source["id"];
+	        this.fid = source["fid"];
 	        this.mime_type = source["mime_type"];
 	        this.label = source["label"];
 	        this.code = source["code"];
@@ -222,7 +237,6 @@ export namespace proto {
 		    return a;
 		}
 	}
-	
 	export class VideoInfoResponse {
 	    title?: string;
 	    cover?: string;

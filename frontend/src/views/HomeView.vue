@@ -99,7 +99,7 @@
         </div>
       </div>
 
-      <div class="overflow-y-hidden px-4">
+      <div class="px-4">
         <h2 class="p-2 py-3 font-bold">分P选择</h2>
         <div class="flex flex-col">
           <table class="table">
@@ -110,8 +110,8 @@
                     <input
                       type="checkbox"
                       class="checkbox"
-                      :checked="isSelectAll(videoInfo.stream_infos)"
-                      @change="handleselectedAll(videoInfo.stream_infos)" />
+                      :checked="isSelectAll(videoInfo.tasks)"
+                      @change="handleSelectedAll(videoInfo.tasks)" />
                   </label>
                 </th>
                 <th>序号</th>
@@ -128,32 +128,34 @@
                     魔法名称
                   </button>
                 </th>
-                <th>视频</th>
-                <th>音频</th>
-                <th>图片</th>
+                <template v-if="hasVideo">
+                  <th>视频</th>
+                </template>
+                <template v-if="hasAudio">
+                  <th>音频</th>
+                </template>
+                <template v-if="hasImage">
+                  <th>图片</th>
+                </template>
               </tr>
             </thead>
             <tbody>
-              <tr
-                v-for="(streamInfo, index) in videoInfo.stream_infos"
-                :key="index"
-                class="px-2 mb-2">
+              <tr v-for="(task, index) in videoInfo.tasks" :key="index" class="px-2 mb-2">
                 <th>
                   <label>
                     <input
                       type="checkbox"
                       class="checkbox"
-                      :checked="streamInfo.selected"
-                      @change="streamInfo.selected = !streamInfo.selected" />
+                      :checked="task.selected"
+                      @change="task.selected = !task.selected" />
                   </label>
                 </th>
                 <td>
                   {{ index + 1 }}
                 </td>
-                <!-- 标题 -->
                 <td class="w-full">
                   <div class="font-bold" v-if="!showMagicName">
-                    {{ streamInfo.title }}
+                    {{ task.title }}
                   </div>
                   <div class="font-bold" v-if="showMagicName">
                     <input
@@ -161,34 +163,12 @@
                       name=""
                       class="input w-full"
                       id=""
-                      v-model="streamInfo.magicName" />
+                      v-model="task.magicName" />
                   </div>
                 </td>
-                <!-- 视频 -->
-                <th class="relative group">
-                  <div tabindex="0" role="button" class="min-w-max btn btn-sm btn-outline">
-                    {{ currentFormat(videoSegments(streamInfo.streams, 'video').formats) }}
-                  </div>
-
-                  <ul
-                    tabindex="0"
-                    class="dropdown-content duration-500 transition-opacity absolute rounded-lg opacity-0 invisible group-hover:visible group-hover:opacity-100 group-hover:block top-[80%] w-full menu bg-base-300 z-[1]">
-                    <template
-                      v-for="(format, index) in videoSegments(streamInfo.streams, 'video').formats"
-                      :key="index">
-                      <button
-                        :class="format.selected ? '' : ''"
-                        class="py-1 btn btn-xs"
-                        @click="selectFormat(streamInfo.streams, index)">
-                        {{ format.label }}
-                      </button>
-                    </template>
-                  </ul>
-                </th>
-
-                <th>
-                  <button class="btn btn-ghost btn-xs min-w-max">暂不支持</button>
-                </th>
+                <template v-for="type in mediaTypes" :key="type">
+                  <media-cell :task="task" :type="type" />
+                </template>
               </tr>
             </tbody>
             <!-- foot -->
@@ -197,9 +177,15 @@
                 <th></th>
                 <th>Index</th>
                 <th>Title</th>
-                <th>Video</th>
-                <th>Audio</th>
-                <th>Code</th>
+                <template v-if="hasVideo">
+                  <th>Video</th>
+                </template>
+                <template v-if="hasAudio">
+                  <th>Audio</th>
+                </template>
+                <template v-if="hasImage">
+                  <th>Image</th>
+                </template>
               </tr>
             </tfoot>
           </table>
@@ -212,9 +198,9 @@
           <label class="flex items-center cursor-pointer">
             <input
               type="checkbox"
-              :checked="isSelectAll(videoInfo.stream_infos)"
+              :checked="isSelectAll(videoInfo.tasks)"
               class="hidden peer"
-              @change="handleselectedAll(videoInfo.stream_infos)" />
+              @change="handleSelectedAll(videoInfo.tasks)" />
             <span
               class="border-primary select-none border text-sm peer-checked:bg-primary peer-checked:text-white ml-2 px-3 py-1 rounded">
               全选
@@ -223,14 +209,14 @@
           <button
             class="btn btn-sm mx-4"
             @click="parsePlaylistInfo"
-            :disabled="isSelectAtLessOne(videoInfo.stream_infos)">
+            :disabled="isSelectAtLessOne(videoInfo.tasks)">
             解析
           </button>
           <button class="btn btn-sm ml-auto mx-4" @click="showPlaylistInfo = false">取消</button>
           <button
             class="btn btn-primary btn-sm mr-2"
             @click="addTasks"
-            :disabled="isSelectAtLessOne(videoInfo.stream_infos)">
+            :disabled="isSelectAtLessOne(videoInfo.tasks)">
             下载
           </button>
         </div>
@@ -240,13 +226,15 @@
 </template>
 <script lang="ts" setup>
 import { VDialog } from '@/plugins/dialog/index.js'
-import { proto } from '@wailsjs/go/models'
+import { proto, app } from '@wailsjs/go/models'
 
-import { Part, Playlist, Task, Segment, Format } from '@/models/go'
+const mediaTypes = ['video', 'audio']
+
+import { Playlist, Task } from '@/models/go'
 import { ShowDownloadInfo, AddDownloadTasks, ParsePlaylist } from '@wailsjs/go/app/App'
 // import { MagicName } from '@/utils/util'
 
-const { config, tasks } = storeToRefs(useBasicStore())
+const { config } = storeToRefs(useBasicStore())
 const isDownloadBtnDisabled = ref(false)
 const link = ref('')
 
@@ -254,27 +242,38 @@ const showPlaylistInfo = ref(false)
 const showMagicName = ref(false)
 const videoInfo = reactive<Playlist>(new Playlist())
 
-const router = useRouter()
+const hasVideo = computed(() => {
+  return videoInfo.tasks[0].segments.some((segment) => segment.mime_type === 'video')
+})
 
-function isSelectAll(streamInfos: Task[]) {
-  return streamInfos.every((streamInfo: Task) => {
-    return streamInfo.selected
+const hasAudio = computed(() => {
+  return videoInfo.tasks[0].segments.some((segment) => segment.mime_type === 'audio')
+})
+const hasImage = computed(() => {
+  return videoInfo.tasks[0].segments.some((segment) => segment.mime_type === 'image')
+})
+
+// const router = useRouter()
+
+function isSelectAll(tasks: Task[]) {
+  return tasks.every((task: Task) => {
+    return task.selected
   })
 }
-function isSelectAtLessOne(streamInfos: Task[]) {
-  return !streamInfos.some((streamInfo: Task) => {
-    return streamInfo.selected
+function isSelectAtLessOne(tasks: Task[]) {
+  return !tasks.some((task: Task) => {
+    return task.selected
   })
 }
 
-function handleselectedAll(streamInfos: Task[]) {
-  const status = isSelectAll(streamInfos)
-
-  streamInfos.forEach((streamInfo) => {
-    streamInfo.selected = !status
+function handleSelectedAll(tasks: Task[]) {
+  const status = isSelectAll(tasks)
+  tasks.forEach((task) => {
+    task.selected = !status
   })
 }
 
+// 获取视频信息
 function extractPlaylistInfo() {
   Message({ message: '获取视频信息中...请稍后', duration: 300 })
   ShowDownloadInfo(link.value).then((vi: proto.VideoInfoResponse) => {
@@ -282,84 +281,82 @@ function extractPlaylistInfo() {
       Message({ message: '获取视频信息失败, 请检查设置, 以及日志文件', type: 'warn' })
     } else {
       showPlaylistInfo.value = true
-      console.log(vi)
       Object.assign(videoInfo, vi)
+      videoInfo.title = vi.title
+      console.log(videoInfo)
+      selectBest(videoInfo)
     }
   })
 }
 
+// 解析视频
 function parsePlaylistInfo() {
-  ParsePlaylist([]).then((vi: proto.ParseResponse) => {
-    if (vi.id == '') {
+  const ids: string[] = []
+
+  videoInfo.tasks.forEach((task) => {
+    if (task.selected) {
+      ids.push(task.id)
+    }
+  })
+
+  ParsePlaylist(ids).then((vi: proto.ParseResponse) => {
+    if (vi.id === '') {
       Message({ message: '获取视频信息失败, 请检查设置, 以及日志文件', type: 'warn' })
     } else {
       Message({ message: '解析成功', type: 'success' })
-
       Object.assign(videoInfo, vi)
+      console.log(videoInfo)
 
       selectBest(videoInfo)
     }
   })
 }
 
-function videoSegments(streams: Segment[], mimeType: string) {
-  for (const stream of streams) {
-    if ((stream.mime_type = mimeType)) {
-      return stream
-    }
-  }
-  return new Segment()
-}
-
 // 选择最高画质
 function selectBest(videoInfo: Playlist) {
-  videoInfo.stream_infos.forEach((element) => {
-    element.streams
-    // element.Videos[0].selected = true
-    // element.Audios[0].selected = true
+  videoInfo.tasks.forEach((task) => {
+    task.segments.forEach((seg) => {
+      if (seg.formats.length > 0) {
+        seg.formats[0].selected = true
+      }
+    })
   })
 }
 
 function addTasks() {
-  isDownloadBtnDisabled.value = true
-  // const parts: Part[] = []
-  for (let i = 0; i < videoInfo.stream_infos.length; i++) {
-    const streamInfo = videoInfo.stream_infos[i]
+  const mps = new app.taskMap()
+  mps['1'] = 1
 
-    if (!streamInfo.selected) {
+  isDownloadBtnDisabled.value = true
+  for (let i = 0; i < videoInfo.tasks.length; i++) {
+    const task = videoInfo.tasks[i]
+
+    if (!task.selected) {
       continue
     }
-
-    // const part = new Part(
-    //     video['Url'],
-    //     video['Title'],
-    //     video['Thumbnail'],
-    //     selectedFormat.value
-    // )
-    // parts.push(part)
   }
 
   setTimeout(() => {
     isDownloadBtnDisabled.value = false
   }, 1000)
 
-  AddDownloadTasks(videoInfo.stream_infos).then((parts: Part[]) => {
-    console.log(parts)
+  AddDownloadTasks(videoInfo.tasks).then((result: boolean) => {
+    console.log(result)
 
-    if (parts.length == 0) {
-      Message({ message: '添加失败', type: 'warn' })
-    } else {
-      tasks.value.push(...parts)
-      Message({ message: '添加成功', type: 'success' })
-      router.push({
-        name: 'task'
-      })
-    }
+    // if (parts.length == 0) {
+    //   Message({ message: '添加失败', type: 'warn' })
+    // } else {
+    //   tasks.value.push(...parts)
+    //   Message({ message: '添加成功', type: 'success' })
+    //   router.push({
+    //     name: 'task'
+    //   })
+    // }
   })
 }
 
 function applyMagicName() {
-  // videoInfo.stream_infos.forEach((element, index) => {
+  // videoInfo.tasks.forEach((element, index) => {
   //   // element.magicNamee = MagicName(
   //   //   config.value.system.magic_name,
   //   //   videoInfo.WorkDirName,
@@ -367,22 +364,6 @@ function applyMagicName() {
   //   //   index + 1
   //   // )
   // })
-}
-
-const currentFormat = (formats: Format[]) => {
-  const selectedFormat = formats.find((format) => format.selected)
-  return selectedFormat ? selectedFormat.label : '选择'
-}
-
-function selectFormat(formats: Format[], index: number) {
-  for (let i = 0; i < formats.length; i++) {
-    if (i == index) {
-      formats[i].selected = true
-    } else {
-      formats[i].selected = false
-    }
-  }
-  console.log(formats)
 }
 
 watch(config.value, async () => {

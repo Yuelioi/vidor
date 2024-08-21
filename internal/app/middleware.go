@@ -3,10 +3,11 @@ package app
 import (
 	"context"
 	"fmt"
+	"io"
+	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
-	"sync"
 
 	cmdRuntime "runtime"
 
@@ -32,17 +33,25 @@ type TaskResult struct {
 3. 缓存数据
 */
 func (a *App) ShowDownloadInfo(link string) *pb.VideoInfoResponse {
-	var wg sync.WaitGroup
 
-	// 清理上次查询缓存
-	a.cache.Clear()
+	// 清理上次查询任务缓存
+	a.cache.ClearTasks()
 
 	// 获取下载器
-	plugin := a.plugins[0]
+	plugin, err := a.selectPlugin(link)
+	if err != nil {
+		return &pb.VideoInfoResponse{}
+	}
 	logger.Infof("检测到可用插件%s", plugin.Name)
 
+	// 储存下载器
+	a.cache.SetDownloader(plugin)
+
+	// 传递上下文
+	ctx := context.Background()
+
 	// 获取展示信息
-	response, err := plugin.Service.GetVideoInfo(context.Background(), &pb.VideoInfoRequest{
+	response, err := plugin.Service.GetVideoInfo(ctx, &pb.VideoInfoRequest{
 		Url: link,
 	})
 
@@ -52,17 +61,28 @@ func (a *App) ShowDownloadInfo(link string) *pb.VideoInfoResponse {
 	}
 	fmt.Printf("Show Response: %v\n", response)
 
-	// 缓存数据
-	for _, info := range response.Tasks {
-		wg.Add(1)
-		go func(info *pb.Task) {
-			defer wg.Done()
-			a.cache.Set(info.Id, info)
-		}(info)
-	}
-	wg.Wait()
+	// 缓存任务数据
+	a.cache.SetTasks(response.Tasks)
 
 	return response
+}
+
+type taskMap struct {
+	id        string
+	formatIds []string
+}
+
+// 过滤 segments 中的 formats
+func filterSegments(segments []*pb.Segment, formatSet map[string]struct{}) {
+	for _, seg := range segments {
+		filteredFormats := []*pb.Format{}
+		for _, format := range seg.Formats {
+			if _, exists := formatSet[format.Id]; exists {
+				filteredFormats = append(filteredFormats, format)
+			}
+		}
+		seg.Formats = filteredFormats
+	}
 }
 
 /*
@@ -70,33 +90,32 @@ func (a *App) ShowDownloadInfo(link string) *pb.VideoInfoResponse {
 */
 func (a *App) ParsePlaylist(ids []string) *pb.ParseResponse {
 
-	// 获取缓存数据
-	var wg sync.WaitGroup
+	// 获取任务缓存数据
+	tasks, err := a.cache.Tasks(ids)
 
-	infos := []*pb.Task{}
-	for _, id := range ids {
-		wg.Add(1)
-		go func(id string) {
-			defer wg.Done()
-			info, ok := a.cache.Get(id)
-			if ok {
-				infos = append(infos, info)
-			}
-		}(id)
+	fmt.Printf("tasks: %v\n", tasks)
+	if err != nil {
+		return &pb.ParseResponse{}
 	}
 
-	wg.Wait()
+	// 获取缓存下载器
+	plugin := a.cache.Downloader()
 
-	// 获取下载器
-	plugin := a.plugins[0]
+	// 传递上下文
+	ctx := context.Background()
 
 	// 解析
-	parseResponse, err := plugin.Service.ParseEpisodes(context.Background(), &pb.ParseRequest{Tasks: infos})
+	parseResponse, err := plugin.Service.ParseEpisodes(ctx, &pb.ParseRequest{Tasks: tasks})
 
 	if err != nil {
 		return &pb.ParseResponse{}
 	}
 
+	fmt.Println("parseResponse", parseResponse)
+	// 更新数据
+
+	// 缓存任务
+	a.cache.SetTasks(parseResponse.Tasks)
 	return parseResponse
 }
 
@@ -107,51 +126,54 @@ func (a *App) ParsePlaylist(ids []string) *pb.ParseResponse {
 2. 创建/添加到任务队列
 3. 保存任务信息
 */
-func (a *App) AddDownloadTasks(infos []*pb.Task) []shared.Part {
+func (a *App) AddDownloadTasks(taskMaps []taskMap) bool {
 
-	_, err := a.plugins[0].Service.Download(context.Background(), &pb.DownloadRequest{
-		Tasks: infos,
+	// 获取任务
+	tasks := []*pb.Task{}
+	for _, taskMap := range taskMaps {
+		cacheTask, ok := a.cache.Task(taskMap.id)
+		if !ok {
+			continue
+		}
+
+		// 将 formatIds 转换为集合，便于快速查找
+		formatSet := make(map[string]struct{})
+		for _, formatId := range taskMap.formatIds {
+			formatSet[formatId] = struct{}{}
+		}
+
+		// 过滤掉不符合条件的 formats
+		filterSegments(cacheTask.Segments, formatSet)
+
+		tasks = append(tasks, cacheTask)
+	}
+
+	// 获取缓存下载器
+	plugin := a.cache.Downloader()
+
+	// 清除任务缓存
+	a.cache.ClearTasks()
+
+	stream, err := plugin.Service.Download(context.Background(), &pb.DownloadRequest{
+		Tasks: tasks,
 	})
 
 	if err != nil {
-		return []shared.Part{}
+		return false
 	}
 
-	// if len(parts) == 0 {
-	// 	return make([]shared.Part, 0)
-	// }
+	for {
+		progress, err := stream.Recv()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			log.Fatalf("Error receiving progress: %v", err)
+		}
+		fmt.Printf("Download progress: %s - %s\n", progress.Id, progress.Speed)
+	}
 
-	// var tasks = make([]*Task, 0)
-
-	// for _, part := range parts {
-	// 	if taskExists(a.tasks, part.URL) {
-	// 		logger.Info("任务", "任务已存在", part.URL)
-	// 		continue
-	// 	} else {
-
-	// 		task, err := createNewTask(part, a.config.DownloadDir, workName)
-	// 		if err != nil {
-	// 			a.Logger.Warnf("任务: 创建任务失败%s", err)
-	// 			continue
-	// 		}
-	// 		tasks = append(tasks, task)
-	// 		a.tasks = append(a.tasks, task)
-	// 	}
-	// }
-	// // 添加到队列
-	// if a.taskQueue == nil || a.taskQueue.state == Finished {
-	// 	println("任务队列 重新创建")
-	// 	a.taskQueue = NewTaskQueue(a, tasks)
-	// } else {
-	// 	println("任务队列 还在使用")
-	// 	a.taskQueue.AddTasks(tasks)
-	// }
-
-	// if err := saveTasks(a.tasks, a.configDir); err != nil {
-	// 	a.Logger.Warnf("添加任务:保存配置失败 %s", err)
-	// }
-
-	return []shared.Part{}
+	return true
 
 	// return tasksToParts(tasks)
 }
