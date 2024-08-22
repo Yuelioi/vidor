@@ -13,7 +13,6 @@ package plugin_youtube
 
 // 	"github.com/Yuelioi/vidor/shared"
 // 	"github.com/Yuelioi/vidor/utils"
-
 // 	"github.com/kkdai/youtube/v2"
 // )
 
@@ -287,7 +286,6 @@ package plugin_youtube
 // func isPlaylist(url string) bool {
 // 	re := regexp.MustCompile(`list=([^&]+)`)
 // 	match := re.FindStringSubmatch(url)
-
 // 	return len(match) > 1
 // }
 

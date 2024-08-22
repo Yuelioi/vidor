@@ -32,7 +32,7 @@ type TaskResult struct {
 2. 调用展示信息函数
 3. 缓存数据
 */
-func (a *App) ShowDownloadInfo(link string) *pb.VideoInfoResponse {
+func (a *App) ShowDownloadInfo(link string) *pb.InfoResponse {
 
 	// 清理上次查询任务缓存
 	a.cache.ClearTasks()
@@ -40,7 +40,7 @@ func (a *App) ShowDownloadInfo(link string) *pb.VideoInfoResponse {
 	// 获取下载器
 	plugin, err := a.selectPlugin(link)
 	if err != nil {
-		return &pb.VideoInfoResponse{}
+		return &pb.InfoResponse{}
 	}
 	logger.Infof("检测到可用插件%s", plugin.Name)
 
@@ -51,7 +51,7 @@ func (a *App) ShowDownloadInfo(link string) *pb.VideoInfoResponse {
 	ctx := context.Background()
 
 	// 获取展示信息
-	response, err := plugin.Service.GetVideoInfo(ctx, &pb.VideoInfoRequest{
+	response, err := plugin.Service.GetInfo(ctx, &pb.InfoRequest{
 		Url: link,
 	})
 
@@ -105,7 +105,7 @@ func (a *App) ParsePlaylist(ids []string) *pb.ParseResponse {
 	ctx := context.Background()
 
 	// 解析
-	parseResponse, err := plugin.Service.ParseEpisodes(ctx, &pb.ParseRequest{Tasks: tasks})
+	parseResponse, err := plugin.Service.Parse(ctx, &pb.ParseRequest{Tasks: tasks})
 
 	if err != nil {
 		return &pb.ParseResponse{}

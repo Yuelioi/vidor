@@ -112,3 +112,9 @@ func (a *App) selectPlugin(url string) (*Plugin, error) {
 	// implement plugin selection logic based on URL scheme or content type
 	return a.plugins[0], nil
 }
+
+// Load ThirdPart Plugins
+func (a *App) loadPlugins() {
+
+	//  a.config.pluginsDir
+}
