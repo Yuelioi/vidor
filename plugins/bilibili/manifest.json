@@ -1,8 +1,9 @@
 {
   "manifest_version": 1,
-  "id": "video-plugin-youtube",
-  "name": "Youtube",
+  "id": "video-plugin-bilibili",
+  "name": "Bilibili",
   "description": "B站下载器",
+  "color": "#fb7299",
   "author": "Yueli",
   "version": "1.0.0",
   "url": "https://www.google.com.hk/",

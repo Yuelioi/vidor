@@ -2,6 +2,7 @@ package app
 
 import (
 	"context"
+	"encoding/json"
 	"log"
 	"os"
 	"path/filepath"
@@ -41,14 +42,13 @@ func init() {
 	Application.cache = NewCache()
 	Application.Logger = appLogger
 
-	p := NewPlugin("bilibili", "bilibili", "location string", "system")
+	logger.Info("初始化完毕")
 
 	// p, err = RunPlugin(p)
 	// if err != nil {
 	// 	logger.Errorf("运行插件失败%v", err)
 	// }
 
-	Application.plugins = append(Application.plugins, p)
 }
 
 func NewApp() *App {
@@ -56,19 +56,26 @@ func NewApp() *App {
 }
 
 func (a *App) Startup(ctx context.Context) {
+	logger.Info("启动中")
 
 	a.ctx = ctx
 	a.Logger = logger
 
 	// 添加托盘
-	systray.Run(systemTray, func() {})
+	logger.Info("加载系统托盘")
+	go func() {
+		systray.Run(systemTray, func() {})
+	}()
 
 	// 加载任务列表
 
 	// 注册事件
+	logger.Info("注册事件")
 	registerEvents(a)
 
-	// TODO 加载本地插件
+	// 加载本地插件
+	logger.Info("加载插件")
+	a.loadPlugins()
 
 	// 加载FFmpeg
 	// err = utils.SetFFmpegPath(a.config.FFMPEG)
@@ -89,9 +96,12 @@ func (a *App) Shutdown(ctx context.Context) {
 // 系统托盘
 func systemTray() {
 	iconPath := filepath.Join(Application.config.assetsDir, "icon.ico")
-	iconData, _ := os.ReadFile(iconPath)
+	iconData, err := os.ReadFile(iconPath)
+	if err != nil {
+		logger.Info("加载托盘图标失败")
+	}
 
-	systray.SetIcon(iconData) // read the icon from a file
+	systray.SetIcon(iconData)
 
 	show := systray.AddMenuItem("显示", "Show The Window")
 	hide := systray.AddMenuItem("隐藏", "Hide The Window")
@@ -104,6 +114,7 @@ func systemTray() {
 
 	systray.SetOnClick(func(menu systray.IMenu) { runtime.WindowShow(Application.ctx) })
 	systray.SetOnRClick(func(menu systray.IMenu) { menu.ShowMenu() })
+
 }
 
 func (a *App) selectPlugin(url string) (*Plugin, error) {
@@ -111,8 +122,31 @@ func (a *App) selectPlugin(url string) (*Plugin, error) {
 	return a.plugins[0], nil
 }
 
-// Load ThirdPart Plugins
+// Load Plugins
 func (a *App) loadPlugins() {
 
-	//  a.config.pluginsDir
+	dirs, err := os.ReadDir(a.config.pluginsDir)
+	if err != nil {
+		logger.Infof("无法加载插件文件夹:%s", err)
+	}
+
+	for _, dir := range dirs {
+		if dir.IsDir() {
+			pluginConfigPath := filepath.Join(a.config.pluginsDir, dir.Name(), "manifest.json")
+			data, err := os.ReadFile(pluginConfigPath)
+			if err != nil {
+				logger.Infof("无法读取插件配置:%s", err)
+			}
+
+			plugin := &Plugin{}
+			err = json.Unmarshal(data, plugin)
+			if err != nil {
+				logger.Infof("插件配置转换失败:%s", err)
+			}
+			logger.Infof("成功加载插件:%s", plugin.Name)
+
+			a.plugins = append(a.plugins, plugin)
+
+		}
+	}
 }

@@ -1,7 +1,7 @@
 export interface Tab {
-    id: number
-    name: string
-    icon: string
-    component: ReturnType<typeof defineComponent>
-    color: string
+  id: number
+  name: string
+  icon: string
+  component?: ReturnType<typeof defineComponent>
+  color: string
 }

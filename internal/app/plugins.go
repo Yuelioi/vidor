@@ -6,7 +6,6 @@ import (
 	"net"
 	"os"
 	"path/filepath"
-	"regexp"
 	"runtime"
 
 	pb "github.com/Yuelioi/vidor/internal/proto"
@@ -18,19 +17,20 @@ import (
 )
 
 type Plugin struct {
-	ID              string
-	ManifestVersion int              `json:"manifest_version"`
-	Name            string           `json:"name"`
-	Description     string           `json:"description"`
-	Author          string           `json:"author"`
-	Version         string           `json:"version"`
-	URL             string           `json:"url"`
-	DocsURL         string           `json:"docs_url"`
-	DownloadURL     string           `json:"download_url"`
-	Matches         []*regexp.Regexp `json:"matches"`
-	Settings        []string         `json:"settings"`
-	Type            string           `json:"type"` // System/ThirdPart
-	Location        string           `json:"location"`
+	ID              string   `json:"id"`
+	ManifestVersion int      `json:"manifest_version"`
+	Name            string   `json:"name"`
+	Description     string   `json:"description"`
+	Color           string   `json:"color"`
+	Author          string   `json:"author"`
+	Version         string   `json:"version"`
+	URL             string   `json:"url"`
+	DocsURL         string   `json:"docs_url"`
+	DownloadURL     string   `json:"download_url"`
+	Matches         []string `json:"matches"`
+	Settings        []string `json:"settings"`
+	Type            string   `json:"type"` // System/ThirdPart
+	Location        string   `json:"location"`
 	Enable          bool
 	State           int // 1.运行中 2.运行但是通信失败 3.未启动
 	Port            int
@@ -75,7 +75,6 @@ func RunPlugin(p *Plugin) (*Plugin, error) {
 		return nil, err
 	}
 
-	logger.Infof("已成功加载插件%s", p.Name)
 	return p, nil
 }
 

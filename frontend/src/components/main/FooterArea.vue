@@ -2,6 +2,7 @@
 
 <script setup lang="ts">
 import { Part } from '@/models/go'
+import { GetPlugins } from '@wailsjs/go/app/App'
 import { app } from '@wailsjs/go/models'
 
 const _themes = ['light', 'dark']
@@ -35,7 +36,8 @@ onMounted(async () => {
   // 加载插件
   const fetchedPlugins = (await GetPlugins()) as app.Plugin[]
   if (fetchedPlugins) {
-    plugins.value = fetchedPlugins
+    Object.assign(plugins.value, fetchedPlugins)
+
     console.log(plugins.value)
   }
 

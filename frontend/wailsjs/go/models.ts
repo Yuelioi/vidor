@@ -95,15 +95,17 @@ export namespace app {
 		}
 	}
 	export class Plugin {
+	    id: string;
 	    manifest_version: number;
 	    name: string;
 	    description: string;
+	    color: string;
 	    author: string;
 	    version: string;
 	    url: string;
 	    docs_url: string;
 	    download_url: string;
-	    matches: regexp.Regexp[];
+	    matches: string[];
 	    settings: string[];
 	    type: string;
 	    location: string;
@@ -114,37 +116,21 @@ export namespace app {
 	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.id = source["id"];
 	        this.manifest_version = source["manifest_version"];
 	        this.name = source["name"];
 	        this.description = source["description"];
+	        this.color = source["color"];
 	        this.author = source["author"];
 	        this.version = source["version"];
 	        this.url = source["url"];
 	        this.docs_url = source["docs_url"];
 	        this.download_url = source["download_url"];
-	        this.matches = this.convertValues(source["matches"], regexp.Regexp);
+	        this.matches = source["matches"];
 	        this.settings = source["settings"];
 	        this.type = source["type"];
 	        this.location = source["location"];
 	    }
-	
-		convertValues(a: any, classs: any, asMap: boolean = false): any {
-		    if (!a) {
-		        return a;
-		    }
-		    if (a.slice && a.map) {
-		        return (a as any[]).map(elem => this.convertValues(elem, classs));
-		    } else if ("object" === typeof a) {
-		        if (asMap) {
-		            for (const key of Object.keys(a)) {
-		                a[key] = new classs(a[key]);
-		            }
-		            return a;
-		        }
-		        return new classs(a);
-		    }
-		    return a;
-		}
 	}
 	
 	

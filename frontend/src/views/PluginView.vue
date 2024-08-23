@@ -3,7 +3,8 @@
 </template>
 
 <script setup lang="ts">
-import PluginTab from '@/components/plugins/PluginTab.vue'
+import SystemPlugin from '@/components/plugins/SystemPlugin.vue'
+import ThirdPartPlugin from '@/components/plugins/ThirdPartPlugin.vue'
 
 const tabId = ref(1)
 
@@ -12,13 +13,13 @@ const tabs: Tab[] = [
     id: 1,
     name: '系统插件',
     icon: 'icon-[lucide--plug-2]',
-    component: PluginTab,
+    component: SystemPlugin,
     color: 'text-primary'
   },
   {
     id: 2,
     name: '三方插件',
-    component: PluginTab,
+    component: ThirdPartPlugin,
     icon: 'icon-[lucide--sailboat]',
     color: 'text-secondary'
   }

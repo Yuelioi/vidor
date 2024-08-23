@@ -236,7 +236,7 @@ import { ShowDownloadInfo, AddDownloadTasks, ParsePlaylist } from '@wailsjs/go/a
 
 const { config } = storeToRefs(useBasicStore())
 const isDownloadBtnDisabled = ref(false)
-const link = ref('')
+const link = ref('https://www.bilibili.com/video/BV1k14y117di/')
 
 const showPlaylistInfo = ref(false)
 const showMagicName = ref(false)

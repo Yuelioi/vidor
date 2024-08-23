@@ -27,6 +27,5 @@ func createLogger(appTempDir string) (*logrus.Logger, error) {
 	logger.SetFormatter(formatter)
 	logger.SetReportCaller(true)
 	logger.SetLevel(logrus.InfoLevel)
-	logger.Info("初始化完毕")
 	return logger, nil
 }

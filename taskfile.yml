@@ -23,3 +23,9 @@ tasks:
       - buf dep update
     desc: "更新"
     aliases: [up]
+  copy-plugins:
+    cmds:
+      - "powershell -Command 'if (-Not (Test-Path .\\build\\bin\\plugins)) { New-Item -ItemType Directory -Path .\\build\\bin\\plugins }'"
+      - "powershell -Command 'Copy-Item -Path .\\plugins\\* -Destination .\\build\\bin\\plugins -Recurse -Force'"
+    desc: "Copies the ./plugins directory to ./build/bin and overwrites existing files"
+    aliases: [copy]
