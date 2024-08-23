@@ -10,8 +10,16 @@ export function GetConfig() {
   return window['go']['app']['App']['GetConfig']();
 }
 
+export function GetPlugins() {
+  return window['go']['app']['App']['GetPlugins']();
+}
+
 export function GetTaskParts() {
   return window['go']['app']['App']['GetTaskParts']();
+}
+
+export function InitPlugin() {
+  return window['go']['app']['App']['InitPlugin']();
 }
 
 export function OpenExplorer(arg1) {
@@ -44,4 +52,8 @@ export function SetDownloadDir(arg1) {
 
 export function ShowDownloadInfo(arg1) {
   return window['go']['app']['App']['ShowDownloadInfo'](arg1);
+}
+
+export function UpdatePlugin() {
+  return window['go']['app']['App']['UpdatePlugin']();
 }

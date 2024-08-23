@@ -41,14 +41,12 @@ func init() {
 	Application.cache = NewCache()
 	Application.Logger = appLogger
 
-	p, _ := LoadPlugin("bilibili", "location string", "_type string")
-	if err != nil {
-		logger.Errorf("加载插件失败%v", err)
-	}
-	p, err = RunPlugin(p)
-	if err != nil {
-		logger.Errorf("运行插件失败%v", err)
-	}
+	p := NewPlugin("bilibili", "bilibili", "location string", "system")
+
+	// p, err = RunPlugin(p)
+	// if err != nil {
+	// 	logger.Errorf("运行插件失败%v", err)
+	// }
 
 	Application.plugins = append(Application.plugins, p)
 }

@@ -13,6 +13,7 @@ import (
 
 	pb "github.com/Yuelioi/vidor/internal/proto"
 	"github.com/Yuelioi/vidor/internal/shared"
+	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
 
@@ -23,6 +24,14 @@ type MessageData struct {
 type TaskResult struct {
 	Success bool   `json:"success"`
 	Message string `json:"message"`
+}
+
+func (a *App) InitPlugin() *empty.Empty {
+	return nil
+}
+
+func (a *App) UpdatePlugin() *empty.Empty {
+	return nil
 }
 
 /*
@@ -51,7 +60,7 @@ func (a *App) ShowDownloadInfo(link string) *pb.InfoResponse {
 	ctx := context.Background()
 
 	// 获取展示信息
-	response, err := plugin.Service.GetInfo(ctx, &pb.InfoRequest{
+	response, err := plugin.service.GetInfo(ctx, &pb.InfoRequest{
 		Url: link,
 	})
 
@@ -105,7 +114,7 @@ func (a *App) ParsePlaylist(ids []string) *pb.ParseResponse {
 	ctx := context.Background()
 
 	// 解析
-	parseResponse, err := plugin.Service.Parse(ctx, &pb.ParseRequest{Tasks: tasks})
+	parseResponse, err := plugin.service.Parse(ctx, &pb.ParseRequest{Tasks: tasks})
 
 	if err != nil {
 		return &pb.ParseResponse{}
@@ -154,7 +163,7 @@ func (a *App) AddDownloadTasks(taskMaps []taskMap) bool {
 	// 清除任务缓存
 	a.cache.ClearTasks()
 
-	stream, err := plugin.Service.Download(context.Background(), &pb.DownloadRequest{
+	stream, err := plugin.service.Download(context.Background(), &pb.DownloadRequest{
 		Tasks: tasks,
 	})
 
@@ -321,7 +330,10 @@ func (a *App) OpenFileWithSystemPlayer(filePath string) error {
 
 func (a *App) GetConfig() *Config {
 	return a.config
+}
 
+func (a *App) GetPlugins() []*Plugin {
+	return a.plugins
 }
 
 // 获取前端任务片段

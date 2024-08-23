@@ -18,25 +18,36 @@ import (
 )
 
 type Plugin struct {
-	Name     string
-	Type     string // System/ThirdPart
-	Location string
-	Enable   bool
-	Port     int
-	PID      int
-	Regexs   []*regexp.Regexp
-	Service  pb.DownloadServiceClient
+	ID              string
+	ManifestVersion int              `json:"manifest_version"`
+	Name            string           `json:"name"`
+	Description     string           `json:"description"`
+	Author          string           `json:"author"`
+	Version         string           `json:"version"`
+	URL             string           `json:"url"`
+	DocsURL         string           `json:"docs_url"`
+	DownloadURL     string           `json:"download_url"`
+	Matches         []*regexp.Regexp `json:"matches"`
+	Settings        []string         `json:"settings"`
+	Type            string           `json:"type"` // System/ThirdPart
+	Location        string           `json:"location"`
+	Enable          bool
+	State           int // 1.运行中 2.运行但是通信失败 3.未启动
+	Port            int
+	PID             int
+	service         pb.DownloadServiceClient
 }
 
 // 加载插件基础信息
-func LoadPlugin(name string, location string, _type string) (*Plugin, error) {
+func NewPlugin(id, name string, location string, _type string) *Plugin {
 	p := &Plugin{
+		ID:       id,
 		Name:     name,
 		Type:     _type,
 		Location: location,
 	}
 
-	return p, nil
+	return p
 }
 
 // 初始化插件 运行插件
@@ -53,13 +64,13 @@ func RunPlugin(p *Plugin) (*Plugin, error) {
 		return nil, err
 	}
 
-	p.Service = pb.NewDownloadServiceClient(conn)
+	p.service = pb.NewDownloadServiceClient(conn)
 	// 插件设置
 	LoadEnv()
 	value := os.Getenv("SESSDATA")
 	ctx := metadata.AppendToOutgoingContext(context.Background(), "plugin.sessdata", value, "host", "vidor")
 
-	_, err = p.Service.Init(ctx, nil)
+	_, err = p.service.Init(ctx, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -74,7 +85,7 @@ func StopPlugin(p *Plugin) (*Plugin, error) {
 		return nil, fmt.Errorf("插件不存在")
 	}
 
-	_, err := p.Service.Shutdown(context.TODO(), &emptypb.Empty{})
+	_, err := p.service.Shutdown(context.TODO(), &emptypb.Empty{})
 	return nil, err
 }
 

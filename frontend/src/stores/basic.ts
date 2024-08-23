@@ -11,9 +11,11 @@ export const useBasicStore = defineStore('basic', () => {
     plugins: []
   })
 
+  const plugins = reactive<app.Plugin[]>([])
+
   const config = reactive(configInstance)
 
   const tasks = reactive([])
 
-  return { config, tasks }
+  return { config, tasks, plugins }
 })

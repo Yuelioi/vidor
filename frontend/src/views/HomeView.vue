@@ -276,7 +276,7 @@ function handleSelectedAll(tasks: Task[]) {
 // 获取视频信息
 function extractPlaylistInfo() {
   Message({ message: '获取视频信息中...请稍后', duration: 300 })
-  ShowDownloadInfo(link.value).then((vi: proto.VideoInfoResponse) => {
+  ShowDownloadInfo(link.value).then((vi: proto.InfoResponse) => {
     if (vi.title == '') {
       Message({ message: '获取视频信息失败, 请检查设置, 以及日志文件', type: 'warn' })
     } else {

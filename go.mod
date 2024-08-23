@@ -6,6 +6,7 @@ toolchain go1.22.1
 
 require (
 	github.com/energye/systray v1.0.2
+	github.com/golang/protobuf v1.5.4
 	github.com/joho/godotenv v1.5.1
 	github.com/kkdai/youtube/v2 v2.10.1
 	github.com/michimani/deepl-sdk-go v0.3.1

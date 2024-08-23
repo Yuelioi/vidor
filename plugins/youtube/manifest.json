@@ -1,14 +1,14 @@
 {
   "manifest_version": 1,
-  "id": "video-plugin-youtube",
-  "name": "Youtube",
+  "id": "video-plugin-bilibili",
+  "name": "Bilibili",
   "description": "B站下载器",
   "author": "Yueli",
   "version": "1.0.0",
-  "url": "https://www.google.com.hk/",
+  "url": "https://www.bilibili.com/",
   "docs_url": "",
   "download_url": "",
-  "matches": ["https://www.bilibili.com/video/BV.+", "https://www.bilibili.com/video/av.+"],
+  "matches": ["https://www.youtube.com/watch?v.+", "https://www.youtube.com/playlist?.+"],
   "settings": ["SESSDATA"],
   "location": "main.exe"
 }

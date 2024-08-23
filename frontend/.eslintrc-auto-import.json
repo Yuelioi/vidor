@@ -143,6 +143,9 @@
     "watchSyncEffect": true,
     "Config": true,
     "MessageData": true,
-    "ParsePlaylist": true
+    "ParsePlaylist": true,
+    "InitPlugin": true,
+    "UpdatePlugin": true,
+    "GetPlugins": true
   }
 }
