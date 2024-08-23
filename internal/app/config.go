@@ -14,8 +14,8 @@ type Config struct {
 	configDir     string
 	assetsDir     string
 	pluginsDir    string
-	SystemConfig  SystemConfig   `json:"system"`
-	PluginConfigs []PluginConfig `json:"plugins"`
+	SystemConfig  *SystemConfig   `json:"system"`
+	PluginConfigs []*PluginConfig `json:"plugins"`
 }
 
 type SystemConfig struct {
@@ -34,8 +34,10 @@ type SystemConfig struct {
 
 type PluginConfig struct {
 	ManifestVersion int      `json:"manifest_version"`
+	ID              string   `json:"id"`
 	Name            string   `json:"name"`
 	Description     string   `json:"description"`
+	Color           string   `json:"color"`
 	Author          string   `json:"author"`
 	Version         string   `json:"version"`
 	URL             string   `json:"url"`
@@ -60,7 +62,7 @@ func NewConfig() *Config {
 
 	// 加载插件配置
 
-	c.PluginConfigs = []PluginConfig{}
+	c.PluginConfigs = make([]*PluginConfig, 0)
 	return c
 }
 
@@ -106,7 +108,7 @@ func (c *Config) loadConfig() error {
 	// 检查配置文件是否存在，如果不存在则创建一个空的配置文件
 	if _, err := os.Stat(configFile); os.IsNotExist(err) {
 		log.Printf("配置文件 '%s' 不存在，将创建一个空的配置文件", configFile)
-		c.SystemConfig = SystemConfig{
+		c.SystemConfig = &SystemConfig{
 			Theme:            "dark",
 			ScaleFactor:      16,
 			MagicName:        "{{Index}}-{{Title}}",
@@ -116,7 +118,7 @@ func (c *Config) loadConfig() error {
 			DownloadCombine:  true,
 			DownloadLimit:    5,
 		}
-		c.PluginConfigs = []PluginConfig{} // 初始化为空的插件配置
+		c.PluginConfigs = make([]*PluginConfig, 0) // 初始化为空的插件配置
 
 		if err := c.SaveConfig(); err != nil {
 			return fmt.Errorf("无法创建配置文件: %v", err)
@@ -142,7 +144,7 @@ func (c *Config) loadConfig() error {
 
 	if pluginsConfig, ok := config["plugins"].([]interface{}); ok {
 		for _, plugin := range pluginsConfig {
-			var pluginConfig PluginConfig
+			var pluginConfig *PluginConfig
 			pluginMap := plugin.(map[string]interface{})
 			if err := mapToStruct(pluginMap, &pluginConfig); err != nil {
 				return err

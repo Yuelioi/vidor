@@ -2,8 +2,10 @@ export namespace app {
 	
 	export class PluginConfig {
 	    manifest_version: number;
+	    id: string;
 	    name: string;
 	    description: string;
+	    color: string;
 	    author: string;
 	    version: string;
 	    url: string;
@@ -19,8 +21,10 @@ export namespace app {
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.manifest_version = source["manifest_version"];
+	        this.id = source["id"];
 	        this.name = source["name"];
 	        this.description = source["description"];
+	        this.color = source["color"];
 	        this.author = source["author"];
 	        this.version = source["version"];
 	        this.url = source["url"];
@@ -63,7 +67,7 @@ export namespace app {
 	    }
 	}
 	export class Config {
-	    system: SystemConfig;
+	    system?: SystemConfig;
 	    plugins: PluginConfig[];
 	
 	    static createFrom(source: any = {}) {
@@ -95,8 +99,8 @@ export namespace app {
 		}
 	}
 	export class Plugin {
-	    id: string;
 	    manifest_version: number;
+	    id: string;
 	    name: string;
 	    description: string;
 	    color: string;
@@ -116,8 +120,8 @@ export namespace app {
 	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.id = source["id"];
 	        this.manifest_version = source["manifest_version"];
+	        this.id = source["id"];
 	        this.name = source["name"];
 	        this.description = source["description"];
 	        this.color = source["color"];
@@ -132,7 +136,6 @@ export namespace app {
 	        this.location = source["location"];
 	    }
 	}
-	
 	
 	export class taskMap {
 	

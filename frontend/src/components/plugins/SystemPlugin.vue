@@ -17,6 +17,8 @@
                 {{ plugin.name }}
               </span>
               <span class="ml-auto">
+                <template v-if="plugin.id"></template>
+                <span><span class="size-6 text-warning icon-[lucide--unplug]"></span></span>
                 <span class="size-6 text-success icon-[ic--outline-check-circle-outline]"></span>
               </span>
             </div>

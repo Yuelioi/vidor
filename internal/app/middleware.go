@@ -12,7 +12,6 @@ import (
 	cmdRuntime "runtime"
 
 	pb "github.com/Yuelioi/vidor/internal/proto"
-	"github.com/Yuelioi/vidor/internal/shared"
 	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
@@ -229,12 +228,12 @@ func (a *App) RemoveTask(uid string) bool {
 // 移除完成任务: 去除a.tasks目标 并保存配置
 // 移除下载中任务: 调用下载器StopDownload函数 关闭stopChan
 // 移除队列中任务: 清理缓存队列的queueTasks
-func (a *App) RemoveAllTask(parts []shared.Part) bool {
+func (a *App) RemoveAllTask(parts []Part) bool {
 
 	// newTasks := make([]*Task, 0)
 	// delQueueTasks := make([]*Task, 0)
 
-	// partTaskIDs := make(map[string]shared.Part)
+	// partTaskIDs := make(map[string]Part)
 
 	// for _, part := range parts {
 	// 	partTaskIDs[part.TaskID] = part
@@ -337,9 +336,9 @@ func (a *App) GetPlugins() []*Plugin {
 }
 
 // 获取前端任务片段
-func (a *App) GetTaskParts() []shared.Part {
+func (a *App) GetTaskParts() []Part {
 	// return tasksToParts(a.tasks)
-	return []shared.Part{}
+	return []Part{}
 }
 
 func (a *App) SaveConfig(config *Config) bool {
@@ -356,11 +355,11 @@ func (a *App) SaveConfig(config *Config) bool {
 }
 
 // 任务转任务片段
-func tasksToParts(tasks []*Task) []shared.Part {
-	// parts := make([]shared.Part, len(tasks))
+func tasksToParts(tasks []*Task) []Part {
+	// parts := make([]Part, len(tasks))
 	// for i, task := range tasks {
 	// 	parts[i] = *task.part
 	// }
 	// return parts
-	return []shared.Part{}
+	return []Part{}
 }

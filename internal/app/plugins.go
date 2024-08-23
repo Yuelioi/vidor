@@ -17,37 +17,14 @@ import (
 )
 
 type Plugin struct {
-	ID              string   `json:"id"`
-	ManifestVersion int      `json:"manifest_version"`
-	Name            string   `json:"name"`
-	Description     string   `json:"description"`
-	Color           string   `json:"color"`
-	Author          string   `json:"author"`
-	Version         string   `json:"version"`
-	URL             string   `json:"url"`
-	DocsURL         string   `json:"docs_url"`
-	DownloadURL     string   `json:"download_url"`
-	Matches         []string `json:"matches"`
-	Settings        []string `json:"settings"`
-	Type            string   `json:"type"` // System/ThirdPart
-	Location        string   `json:"location"`
-	Enable          bool
-	State           int // 1.运行中 2.运行但是通信失败 3.未启动
-	Port            int
-	PID             int
-	service         pb.DownloadServiceClient
-}
-
-// 加载插件基础信息
-func NewPlugin(id, name string, location string, _type string) *Plugin {
-	p := &Plugin{
-		ID:       id,
-		Name:     name,
-		Type:     _type,
-		Location: location,
-	}
-
-	return p
+	PluginConfig
+	Type     string `json:"type"` // System/ThirdPart
+	Location string `json:"location"`
+	Enable   bool
+	State    int // 1.运行中 2.运行但是通信失败 3.未启动
+	Port     int
+	PID      int
+	service  pb.DownloadServiceClient
 }
 
 // 初始化插件 运行插件
@@ -65,17 +42,24 @@ func RunPlugin(p *Plugin) (*Plugin, error) {
 	}
 
 	p.service = pb.NewDownloadServiceClient(conn)
+
+	return p, nil
+}
+
+func InitPlugin(p *Plugin, c *Config) (*Plugin, error) {
+
 	// 插件设置
 	LoadEnv()
 	value := os.Getenv("SESSDATA")
 	ctx := metadata.AppendToOutgoingContext(context.Background(), "plugin.sessdata", value, "host", "vidor")
 
-	_, err = p.service.Init(ctx, nil)
+	_, err := p.service.Init(ctx, nil)
 	if err != nil {
 		return nil, err
 	}
 
-	return p, nil
+	logger.Infof("已成功加载插件%s", p.Name)
+	return p, err
 }
 
 // 停止插件
