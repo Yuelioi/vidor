@@ -60,8 +60,6 @@ func (c *Cache) Tasks(ids []string) ([]*pb.Task, error) {
 			task, ok := c.Task(id)
 			if ok {
 				tasks[i] = task
-			} else {
-				tasks[i] = nil
 			}
 		}(i, id)
 	}
@@ -75,5 +73,4 @@ func (c *Cache) Downloader() *Plugin {
 }
 func (c *Cache) SetDownloader(p *Plugin) {
 	c.downloader = p
-
 }

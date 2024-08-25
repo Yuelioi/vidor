@@ -3,23 +3,23 @@
 </template>
 
 <script setup lang="ts">
-import SystemPlugin from '@/components/plugins/SystemPlugin.vue'
-import ThirdPartPlugin from '@/components/plugins/ThirdPartPlugin.vue'
+import PluginMarket from '@/components/plugins/PluginMarket.vue'
+import PluginManager from '@/components/plugins/PluginManager.vue'
 
 const tabId = ref(1)
 
 const tabs: Tab[] = [
   {
     id: 1,
-    name: '系统插件',
+    name: '插件市场',
     icon: 'icon-[lucide--plug-2]',
-    component: SystemPlugin,
+    component: PluginMarket,
     color: 'text-primary'
   },
   {
     id: 2,
-    name: '三方插件',
-    component: ThirdPartPlugin,
+    name: '插件管理',
+    component: PluginManager,
     icon: 'icon-[lucide--sailboat]',
     color: 'text-secondary'
   }

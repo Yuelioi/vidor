@@ -7,7 +7,9 @@ import (
 )
 
 func registerEvents(a *App) {
+
 	runtime.EventsOn(a.ctx, "ceshi", func(optionalData ...interface{}) {
 		fmt.Print(optionalData)
 	})
+
 }

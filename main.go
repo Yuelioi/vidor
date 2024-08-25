@@ -9,7 +9,6 @@ import (
 	"strings"
 
 	"github.com/Yuelioi/vidor/internal/app"
-
 	"github.com/wailsapp/wails/v2"
 	"github.com/wailsapp/wails/v2/pkg/logger"
 	"github.com/wailsapp/wails/v2/pkg/options"
@@ -57,7 +56,7 @@ func (h *FileLoader) ServeHTTP(res http.ResponseWriter, req *http.Request) {
 }
 
 func AppLaunch() {
-	a := app.Application
+	a := app.NewApp()
 
 	err := wails.Run(&options.App{
 		Title:     "Vidor",

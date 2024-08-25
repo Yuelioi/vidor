@@ -3,6 +3,8 @@ import { defineStore } from 'pinia'
 
 // import { Config, SystemConfig } from '@/models/go'
 
+import { Plugin } from '@/models/go'
+
 import { app } from '@wailsjs/go/models'
 
 export const useBasicStore = defineStore('basic', () => {
@@ -11,7 +13,7 @@ export const useBasicStore = defineStore('basic', () => {
     plugins: []
   })
 
-  const plugins = reactive<app.Plugin[]>([])
+  const plugins: Record<string, Plugin> = reactive({})
 
   const config = reactive(configInstance)
 

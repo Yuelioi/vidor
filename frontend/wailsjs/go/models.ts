@@ -1,18 +1,21 @@
 export namespace app {
 	
+	export class App {
+	
+	
+	    static createFrom(source: any = {}) {
+	        return new App(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	
+	    }
+	}
 	export class PluginConfig {
-	    manifest_version: number;
 	    id: string;
-	    name: string;
-	    description: string;
-	    color: string;
-	    author: string;
-	    version: string;
-	    url: string;
-	    docs_url: string;
-	    download_url: string;
-	    matches: string[];
-	    settings: string[];
+	    enable: boolean;
+	    settings: {[key: string]: string};
 	
 	    static createFrom(source: any = {}) {
 	        return new PluginConfig(source);
@@ -20,17 +23,8 @@ export namespace app {
 	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.manifest_version = source["manifest_version"];
 	        this.id = source["id"];
-	        this.name = source["name"];
-	        this.description = source["description"];
-	        this.color = source["color"];
-	        this.author = source["author"];
-	        this.version = source["version"];
-	        this.url = source["url"];
-	        this.docs_url = source["docs_url"];
-	        this.download_url = source["download_url"];
-	        this.matches = source["matches"];
+	        this.enable = source["enable"];
 	        this.settings = source["settings"];
 	    }
 	}
@@ -68,7 +62,7 @@ export namespace app {
 	}
 	export class Config {
 	    system?: SystemConfig;
-	    plugins: PluginConfig[];
+	    plugins: {[key: string]: PluginConfig};
 	
 	    static createFrom(source: any = {}) {
 	        return new Config(source);
@@ -77,7 +71,7 @@ export namespace app {
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.system = this.convertValues(source["system"], SystemConfig);
-	        this.plugins = this.convertValues(source["plugins"], PluginConfig);
+	        this.plugins = source["plugins"];
 	    }
 	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {
@@ -98,21 +92,37 @@ export namespace app {
 		    return a;
 		}
 	}
+	export class Part {
+	
+	
+	    static createFrom(source: any = {}) {
+	        return new Part(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	
+	    }
+	}
 	export class Plugin {
-	    manifest_version: number;
 	    id: string;
+	    enable: boolean;
+	    settings: {[key: string]: string};
+	    manifest_version: number;
 	    name: string;
 	    description: string;
-	    color: string;
 	    author: string;
 	    version: string;
-	    url: string;
+	    homepage: string;
+	    color: string;
 	    docs_url: string;
 	    download_url: string;
 	    matches: string[];
-	    settings: string[];
 	    type: string;
 	    location: string;
+	    state: number;
+	    port: number;
+	    pid: number;
 	
 	    static createFrom(source: any = {}) {
 	        return new Plugin(source);
@@ -120,45 +130,33 @@ export namespace app {
 	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.manifest_version = source["manifest_version"];
 	        this.id = source["id"];
+	        this.enable = source["enable"];
+	        this.settings = source["settings"];
+	        this.manifest_version = source["manifest_version"];
 	        this.name = source["name"];
 	        this.description = source["description"];
-	        this.color = source["color"];
 	        this.author = source["author"];
 	        this.version = source["version"];
-	        this.url = source["url"];
+	        this.homepage = source["homepage"];
+	        this.color = source["color"];
 	        this.docs_url = source["docs_url"];
 	        this.download_url = source["download_url"];
 	        this.matches = source["matches"];
-	        this.settings = source["settings"];
 	        this.type = source["type"];
 	        this.location = source["location"];
+	        this.state = source["state"];
+	        this.port = source["port"];
+	        this.pid = source["pid"];
 	    }
 	}
+	
 	
 	export class taskMap {
 	
 	
 	    static createFrom(source: any = {}) {
 	        return new taskMap(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	
-	    }
-	}
-
-}
-
-export namespace emptypb {
-	
-	export class Empty {
-	
-	
-	    static createFrom(source: any = {}) {
-	        return new Empty(source);
 	    }
 	
 	    constructor(source: any = {}) {
@@ -330,23 +328,6 @@ export namespace proto {
 		    }
 		    return a;
 		}
-	}
-
-}
-
-export namespace shared {
-	
-	export class Part {
-	
-	
-	    static createFrom(source: any = {}) {
-	        return new Part(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	
-	    }
 	}
 
 }

@@ -1,3 +1,9 @@
+import { app } from '@wailsjs/go/models'
+
+export class Plugin extends app.Plugin {
+  lock?: boolean = true
+}
+
 export class Part {
   TaskID: string
   DownloadDir: string

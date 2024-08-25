@@ -1,13 +1,10 @@
 module github.com/Yuelioi/vidor
 
-go 1.21.1
-
-toolchain go1.22.1
+go 1.23.0
 
 require (
 	github.com/energye/systray v1.0.2
-	github.com/golang/protobuf v1.5.4
-	github.com/joho/godotenv v1.5.1
+	github.com/go-resty/resty/v2 v2.14.0
 	github.com/kkdai/youtube/v2 v2.10.1
 	github.com/michimani/deepl-sdk-go v0.3.1
 	github.com/sirupsen/logrus v1.9.3

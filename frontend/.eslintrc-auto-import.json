@@ -146,6 +146,17 @@
     "ParsePlaylist": true,
     "InitPlugin": true,
     "UpdatePlugin": true,
-    "GetPlugins": true
+    "GetPlugins": true,
+    "RunPlugin": true,
+    "StopPlugin": true,
+    "DisablePlugin": true,
+    "EnablePlugin": true,
+    "SavePluginsConfig": true,
+    "SaveSystemConfig": true,
+    "SavePluginConfig": true,
+    "TaskParts": true,
+    "UpdatePluginsConfig": true,
+    "UpdateSystemConfig": true,
+    "DownloadPlugin": true
   }
 }

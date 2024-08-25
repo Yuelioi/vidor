@@ -2,12 +2,10 @@
 
 <script setup lang="ts">
 import { Part } from '@/models/go'
-import { GetPlugins } from '@wailsjs/go/app/App'
-import { app } from '@wailsjs/go/models'
 
 const _themes = ['light', 'dark']
 const { switchTheme } = useTheme(_themes)
-const { config, tasks, plugins } = storeToRefs(useBasicStore())
+const { config, tasks } = storeToRefs(useBasicStore())
 
 EventsOn('updateInfo', (optionalData?: Part) => {
   const index = tasks.value.findIndex((task) => task.TaskID === optionalData?.TaskID)
@@ -31,14 +29,8 @@ onMounted(async () => {
   const fetchedConfig = (await GetConfig()) as Config
   if (fetchedConfig) {
     Object.assign(config.value, fetchedConfig)
-  }
-
-  // 加载插件
-  const fetchedPlugins = (await GetPlugins()) as app.Plugin[]
-  if (fetchedPlugins) {
-    Object.assign(plugins.value, fetchedPlugins)
-
-    console.log(plugins.value)
+    console.log('加载配置')
+    console.log(config.value)
   }
 
   // 加载任务

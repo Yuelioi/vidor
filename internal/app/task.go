@@ -55,7 +55,7 @@ func (tq *taskQueue) List() {
 
 // 保存单个任务
 func saveTask(srcTask *Task, tasks []*Task, configDir string) error {
-	// parts := make([]shared.Part, 0)
+	// parts := make([]Part, 0)
 
 	// // 修改/更新
 	// for _, task := range tasks {
@@ -81,7 +81,7 @@ func saveTask(srcTask *Task, tasks []*Task, configDir string) error {
 
 // task更新时 保存
 func saveTasks(tasks []*Task, configDir string) error {
-	// parts := make([]shared.Part, 0)
+	// parts := make([]Part, 0)
 
 	// for _, task := range tasks {
 	// 	part := *task.part
@@ -113,7 +113,7 @@ func saveTasks(tasks []*Task, configDir string) error {
 // 		return err
 // 	}
 
-// 	parts := make([]shared.Part, 0)
+// 	parts := make([]Part, 0)
 // 	err = json.Unmarshal(configData, &parts)
 // 	if err != nil {
 // 		logger.Errorf("Cannot convert task data: %v", err)

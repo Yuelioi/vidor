@@ -12,7 +12,7 @@ import (
 	cmdRuntime "runtime"
 
 	pb "github.com/Yuelioi/vidor/internal/proto"
-	"github.com/golang/protobuf/ptypes/empty"
+	"github.com/go-resty/resty/v2"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
 
@@ -25,12 +25,129 @@ type TaskResult struct {
 	Message string `json:"message"`
 }
 
-func (a *App) InitPlugin() *empty.Empty {
+// 插件
+
+func (app *App) DownloadPlugin(p *Plugin) *Plugin {
+	pluginDir := fmt.Sprintf("https://cdn.yuelili.com/market/vidor/plugins/", p.ID)
+
+	client := &resty.Client{}
+	resp, err := client.R().Get(pluginDir + "/" + p.Location)
+
+	if err != nil {
+		return nil
+	}
+	fmt.Println(resp)
+
 	return nil
 }
 
-func (a *App) UpdatePlugin() *empty.Empty {
-	return nil
+// 运行插件, 并建立连接
+func (app *App) RunPlugin(p *Plugin) *Plugin {
+	plugin, ok := app.plugins[p.ID]
+	if !ok {
+		return nil
+	}
+	// 运行
+	err := plugin.Run(app.config)
+	if err != nil {
+		app.logger.Infof("插件开启失败:%s", err)
+		return nil
+	}
+
+	err = plugin.Init()
+	if err != nil {
+		app.logger.Infof("插件开启失败:%s", err)
+		return nil
+	}
+
+	return plugin
+}
+
+// 更新插件参数
+func (app *App) UpdatePlugin(p *Plugin) *Plugin {
+	plugin, ok := app.plugins[p.ID]
+	if !ok {
+		return nil
+	}
+	// TODO 跟新
+	err := plugin.Run(app.config)
+	if err != nil {
+		app.logger.Infof("插件开启失败:%s", err)
+		return nil
+	}
+
+	return plugin
+}
+
+func (app *App) StopPlugin(p *Plugin) *Plugin {
+	plugin, ok := app.plugins[p.ID]
+	if !ok {
+		return nil
+	}
+	// 停止
+	_, err := plugin.service.Shutdown(context.Background(), nil)
+	if err != nil {
+		return nil
+	}
+	p.State = 3
+	return p
+}
+
+// 启用插件, 但是不会运行
+func (app *App) EnablePlugin(p *Plugin) (*Plugin, string) {
+	plugin, ok := app.plugins[p.ID]
+	if !ok {
+		app.logger.Infof("没有找到插件:%s", p.ID)
+		return nil, fmt.Sprintf("没有找到插件:%s", p.ID)
+	}
+	plugin.Enable = true
+	// 保存配置
+	p2, err := app.SavePluginConfig(plugin.ID, plugin.PluginConfig)
+	if err != nil {
+		return nil, fmt.Sprintf("保存插件配置失败:%s", p.ID)
+	}
+	return p2, fmt.Sprintf("保存插件配置失败:%s", p.ID)
+}
+
+// 关闭插件,并禁用插件
+func (app *App) DisablePlugin(p *Plugin) *Plugin {
+	plugin, ok := app.plugins[p.ID]
+	if !ok {
+		app.logger.Infof("没有找到插件:%s", p.ID)
+		return nil
+	}
+
+	// 关闭插件
+	if plugin.State == 1 {
+		_, err := plugin.service.Shutdown(context.Background(), nil)
+		if err != nil {
+			return nil
+		}
+	}
+
+	// 禁用并保存配置
+	plugin.Enable = false
+	plugin.State = 3
+
+	p2, err := app.SavePluginConfig(plugin.ID, plugin.PluginConfig)
+	if err != nil {
+		return nil
+	}
+	return p2
+}
+
+// 保存插件配置
+func (app *App) SavePluginConfig(id string, pluginConfig *PluginConfig) (*Plugin, error) {
+	plugin, ok := app.plugins[id]
+	if !ok {
+		return nil, pluginConfigSaveError
+	}
+
+	err := app.UpdatePluginsConfig(id, pluginConfig).config.Save()
+	if err != nil {
+		return nil, err
+	}
+	return plugin, nil
 }
 
 /*
@@ -40,20 +157,19 @@ func (a *App) UpdatePlugin() *empty.Empty {
 2. 调用展示信息函数
 3. 缓存数据
 */
-func (a *App) ShowDownloadInfo(link string) *pb.InfoResponse {
-
+func (app *App) ShowDownloadInfo(link string) *pb.InfoResponse {
 	// 清理上次查询任务缓存
-	a.cache.ClearTasks()
+	app.cache.ClearTasks()
 
 	// 获取下载器
-	plugin, err := a.selectPlugin(link)
+	plugin, err := app.selectPlugin(link)
 	if err != nil {
 		return &pb.InfoResponse{}
 	}
-	logger.Infof("检测到可用插件%s", plugin.Name)
+	app.logger.Infof("检测到可用插件%s", plugin.Name)
 
 	// 储存下载器
-	a.cache.SetDownloader(plugin)
+	app.cache.SetDownloader(plugin)
 
 	// 传递上下文
 	ctx := context.Background()
@@ -64,13 +180,13 @@ func (a *App) ShowDownloadInfo(link string) *pb.InfoResponse {
 	})
 
 	if err != nil {
-		logger.Infof("获取视频信息失败%+v", err)
+		app.logger.Infof("获取视频信息失败%+v", err)
 		return nil
 	}
 	fmt.Printf("Show Response: %v\n", response)
 
 	// 缓存任务数据
-	a.cache.SetTasks(response.Tasks)
+	app.cache.SetTasks(response.Tasks)
 
 	return response
 }
@@ -96,10 +212,10 @@ func filterSegments(segments []*pb.Segment, formatSet map[string]struct{}) {
 /*
 解析数据
 */
-func (a *App) ParsePlaylist(ids []string) *pb.ParseResponse {
+func (app *App) ParsePlaylist(ids []string) *pb.ParseResponse {
 
 	// 获取任务缓存数据
-	tasks, err := a.cache.Tasks(ids)
+	tasks, err := app.cache.Tasks(ids)
 
 	fmt.Printf("tasks: %v\n", tasks)
 	if err != nil {
@@ -107,7 +223,7 @@ func (a *App) ParsePlaylist(ids []string) *pb.ParseResponse {
 	}
 
 	// 获取缓存下载器
-	plugin := a.cache.Downloader()
+	plugin := app.cache.Downloader()
 
 	// 传递上下文
 	ctx := context.Background()
@@ -123,7 +239,7 @@ func (a *App) ParsePlaylist(ids []string) *pb.ParseResponse {
 	// 更新数据
 
 	// 缓存任务
-	a.cache.SetTasks(parseResponse.Tasks)
+	app.cache.SetTasks(parseResponse.Tasks)
 	return parseResponse
 }
 
@@ -134,12 +250,12 @@ func (a *App) ParsePlaylist(ids []string) *pb.ParseResponse {
 2. 创建/添加到任务队列
 3. 保存任务信息
 */
-func (a *App) AddDownloadTasks(taskMaps []taskMap) bool {
+func (app *App) AddDownloadTasks(taskMaps []taskMap) bool {
 
 	// 获取任务
 	tasks := []*pb.Task{}
 	for _, taskMap := range taskMaps {
-		cacheTask, ok := a.cache.Task(taskMap.id)
+		cacheTask, ok := app.cache.Task(taskMap.id)
 		if !ok {
 			continue
 		}
@@ -157,10 +273,10 @@ func (a *App) AddDownloadTasks(taskMaps []taskMap) bool {
 	}
 
 	// 获取缓存下载器
-	plugin := a.cache.Downloader()
+	plugin := app.cache.Downloader()
 
 	// 清除任务缓存
-	a.cache.ClearTasks()
+	app.cache.ClearTasks()
 
 	stream, err := plugin.service.Download(context.Background(), &pb.DownloadRequest{
 		Tasks: tasks,
@@ -195,28 +311,28 @@ func (a *App) AddDownloadTasks(taskMaps []taskMap) bool {
  3. 已完成
     直接删除对应任务
 */
-func (a *App) RemoveTask(uid string) bool {
+func (app *App) RemoveTask(uid string) bool {
 
-	// for i, task := range a.tasks {
+	// for i, task := range app.tasks {
 	// 	if task.part.TaskID == uid {
 
 	// 		if checkTaskQueueWorking(a) {
 	// 			if task.state == Queue {
 	// 				// 1. 正在队列中
-	// 				a.Logger.Info("任务移除(队列中):", task.part.Title)
-	// 				a.taskQueue.removeQueueTasks([]*Task{task})
+	// 				app.logger.Info("任务移除(队列中):", task.part.Title)
+	// 				app.taskQueue.removeQueueTasks([]*Task{task})
 	// 			} else {
 	// 				// 2. 正在下载中
-	// 				a.Logger.Info("任务移除(下载中):", task.part.Title)
-	// 				a.taskQueue.stopTask(task)
+	// 				app.logger.Info("任务移除(下载中):", task.part.Title)
+	// 				app.taskQueue.stopTask(task)
 	// 			}
 	// 		}
 
 	// 		// 3. 直接删除
-	// 		a.tasks = append(a.tasks[:i], a.tasks[i+1:]...)
+	// 		app.tasks = append(app.tasks[:i], app.tasks[i+1:]...)
 
-	// 		if err := saveTasks(a.tasks, a.configDir); err != nil {
-	// 			a.Logger.Warn(err)
+	// 		if err := saveTasks(app.tasks, app.configDir); err != nil {
+	// 			app.logger.Warn(err)
 	// 		}
 	// 		return true
 	// 	}
@@ -225,10 +341,10 @@ func (a *App) RemoveTask(uid string) bool {
 }
 
 // 移除任务
-// 移除完成任务: 去除a.tasks目标 并保存配置
+// 移除完成任务: 去除app.tasks目标 并保存配置
 // 移除下载中任务: 调用下载器StopDownload函数 关闭stopChan
 // 移除队列中任务: 清理缓存队列的queueTasks
-func (a *App) RemoveAllTask(parts []Part) bool {
+func (app *App) RemoveAllTask(parts []Part) bool {
 
 	// newTasks := make([]*Task, 0)
 	// delQueueTasks := make([]*Task, 0)
@@ -239,7 +355,7 @@ func (a *App) RemoveAllTask(parts []Part) bool {
 	// 	partTaskIDs[part.TaskID] = part
 	// }
 
-	// for i, task := range a.tasks {
+	// for i, task := range app.tasks {
 	// 	if _, found := partTaskIDs[task.part.TaskID]; found {
 
 	// 		if checkTaskQueueWorking(a) {
@@ -248,51 +364,51 @@ func (a *App) RemoveAllTask(parts []Part) bool {
 	// 				delQueueTasks = append(delQueueTasks, task)
 	// 			} else {
 	// 				// 直接调用停止函数
-	// 				a.Logger.Info("任务移除(下载中):", task.part.Title)
+	// 				app.logger.Info("任务移除(下载中):", task.part.Title)
 	// 				task.downloader.Cancel(context.Background(), task.part)
 	// 			}
 	// 		}
 
 	// 	} else {
-	// 		newTasks = append(newTasks, a.tasks[i])
+	// 		newTasks = append(newTasks, app.tasks[i])
 	// 	}
 	// }
 
 	// // 移除队列中任务
 	// if checkTaskQueueWorking(a) {
-	// 	a.taskQueue.removeQueueTasks(delQueueTasks)
+	// 	app.taskQueue.removeQueueTasks(delQueueTasks)
 	// }
 
 	// // 保存任务清单
-	// a.tasks = newTasks
-	// if err := saveTasks(newTasks, a.configDir); err != nil {
-	// 	a.Logger.Warn(err)
+	// app.tasks = newTasks
+	// if err := saveTasks(newTasks, app.configDir); err != nil {
+	// 	app.logger.Warn(err)
 	// }
 	return true
 }
 
-func checkTaskQueueWorking(a *App) bool {
-	// return a.taskQueue != nil && a.taskQueue.state != Finished
+func checkTaskQueueWorking(app *App) bool {
+	// return app.taskQueue != nil && app.taskQueue.state != Finished
 	return true
 }
 
-func (a *App) SetDownloadDir(title string) string {
+func (app *App) SetDownloadDir(title string) string {
 	home, _ := os.UserHomeDir()
 	downloadsFolder := filepath.Join(home, "Downloads")
 
-	target, err := runtime.OpenDirectoryDialog(a.ctx, runtime.OpenDialogOptions{
+	target, err := runtime.OpenDirectoryDialog(app.ctx, runtime.OpenDialogOptions{
 		Title:            title,
 		DefaultDirectory: downloadsFolder,
 	})
 
 	if err != nil {
-		a.Logger.Error(err)
+		app.logger.Error(err)
 		return ""
 	}
 	return target
 }
 
-func (a *App) OpenExplorer(dir string) error {
+func (app *App) OpenExplorer(dir string) error {
 	dir = filepath.FromSlash(dir)
 	var cmd *exec.Cmd
 
@@ -310,7 +426,7 @@ func (a *App) OpenExplorer(dir string) error {
 	return cmd.Start()
 }
 
-func (a *App) OpenFileWithSystemPlayer(filePath string) error {
+func (app *App) OpenFileWithSystemPlayer(filePath string) error {
 	var cmd *exec.Cmd
 
 	switch cmdRuntime.GOOS {
@@ -327,31 +443,47 @@ func (a *App) OpenFileWithSystemPlayer(filePath string) error {
 	return cmd.Start()
 }
 
-func (a *App) GetConfig() *Config {
-	return a.config
+func (app *App) GetConfig() *Config {
+	return app.config
 }
 
-func (a *App) GetPlugins() []*Plugin {
-	return a.plugins
+func (app *App) GetPlugins() map[string]*Plugin {
+	return app.plugins
 }
 
 // 获取前端任务片段
-func (a *App) GetTaskParts() []Part {
-	// return tasksToParts(a.tasks)
+func (app *App) TaskParts() []Part {
+	// return tasksToParts(app.tasks)
 	return []Part{}
 }
 
-func (a *App) SaveConfig(config *Config) bool {
-	a.config = config
-	err := a.config.SaveConfig()
-	if err != nil {
-		a.Logger.Warnf("保存设置失败%s", err)
-	} else {
-		a.Logger.Info("保存设置成功")
-	}
+// 保存配置文件到本地
+func (app *App) SaveConfig(config *Config) bool {
 
+	// 保存配置文件
+	err := app.config.Save()
+	if err != nil {
+		app.logger.Warnf("保存设置失败%s", err)
+	} else {
+		app.logger.Info("保存设置成功")
+	}
 	return err == nil
 
+}
+
+// 修改系统配置
+func (app *App) UpdateSystemConfig(systemConfig *SystemConfig) *App {
+	app.config.SystemConfig = systemConfig
+	return app
+}
+
+// 修改插件配置
+func (app *App) UpdatePluginsConfig(id string, pluginConfig *PluginConfig) *App {
+	plugin, ok := app.plugins[id]
+	if ok {
+		plugin.PluginConfig = pluginConfig
+	}
+	return app
 }
 
 // 任务转任务片段

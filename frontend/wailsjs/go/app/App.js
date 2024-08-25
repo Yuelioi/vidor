@@ -6,20 +6,24 @@ export function AddDownloadTasks(arg1) {
   return window['go']['app']['App']['AddDownloadTasks'](arg1);
 }
 
+export function DisablePlugin(arg1) {
+  return window['go']['app']['App']['DisablePlugin'](arg1);
+}
+
+export function DownloadPlugin(arg1) {
+  return window['go']['app']['App']['DownloadPlugin'](arg1);
+}
+
+export function EnablePlugin(arg1) {
+  return window['go']['app']['App']['EnablePlugin'](arg1);
+}
+
 export function GetConfig() {
   return window['go']['app']['App']['GetConfig']();
 }
 
 export function GetPlugins() {
   return window['go']['app']['App']['GetPlugins']();
-}
-
-export function GetTaskParts() {
-  return window['go']['app']['App']['GetTaskParts']();
-}
-
-export function InitPlugin() {
-  return window['go']['app']['App']['InitPlugin']();
 }
 
 export function OpenExplorer(arg1) {
@@ -42,8 +46,16 @@ export function RemoveTask(arg1) {
   return window['go']['app']['App']['RemoveTask'](arg1);
 }
 
+export function RunPlugin(arg1) {
+  return window['go']['app']['App']['RunPlugin'](arg1);
+}
+
 export function SaveConfig(arg1) {
   return window['go']['app']['App']['SaveConfig'](arg1);
+}
+
+export function SavePluginConfig(arg1, arg2) {
+  return window['go']['app']['App']['SavePluginConfig'](arg1, arg2);
 }
 
 export function SetDownloadDir(arg1) {
@@ -54,6 +66,22 @@ export function ShowDownloadInfo(arg1) {
   return window['go']['app']['App']['ShowDownloadInfo'](arg1);
 }
 
-export function UpdatePlugin() {
-  return window['go']['app']['App']['UpdatePlugin']();
+export function StopPlugin(arg1) {
+  return window['go']['app']['App']['StopPlugin'](arg1);
+}
+
+export function TaskParts() {
+  return window['go']['app']['App']['TaskParts']();
+}
+
+export function UpdatePlugin(arg1) {
+  return window['go']['app']['App']['UpdatePlugin'](arg1);
+}
+
+export function UpdatePluginsConfig(arg1, arg2) {
+  return window['go']['app']['App']['UpdatePluginsConfig'](arg1, arg2);
+}
+
+export function UpdateSystemConfig(arg1) {
+  return window['go']['app']['App']['UpdateSystemConfig'](arg1);
 }
