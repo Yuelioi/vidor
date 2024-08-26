@@ -1,4 +1,4 @@
-package app
+package logger
 
 import (
 	"fmt"
@@ -10,8 +10,8 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-func createLogger(appTempDir string) (*logrus.Logger, error) {
-	logFilePath := filepath.Join(appTempDir, fmt.Sprintf("logger_%s.txt", time.Now().Format("20060102_150405")))
+func New(dir string) (*logrus.Logger, error) {
+	logFilePath := filepath.Join(dir, fmt.Sprintf("logger_%s.txt", time.Now().Format("20060102_150405")))
 	logFile, err := os.OpenFile(logFilePath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
 	if err != nil {
 		return nil, err

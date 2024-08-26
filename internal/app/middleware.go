@@ -11,7 +11,12 @@ import (
 
 	cmdRuntime "runtime"
 
+	"github.com/Yuelioi/vidor/internal/config"
+	"github.com/Yuelioi/vidor/internal/globals"
+	"github.com/Yuelioi/vidor/internal/models"
+	"github.com/Yuelioi/vidor/internal/plugin"
 	pb "github.com/Yuelioi/vidor/internal/proto"
+	"github.com/Yuelioi/vidor/internal/task"
 	"github.com/go-resty/resty/v2"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
@@ -27,7 +32,7 @@ type TaskResult struct {
 
 // 插件
 
-func (app *App) DownloadPlugin(p *Plugin) *Plugin {
+func (app *App) DownloadPlugin(p *plugin.Plugin) *plugin.Plugin {
 	pluginDir := fmt.Sprintf("https://cdn.yuelili.com/market/vidor/plugins/", p.ID)
 
 	client := &resty.Client{}
@@ -42,7 +47,7 @@ func (app *App) DownloadPlugin(p *Plugin) *Plugin {
 }
 
 // 运行插件, 并建立连接
-func (app *App) RunPlugin(p *Plugin) *Plugin {
+func (app *App) RunPlugin(p *plugin.Plugin) *plugin.Plugin {
 	plugin, ok := app.plugins[p.ID]
 	if !ok {
 		return nil
@@ -64,7 +69,7 @@ func (app *App) RunPlugin(p *Plugin) *Plugin {
 }
 
 // 更新插件参数
-func (app *App) UpdatePlugin(p *Plugin) *Plugin {
+func (app *App) UpdatePlugin(p *plugin.Plugin) *plugin.Plugin {
 	plugin, ok := app.plugins[p.ID]
 	if !ok {
 		return nil
@@ -79,13 +84,13 @@ func (app *App) UpdatePlugin(p *Plugin) *Plugin {
 	return plugin
 }
 
-func (app *App) StopPlugin(p *Plugin) *Plugin {
+func (app *App) StopPlugin(p *plugin.Plugin) *plugin.Plugin {
 	plugin, ok := app.plugins[p.ID]
 	if !ok {
 		return nil
 	}
 	// 停止
-	_, err := plugin.service.Shutdown(context.Background(), nil)
+	_, err := plugin.Service.Shutdown(context.Background(), nil)
 	if err != nil {
 		return nil
 	}
@@ -94,7 +99,7 @@ func (app *App) StopPlugin(p *Plugin) *Plugin {
 }
 
 // 启用插件, 但是不会运行
-func (app *App) EnablePlugin(p *Plugin) (*Plugin, string) {
+func (app *App) EnablePlugin(p *plugin.Plugin) (*plugin.Plugin, string) {
 	plugin, ok := app.plugins[p.ID]
 	if !ok {
 		app.logger.Infof("没有找到插件:%s", p.ID)
@@ -110,7 +115,7 @@ func (app *App) EnablePlugin(p *Plugin) (*Plugin, string) {
 }
 
 // 关闭插件,并禁用插件
-func (app *App) DisablePlugin(p *Plugin) *Plugin {
+func (app *App) DisablePlugin(p *plugin.Plugin) *plugin.Plugin {
 	plugin, ok := app.plugins[p.ID]
 	if !ok {
 		app.logger.Infof("没有找到插件:%s", p.ID)
@@ -119,7 +124,7 @@ func (app *App) DisablePlugin(p *Plugin) *Plugin {
 
 	// 关闭插件
 	if plugin.State == 1 {
-		_, err := plugin.service.Shutdown(context.Background(), nil)
+		_, err := plugin.Service.Shutdown(context.Background(), nil)
 		if err != nil {
 			return nil
 		}
@@ -137,10 +142,10 @@ func (app *App) DisablePlugin(p *Plugin) *Plugin {
 }
 
 // 保存插件配置
-func (app *App) SavePluginConfig(id string, pluginConfig *PluginConfig) (*Plugin, error) {
+func (app *App) SavePluginConfig(id string, pluginConfig *models.PluginConfig) (*plugin.Plugin, error) {
 	plugin, ok := app.plugins[id]
 	if !ok {
-		return nil, pluginConfigSaveError
+		return nil, globals.ErrPluginConfigSave
 	}
 
 	err := app.UpdatePluginsConfig(id, pluginConfig).config.Save()
@@ -175,7 +180,7 @@ func (app *App) ShowDownloadInfo(link string) *pb.InfoResponse {
 	ctx := context.Background()
 
 	// 获取展示信息
-	response, err := plugin.service.GetInfo(ctx, &pb.InfoRequest{
+	response, err := plugin.Service.GetInfo(ctx, &pb.InfoRequest{
 		Url: link,
 	})
 
@@ -229,7 +234,7 @@ func (app *App) ParsePlaylist(ids []string) *pb.ParseResponse {
 	ctx := context.Background()
 
 	// 解析
-	parseResponse, err := plugin.service.Parse(ctx, &pb.ParseRequest{Tasks: tasks})
+	parseResponse, err := plugin.Service.Parse(ctx, &pb.ParseRequest{Tasks: tasks})
 
 	if err != nil {
 		return &pb.ParseResponse{}
@@ -278,7 +283,7 @@ func (app *App) AddDownloadTasks(taskMaps []taskMap) bool {
 	// 清除任务缓存
 	app.cache.ClearTasks()
 
-	stream, err := plugin.service.Download(context.Background(), &pb.DownloadRequest{
+	stream, err := plugin.Service.Download(context.Background(), &pb.DownloadRequest{
 		Tasks: tasks,
 	})
 
@@ -443,11 +448,11 @@ func (app *App) OpenFileWithSystemPlayer(filePath string) error {
 	return cmd.Start()
 }
 
-func (app *App) GetConfig() *Config {
+func (app *App) GetConfig() *config.Config {
 	return app.config
 }
 
-func (app *App) GetPlugins() map[string]*Plugin {
+func (app *App) GetPlugins() map[string]*plugin.Plugin {
 	return app.plugins
 }
 
@@ -458,7 +463,7 @@ func (app *App) TaskParts() []Part {
 }
 
 // 保存配置文件到本地
-func (app *App) SaveConfig(config *Config) bool {
+func (app *App) SaveConfig(config *config.Config) bool {
 
 	// 保存配置文件
 	err := app.config.Save()
@@ -472,13 +477,13 @@ func (app *App) SaveConfig(config *Config) bool {
 }
 
 // 修改系统配置
-func (app *App) UpdateSystemConfig(systemConfig *SystemConfig) *App {
+func (app *App) UpdateSystemConfig(systemConfig *models.SystemConfig) *App {
 	app.config.SystemConfig = systemConfig
 	return app
 }
 
 // 修改插件配置
-func (app *App) UpdatePluginsConfig(id string, pluginConfig *PluginConfig) *App {
+func (app *App) UpdatePluginsConfig(id string, pluginConfig *models.PluginConfig) *App {
 	plugin, ok := app.plugins[id]
 	if ok {
 		plugin.PluginConfig = pluginConfig
@@ -487,7 +492,7 @@ func (app *App) UpdatePluginsConfig(id string, pluginConfig *PluginConfig) *App 
 }
 
 // 任务转任务片段
-func tasksToParts(tasks []*Task) []Part {
+func tasksToParts(tasks []*task.Task) []Part {
 	// parts := make([]Part, len(tasks))
 	// for i, task := range tasks {
 	// 	parts[i] = *task.part

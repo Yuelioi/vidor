@@ -1,6 +1,6 @@
-import { app } from '@wailsjs/go/models'
+import { plugin } from '@wailsjs/go/models'
 
-export class Plugin extends app.Plugin {
+export class Plugin extends plugin.Plugin {
   lock?: boolean = true
 }
 

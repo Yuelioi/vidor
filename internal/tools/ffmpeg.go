@@ -1,4 +1,4 @@
-package utils
+package tools
 
 import (
 	"context"
@@ -28,6 +28,14 @@ func createLogAdapter(logFilePath string) (*LogAdapter, error) {
 	}
 
 	return &LogAdapter{file: logFile}, nil
+}
+
+// 检查是否存在FFmpeg
+func CheckFFmpeg(target string) bool {
+	if err := SetFFmpegPath(target); err != nil {
+		return false
+	}
+	return true
 }
 
 // 设置FFmpeg完整路径

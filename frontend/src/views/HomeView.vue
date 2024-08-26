@@ -45,7 +45,7 @@
                 type="checkbox"
                 id="downloadVideo"
                 class="ml-2 checkbox checkbox-xs"
-                v-model="config.system.download_video" />
+                v-model="configs.system.download_video" />
             </div>
           </div>
           <div class="px-2 basis-1/4">
@@ -57,7 +57,7 @@
                 type="checkbox"
                 id="downloadAudio"
                 class="ml-2 checkbox checkbox-xs"
-                v-model="config.system.download_audio" />
+                v-model="configs.system.download_audio" />
             </div>
           </div>
           <div class="px-2 basis-1/4">
@@ -69,7 +69,7 @@
                 type="checkbox"
                 id="downloadSubtitle"
                 class="ml-2 checkbox checkbox-xs"
-                v-model="config.system.download_subtitle" />
+                v-model="configs.system.download_subtitle" />
             </div>
           </div>
           <div class="px-2 basis-1/4">
@@ -81,7 +81,7 @@
                 type="checkbox"
                 id="downloadCombine"
                 class="ml-2 checkbox checkbox-xs"
-                v-model="config.system.download_combine" />
+                v-model="configs.system.download_combine" />
             </div>
           </div>
         </div>
@@ -92,7 +92,7 @@
             <input
               type="text"
               class="grow"
-              v-model.lazy="config.system.magic_name"
+              v-model.lazy="configs.system.magic_name"
               placeholder="下载文件魔法名称" />
             <button class="btn" @click="applyMagicName">应用</button>
           </label>
@@ -234,7 +234,7 @@ import { Playlist, Task } from '@/models/go'
 import { ShowDownloadInfo, AddDownloadTasks, ParsePlaylist } from '@wailsjs/go/app/App'
 // import { MagicName } from '@/utils/util'
 
-const { config } = storeToRefs(useBasicStore())
+const { configs } = storeToRefs(useBasicStore())
 const isDownloadBtnDisabled = ref(false)
 const link = ref('https://www.bilibili.com/video/BV1k14y117di/')
 
@@ -358,7 +358,7 @@ function addTasks() {
 function applyMagicName() {
   // videoInfo.tasks.forEach((element, index) => {
   //   // element.magicNamee = MagicName(
-  //   //   config.value.system.magic_name,
+  //   //   configs.value.system.magic_name,
   //   //   videoInfo.WorkDirName,
   //   //   element.Name,
   //   //   index + 1
@@ -366,8 +366,8 @@ function applyMagicName() {
   // })
 }
 
-watch(config.value, async () => {
-  SaveConfig(config.value).then(() => {
+watch(configs.value, async () => {
+  SaveConfig(configs.value).then(() => {
     console.log('保存配置成功')
   })
 })

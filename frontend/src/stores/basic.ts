@@ -5,19 +5,19 @@ import { defineStore } from 'pinia'
 
 import { Plugin } from '@/models/go'
 
-import { app } from '@wailsjs/go/models'
+import { config, models } from '@wailsjs/go/models'
 
 export const useBasicStore = defineStore('basic', () => {
-  const configInstance = new app.Config({
-    system: new app.SystemConfig(),
+  const configInstance = new config.Config({
+    system: new models.SystemConfig(),
     plugins: []
   })
 
   const plugins: Record<string, Plugin> = reactive({})
 
-  const config = reactive(configInstance)
+  const configs = reactive(configInstance)
 
   const tasks = reactive([])
 
-  return { config, tasks, plugins }
+  return { configs, tasks, plugins }
 })

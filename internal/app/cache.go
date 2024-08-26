@@ -3,12 +3,13 @@ package app
 import (
 	"sync"
 
+	"github.com/Yuelioi/vidor/internal/plugin"
 	pb "github.com/Yuelioi/vidor/internal/proto"
 )
 
 type Cache struct {
 	tasks      sync.Map
-	downloader *Plugin
+	downloader *plugin.Plugin
 }
 
 func NewCache() *Cache {
@@ -68,9 +69,9 @@ func (c *Cache) Tasks(ids []string) ([]*pb.Task, error) {
 }
 
 // 下载器缓存
-func (c *Cache) Downloader() *Plugin {
+func (c *Cache) Downloader() *plugin.Plugin {
 	return c.downloader
 }
-func (c *Cache) SetDownloader(p *Plugin) {
+func (c *Cache) SetDownloader(p *plugin.Plugin) {
 	c.downloader = p
 }

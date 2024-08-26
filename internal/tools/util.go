@@ -1,29 +1,32 @@
-package utils
+package tools
 
 import (
 	"fmt"
 	"math/rand"
 	"os"
+	"path/filepath"
 	"regexp"
 	"strings"
 )
 
-func MaxInt(a, b int) int {
-	if a < b {
-		return b
+func MkDirs(dirs ...string) error {
+	for _, dir := range dirs {
+		err := os.MkdirAll(dir, os.ModePerm)
+		if err != nil {
+			return err
+		}
 	}
-	return a
+	return nil
 }
 
-func MinInt(a, b int) int {
-	if a > b {
-		return b
+// 获取当前exe所在目录
+func ExePath() (string, error) {
+	exePath, err := os.Executable()
+	if err != nil {
+		return "", err
 	}
-	return a
-}
 
-func ClampInt(src, min, max int) int {
-	return MinInt(MaxInt(src, min), max)
+	return filepath.Dir(exePath), nil
 }
 
 // SanitizeFileName takes an input string and returns a sanitized file name

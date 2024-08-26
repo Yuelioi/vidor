@@ -5,7 +5,7 @@ import { Part } from '@/models/go'
 
 const _themes = ['light', 'dark']
 const { switchTheme } = useTheme(_themes)
-const { config, tasks } = storeToRefs(useBasicStore())
+const { configs, tasks } = storeToRefs(useBasicStore())
 
 EventsOn('updateInfo', (optionalData?: Part) => {
   const index = tasks.value.findIndex((task) => task.TaskID === optionalData?.TaskID)
@@ -28,9 +28,9 @@ onMounted(async () => {
   // 加载配置
   const fetchedConfig = (await GetConfig()) as Config
   if (fetchedConfig) {
-    Object.assign(config.value, fetchedConfig)
+    Object.assign(configs.value, fetchedConfig)
     console.log('加载配置')
-    console.log(config.value)
+    console.log(configs.value)
   }
 
   // 加载任务
@@ -38,10 +38,10 @@ onMounted(async () => {
   tasks.value.splice(0, tasks.value.length, ...fetchedTasks)
 
   // 切换主题
-  switchTheme(config.value.system.theme)
+  switchTheme(configs.value.system.theme)
 
   // 设置字体大小
-  const scale = Math.min(Math.max(config.value.system.scale_factor, 12), 32)
+  const scale = Math.min(Math.max(configs.value.system.scale_factor, 12), 32)
   document.documentElement.style.fontSize = `${scale}px`
 
   // 禁用页面缩放

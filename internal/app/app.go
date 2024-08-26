@@ -9,40 +9,60 @@ import (
 	"path/filepath"
 	"regexp"
 
+	"github.com/Yuelioi/vidor/internal/config"
+	"github.com/Yuelioi/vidor/internal/globals"
+	"github.com/Yuelioi/vidor/internal/logger"
+	"github.com/Yuelioi/vidor/internal/plugin"
+	"github.com/Yuelioi/vidor/internal/task"
+	"github.com/Yuelioi/vidor/internal/tools"
 	"github.com/energye/systray"
 	"github.com/sirupsen/logrus"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
 
+var pluginsDir string
+var assetsDir string
+
 // 应用实例
 type App struct {
 	ctx       context.Context
 	appInfo   AppInfo
-	config    *Config            // 软件配置信息
-	taskQueue TaskQueue          // 任务队列 用于分发任务
-	plugins   map[string]*Plugin // 插件
-	cache     *Cache             // 缓存
+	config    *config.Config            // 软件配置信息
+	taskQueue task.TaskQueue            // 任务队列 用于分发任务
+	plugins   map[string]*plugin.Plugin // 插件
+	cache     *Cache                    // 缓存
 	logger    *logrus.Logger
 }
 
 func NewApp() *App {
 	return &App{
-		plugins: make(map[string]*Plugin),
+		plugins: make(map[string]*plugin.Plugin),
 	}
 }
 
 func (app *App) Startup(ctx context.Context) {
 	app.ctx = ctx
 
+	appDir, err := tools.ExePath()
+	if err != nil {
+		log.Fatal()
+	}
+
+	loggerDir := filepath.Join(appDir, "logs")
+	configDir := filepath.Join(appDir, "configs")
+	pluginsDir = filepath.Join(appDir, "plugins")
+	assetsDir = filepath.Join(appDir, "assets")
+	// libDir := filepath.Join(appDir, "lib")
+
 	// 加载配置
-	c, err := NewConfig()
+	c, err := config.NewConfig(configDir)
 	if err != nil {
 		log.Fatalf("Start: %s", err.Error())
 	}
 	app.config = c
 
 	// 创建日志
-	appLogger, err := createLogger(app.config.logDir)
+	appLogger, err := logger.New(loggerDir)
 	if err != nil {
 		log.Fatal("init: ", err.Error())
 	}
@@ -62,7 +82,7 @@ func (app *App) Startup(ctx context.Context) {
 	go func() {
 		// 任务队列
 		app.logger.Info("任务队列加载中")
-		app.taskQueue = NewTaskQueue()
+		app.taskQueue = task.NewTaskQueue()
 	}()
 
 	go func() {
@@ -81,14 +101,6 @@ func (app *App) Startup(ctx context.Context) {
 	app.logger.Info("缓存器加载中")
 	app.cache = NewCache()
 
-	// 加载FFmpeg
-	// err = utils.SetFFmpegPath(app.config.FFMPEG)
-	// if err != nil {
-	// 	logger.Infof("FFmpeg 加载失败:%s", err)
-	// } else {
-	// 	logger.Info("FFmpeg 加载成功")
-	// }
-
 	app.logger.Info("APP 加载完毕")
 }
 
@@ -98,7 +110,7 @@ func (app *App) Shutdown(ctx context.Context) {
 	// 关闭插件
 	for _, plugin := range app.plugins {
 		if plugin.State == 1 {
-			plugin.service.Shutdown(context.Background(), nil)
+			plugin.Service.Shutdown(context.Background(), nil)
 		}
 	}
 
@@ -110,7 +122,7 @@ func (app *App) Shutdown(ctx context.Context) {
 
 // 系统托盘
 func (app *App) systemTray() {
-	iconPath := filepath.Join(app.config.assetsDir, "icon.ico")
+	iconPath := filepath.Join(assetsDir, "icon.ico")
 	iconData, err := os.ReadFile(iconPath)
 	if err != nil {
 		app.logger.Info("加载托盘图标失败")
@@ -133,7 +145,7 @@ func (app *App) systemTray() {
 }
 
 // 基于链接获取下载器
-func (app *App) selectPlugin(url string) (*Plugin, error) {
+func (app *App) selectPlugin(url string) (*plugin.Plugin, error) {
 	for _, plugin := range app.plugins {
 		for _, match := range plugin.Matches {
 			reg, err := regexp.Compile(match)
@@ -145,29 +157,30 @@ func (app *App) selectPlugin(url string) (*Plugin, error) {
 			}
 		}
 	}
-	return nil, pluginNotFound
+	return nil, globals.ErrPluginNotFound
 }
 
 // 加载插件
 func (app *App) loadPlugins() {
-	dirs, err := os.ReadDir(app.config.pluginsDir)
+	dirs, err := os.ReadDir(pluginsDir)
 	if err != nil {
-		log.Fatalf(fileReadFailed.Error())
+		log.Fatalf(globals.ErrFileRead.Error())
 	}
 
 	for _, dir := range dirs {
 		if dir.IsDir() {
-			pluginManifestPath := filepath.Join(app.config.pluginsDir, dir.Name(), "manifest.json")
+			pluginManifestPath := filepath.Join(pluginsDir, dir.Name(), "manifest.json")
 			manifestData, err := os.ReadFile(pluginManifestPath)
 			if err != nil {
-				app.logger.Infof(fileReadFailed.Error())
+				app.logger.Infof(globals.ErrFileRead.Error())
 				continue
 			}
 
-			plugin := NewPlugin()
+			pluginDir := filepath.Join(pluginsDir, dir.Name())
+			plugin := plugin.NewPlugin(pluginDir)
 			err = json.Unmarshal(manifestData, plugin)
 			if err != nil {
-				app.logger.Infof(configConversionFailed.Error())
+				app.logger.Infof(globals.ErrConfigConversion.Error())
 				continue
 			}
 
@@ -180,7 +193,7 @@ func (app *App) loadPlugins() {
 				if pluginConfig.Enable {
 					err = plugin.Run(app.config)
 					if err != nil {
-						app.logger.Warnf(pluginRunFailed.Error())
+						app.logger.Warnf(globals.ErrPluginRun.Error())
 						continue
 					}
 
@@ -188,7 +201,7 @@ func (app *App) loadPlugins() {
 					go func() {
 						err = plugin.Init()
 						if err != nil {
-							app.logger.Warnf(pluginInitFailed.Error())
+							app.logger.Warnf(globals.ErrPluginRun.Error())
 						}
 						runtime.EventsEmit(app.ctx, "plugin-update", plugin)
 					}()
@@ -196,7 +209,7 @@ func (app *App) loadPlugins() {
 				}
 			}
 			// 加载时, 需要绑定插件配置地址
-			app.config.PluginConfigs[plugin.ID] = plugin.PluginConfig
+			app.config.PluginConfigs[plugin.ID] = *plugin.PluginConfig
 
 			app.logger.Infof("成功加载插件:%v\n\n", plugin.PluginConfig)
 			app.plugins[plugin.ID] = plugin
