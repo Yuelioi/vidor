@@ -28,7 +28,7 @@ type App struct {
 	ctx       context.Context
 	appInfo   AppInfo
 	config    *config.Config            // 软件配置信息
-	taskQueue task.TaskQueue            // 任务队列 用于分发任务
+	taskQueue *task.TaskQueue           // 任务队列 用于分发任务
 	plugins   map[string]*plugin.Plugin // 插件
 	cache     *Cache                    // 缓存
 	logger    *logrus.Logger
@@ -55,7 +55,7 @@ func (app *App) Startup(ctx context.Context) {
 	// libDir := filepath.Join(appDir, "lib")
 
 	// 加载配置
-	c, err := config.NewConfig(configDir)
+	c, err := config.New(configDir)
 	if err != nil {
 		log.Fatalf("Start: %s", err.Error())
 	}
@@ -82,7 +82,7 @@ func (app *App) Startup(ctx context.Context) {
 	go func() {
 		// 任务队列
 		app.logger.Info("任务队列加载中")
-		app.taskQueue = task.NewTaskQueue()
+		app.taskQueue = task.New()
 	}()
 
 	go func() {
@@ -164,7 +164,7 @@ func (app *App) selectPlugin(url string) (*plugin.Plugin, error) {
 func (app *App) loadPlugins() {
 	dirs, err := os.ReadDir(pluginsDir)
 	if err != nil {
-		log.Fatalf(globals.ErrFileRead.Error())
+		log.Fatal(globals.ErrFileRead.Error())
 	}
 
 	for _, dir := range dirs {
@@ -177,7 +177,7 @@ func (app *App) loadPlugins() {
 			}
 
 			pluginDir := filepath.Join(pluginsDir, dir.Name())
-			plugin := plugin.NewPlugin(pluginDir)
+			plugin := plugin.New(pluginDir)
 			err = json.Unmarshal(manifestData, plugin)
 			if err != nil {
 				app.logger.Infof(globals.ErrConfigConversion.Error())
@@ -209,7 +209,7 @@ func (app *App) loadPlugins() {
 				}
 			}
 			// 加载时, 需要绑定插件配置地址
-			app.config.PluginConfigs[plugin.ID] = *plugin.PluginConfig
+			app.config.PluginConfigs[plugin.ID] = plugin.PluginConfig
 
 			app.logger.Infof("成功加载插件:%v\n\n", plugin.PluginConfig)
 			app.plugins[plugin.ID] = plugin

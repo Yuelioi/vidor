@@ -27,7 +27,7 @@ func (c *Cache) Task(id string) (*pb.Task, bool) {
 	return value.(*pb.Task), true
 }
 
-func (c *Cache) SetTask(id string, info *pb.Task) {
+func (c *Cache) AddTask(id string, info *pb.Task) {
 	c.tasks.Store(id, info)
 }
 
@@ -39,13 +39,13 @@ func (c *Cache) ClearTasks() {
 	c.tasks = sync.Map{}
 }
 
-func (c *Cache) SetTasks(tasks []*pb.Task) {
+func (c *Cache) AddTasks(tasks []*pb.Task) {
 	var wg sync.WaitGroup
 	for _, task := range tasks {
 		wg.Add(1)
 		go func(task *pb.Task) {
 			defer wg.Done()
-			c.SetTask(task.Id, task)
+			c.AddTask(task.Id, task)
 		}(task)
 	}
 	wg.Wait()

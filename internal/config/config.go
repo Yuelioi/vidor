@@ -21,12 +21,12 @@ var defaultSystemConfig = &models.SystemConfig{
 	DownloadLimit:    3,
 }
 
-func NewConfig(baseDir string) (*Config, error) {
+func New(baseDir string) (*Config, error) {
 
 	c := &Config{
 		baseDir:       baseDir,
 		SystemConfig:  defaultSystemConfig,
-		PluginConfigs: make(map[string]models.PluginConfig),
+		PluginConfigs: make(map[string]*PluginConfig),
 	}
 
 	err := tools.MkDirs(baseDir)

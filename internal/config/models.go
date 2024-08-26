@@ -6,7 +6,13 @@ import (
 
 type Config struct {
 	baseDir       string
-	SystemConfig  *models.SystemConfig           `json:"system"`
-	PluginConfigs map[string]models.PluginConfig `json:"plugins"`
-	Test          *models.SystemConfig           `json:"test"`
+	SystemConfig  *models.SystemConfig     `json:"system"`
+	PluginConfigs map[string]*PluginConfig `json:"plugins"`
+	Test          *models.SystemConfig     `json:"test"`
+}
+
+type PluginConfig struct {
+	ID       string            `json:"id"`
+	Enable   bool              `json:"enable"` // 建立连接 (Run)
+	Settings map[string]string `json:"settings"`
 }

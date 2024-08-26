@@ -13,9 +13,3 @@ type SystemConfig struct {
 	DownloadCombine  bool   `json:"download_combine"`
 	DownloadLimit    int    `json:"download_limit"`
 }
-
-type PluginConfig struct {
-	ID       string            `json:"id"`
-	Enable   bool              `json:"enable"` // 建立连接 (Run)
-	Settings map[string]string `json:"settings"`
-}

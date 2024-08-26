@@ -1,12 +1,12 @@
 package plugin
 
 import (
-	"github.com/Yuelioi/vidor/internal/models"
+	"github.com/Yuelioi/vidor/internal/config"
 	pb "github.com/Yuelioi/vidor/internal/proto"
 )
 
 type Plugin struct {
-	*models.PluginConfig
+	*config.PluginConfig
 	baseDir         string   // 插件所在文件夹
 	ManifestVersion int      `json:"manifest_version"`
 	Name            string   `json:"name"`
@@ -26,9 +26,9 @@ type Plugin struct {
 	Service         pb.DownloadServiceClient
 }
 
-func NewPlugin(baseDir string) *Plugin {
+func New(baseDir string) *Plugin {
 	return &Plugin{
-		PluginConfig: &models.PluginConfig{
+		PluginConfig: &config.PluginConfig{
 			Settings: make(map[string]string),
 		},
 		baseDir: baseDir,
