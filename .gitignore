@@ -1,5 +1,10 @@
 wailsjs/go
+*auto*.*
 envrc
+
+# frontend
+*.md5
+*lock*.*
 
 # GO
 build/bin
@@ -19,3 +24,5 @@ Note.md
 temp.*
 .env
 *.pb.go
+
+

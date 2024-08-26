@@ -105,11 +105,12 @@
 
 <script setup lang="ts">
 import { BrowserOpenURL } from '@wailsjs/runtime/runtime'
-const { plugins } = storeToRefs(useBasicStore())
 
 import { Plugin } from '@/models/go'
 
 import { GetPlugins } from '@wailsjs/go/app/App'
+
+const { plugins } = storeToRefs(useBasicStore())
 
 const hoveredIndex = ref('')
 defineProps<{ tab: Tab }>()
