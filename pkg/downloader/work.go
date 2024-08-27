@@ -10,9 +10,13 @@ import (
 )
 
 func (d *Downloader) Download() error {
-	if err := d.prepareOutputFile(); err != nil {
+
+	file, err := prepareOutputFile(d.targetPath)
+	if err != nil {
 		return err
 	}
+
+	d.out = file
 	defer d.out.Close()
 	defer d.cancel()
 
@@ -24,9 +28,11 @@ func (d *Downloader) Download() error {
 
 // 恢复下载
 func (d *Downloader) Recover(segments []*Pair) error {
-	if err := d.prepareOutputFile(); err != nil {
+	file, err := prepareOutputFile(d.targetPath)
+	if err != nil {
 		return err
 	}
+	d.out = file
 	defer d.out.Close()
 	defer d.cancel()
 
@@ -89,6 +95,7 @@ func (d *Downloader) allocateSegments() {
 }
 
 // 开始
+// TODO 错误处理
 func (d *Downloader) start() error {
 	d.state = 1
 	var wg sync.WaitGroup
@@ -97,11 +104,13 @@ func (d *Downloader) start() error {
 		go func(pair *pair) {
 			defer wg.Done()
 			fmt.Printf("seg: %v\n", seg)
-			err := d.downloadChunk(seg)
-			if err != nil {
-				// todo
-				return
+			if d.supportsChunked {
+				d.downloadChunk(seg)
+
+			} else {
+				d.download()
 			}
+
 		}(seg)
 	}
 	wg.Wait()
@@ -135,10 +144,11 @@ func (d *Downloader) downloadChunk(seg *pair) error {
 		log.Println("请求失败:", err)
 		return err
 	}
+	defer resp.RawBody().Close()
+
 	if resp.RawBody() == nil {
 		return errors.New("response body is nil")
 	}
-	defer resp.RawBody().Close()
 
 	buffer := make([]byte, d.bufferSize)
 
@@ -149,7 +159,7 @@ func (d *Downloader) downloadChunk(seg *pair) error {
 			fmt.Println("Context canceled")
 			return d.ctx.Err()
 		default:
-			n, err := io.ReadFull(resp.RawBody(), buffer)
+			n, err := resp.RawBody().Read(buffer)
 			if n > 0 {
 				_, writeErr := d.out.WriteAt(buffer[:n], chunkStart)
 				if writeErr != nil {
@@ -158,6 +168,54 @@ func (d *Downloader) downloadChunk(seg *pair) error {
 				}
 				chunkStart += int64(n)
 				seg.start.Add(int64(n))
+				d.totalBytesRead.Add(int64(n))
+			}
+
+			if err != nil {
+				if err == io.EOF {
+					return nil // 读取完毕，正常退出
+				}
+				return err // 读取过程中出错，返回错误
+			}
+		}
+	}
+}
+
+// 下载整块
+func (d *Downloader) download() error {
+	fmt.Println("直接下载")
+
+	req := d.client.R().
+		SetDoNotParseResponse(true)
+
+	resp, err := req.Get(d.url)
+	if err != nil {
+		log.Println("请求失败:", err)
+		return err
+	}
+	defer resp.RawBody().Close()
+
+	if resp.RawBody() == nil {
+		return errors.New("response body is nil")
+	}
+
+	buffer := make([]byte, d.bufferSize)
+	start := int64(0)
+
+	for {
+		select {
+		case <-d.ctx.Done():
+			fmt.Println("Context canceled")
+			return d.ctx.Err()
+		default:
+			n, err := resp.RawBody().Read(buffer)
+			if n > 0 {
+				_, writeErr := d.out.WriteAt(buffer[:n], start)
+				if writeErr != nil {
+					log.Printf("写入文件失败：%v", writeErr)
+					return writeErr
+				}
+				start += int64(n)
 				d.totalBytesRead.Add(int64(n))
 			}
 

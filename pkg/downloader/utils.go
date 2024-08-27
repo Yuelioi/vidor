@@ -20,37 +20,33 @@ func newPair(start, end int64) *pair {
 }
 
 // 自适应batch
-func autoSetBatchSize(contentLength int64) int64 {
-	minBatchSize := int64(2)
-	maxBatchSize := int64(5)
-
+func autoSetBatchSize(contentLength int64, minBatchSize, maxBatchSize int64) int64 {
 	batchSize := int64(math.Sqrt(float64(contentLength) / (1024 * 1024))) // 1MB chunks
-	batchSize = int64(math.Max(float64(minBatchSize), float64(math.Min(float64(batchSize), float64(maxBatchSize)))))
+	batchSize = max(minBatchSize, min(batchSize, maxBatchSize))
 	return batchSize
 }
 
 // 准备文件
-func (d *Downloader) prepareOutputFile() error {
-	_, err := os.Stat(d.targetPath)
+func prepareOutputFile(targetPath string) (*os.File, error) {
+	_, err := os.Stat(targetPath)
 	if err == nil {
-		out, err := os.OpenFile(d.targetPath, os.O_RDWR, 0666)
+		out, err := os.OpenFile(targetPath, os.O_RDWR, 0666)
 		if err != nil {
 			log.Printf("无法打开文件：%v", err)
-			return err
+			return out, err
 		}
 		log.Print("使用现有文件")
-		d.out = out
+		return out, nil
 	} else if errors.Is(err, os.ErrNotExist) {
-		out, err := os.Create(d.targetPath)
+		out, err := os.Create(targetPath)
 		if err != nil {
 			log.Printf("无法创建文件：%v", err)
-			return err
+			return out, err
 		}
-		d.out = out
+		return out, nil
 	} else {
 		// An unexpected error occurred
 		log.Printf("无法检查文件状态：%v", err)
-		return err
+		return nil, err
 	}
-	return nil
 }
