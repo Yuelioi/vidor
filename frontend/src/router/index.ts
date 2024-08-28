@@ -7,14 +7,14 @@ import SettingView from '@/views/SettingView.vue'
 import InfoView from '@/views/InfoView.vue'
 
 const routes = [
-    { path: '/', component: HomeView, name: 'home' },
-    { path: '/plugins', component: PluginView, name: 'plugins' },
-    { path: '/task', component: TaskView, name: 'task' },
-    { path: '/setting', component: SettingView, name: 'setting' },
-    { path: '/info', component: InfoView, name: 'info' }
+  { path: '/', component: HomeView, name: 'home' },
+  { path: '/plugins', component: PluginView, name: 'plugins' },
+  { path: '/tasks/', component: TaskView, name: 'tasks' },
+  { path: '/setting', component: SettingView, name: 'setting' },
+  { path: '/info', component: InfoView, name: 'info' }
 ]
 
 export default createRouter({
-    history: createWebHashHistory(),
-    routes
+  history: createWebHashHistory(),
+  routes
 })

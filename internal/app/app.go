@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"log"
 	"os"
 	"path/filepath"
@@ -183,7 +182,6 @@ func (app *App) loadPlugins() {
 
 			pluginDir := filepath.Join(pluginsDir, dir.Name())
 			plugin := plugin.New(pluginDir)
-			fmt.Printf("string(manifestData): %v\n", string(manifestData))
 			err = json.Unmarshal(manifestData, plugin)
 			if err != nil {
 				app.logger.Infof(globals.ErrConfigConversion.Error())

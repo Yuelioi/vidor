@@ -11,7 +11,6 @@ import (
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 
 	"github.com/Yuelioi/vidor/internal/config"
-	"github.com/Yuelioi/vidor/internal/globals"
 	"github.com/Yuelioi/vidor/internal/plugin"
 	"github.com/Yuelioi/vidor/internal/tools"
 	"github.com/Yuelioi/vidor/pkg/downloader"
@@ -179,8 +178,8 @@ func (app *App) EnablePlugin(p *plugin.Plugin) (*plugin.Plugin, string) {
 	}
 	plugin.Enable = true
 	// 保存配置
-	p2, err := app.SavePluginConfig(plugin.ID, plugin.PluginConfig)
-	if err != nil {
+	p2 := app.SavePluginConfig(plugin.ID, plugin.PluginConfig)
+	if p2 != nil {
 		return nil, fmt.Sprintf("保存插件配置失败:%s", p.ID)
 	}
 	return p2, fmt.Sprintf("保存插件配置失败:%s", p.ID)
@@ -206,23 +205,24 @@ func (app *App) DisablePlugin(p *plugin.Plugin) *plugin.Plugin {
 	plugin.Enable = false
 	plugin.State = 3
 
-	p2, err := app.SavePluginConfig(plugin.ID, plugin.PluginConfig)
-	if err != nil {
+	p2 := app.SavePluginConfig(plugin.ID, plugin.PluginConfig)
+	if p2 != nil {
 		return nil
 	}
 	return p2
 }
 
 // 保存插件配置
-func (app *App) SavePluginConfig(id string, pluginConfig *config.PluginConfig) (*plugin.Plugin, error) {
+func (app *App) SavePluginConfig(id string, pluginConfig *config.PluginConfig) *plugin.Plugin {
 	plugin, ok := app.plugins[id]
 	if !ok {
-		return nil, globals.ErrPluginConfigSave
+		// globals.ErrPluginConfigSave
+		return nil
 	}
 
-	err := app.UpdatePluginsConfig(id, pluginConfig).config.Save()
+	err := app.SavePluginsConfig(id, pluginConfig)
 	if err != nil {
-		return nil, err
+		return nil
 	}
-	return plugin, nil
+	return plugin
 }

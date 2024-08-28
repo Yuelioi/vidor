@@ -6,9 +6,13 @@ import (
 	"io"
 	"log"
 
-	pb "github.com/Yuelioi/vidor/internal/proto"
+	"github.com/Yuelioi/vidor/internal/proto"
 	"github.com/Yuelioi/vidor/internal/task"
 )
+
+func (app *App) GetTasks() []*proto.Task {
+	return nil
+}
 
 /*
 	添加下载任务
@@ -20,7 +24,7 @@ import (
 func (app *App) AddDownloadTasks(taskMaps []taskMap) bool {
 
 	// 获取任务
-	tasks := []*pb.Task{}
+	tasks := []*proto.Task{}
 	for _, taskMap := range taskMaps {
 		cacheTask, ok := app.cache.Task(taskMap.id)
 		if !ok {
@@ -45,7 +49,7 @@ func (app *App) AddDownloadTasks(taskMaps []taskMap) bool {
 	// 清除任务缓存
 	app.cache.ClearTasks()
 
-	stream, err := plugin.Service.Download(context.Background(), &pb.DownloadRequest{
+	stream, err := plugin.Service.Download(context.Background(), &proto.TasksRequest{
 		Tasks: tasks,
 	})
 

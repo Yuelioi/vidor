@@ -157,6 +157,7 @@
     "TaskParts": true,
     "UpdatePluginsConfig": true,
     "UpdateSystemConfig": true,
-    "DownloadPlugin": true
+    "DownloadPlugin": true,
+    "GetTasks": true
   }
 }

@@ -13,7 +13,7 @@ type TaskQueue struct {
 
 // Task 任务结构体
 type Task struct {
-	id string
+	ID string
 }
 
 // New 创建一个新的任务队列
@@ -27,7 +27,7 @@ func New() *TaskQueue {
 func (tq *TaskQueue) AddTask(id string) {
 	tq.mu.Lock()
 	defer tq.mu.Unlock()
-	tq.tasks[id] = Task{id: id}
+	tq.tasks[id] = Task{ID: id}
 }
 
 // RemoveTask 从队列中移除任务
@@ -42,7 +42,7 @@ func (tq *TaskQueue) List() {
 	tq.mu.RLock()
 	defer tq.mu.RUnlock()
 	for _, task := range tq.tasks {
-		fmt.Println(task.id)
+		fmt.Println(task.ID)
 	}
 }
 

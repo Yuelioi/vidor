@@ -20,12 +20,14 @@ func newPair(start, end int64) *pair {
 
 // 自适应batch
 func autoSetBatchSize(contentLength int64, minBatchSize, maxBatchSize int64) int64 {
-	batchSize := int64(math.Sqrt(float64(contentLength) / (1024 * 1024))) // 1MB chunks
+	batchSize := int64(math.Sqrt(float64(contentLength) / (1024 * 1024 * 50))) // 1MB  *5 chunks
 	batchSize = max(minBatchSize, min(batchSize, maxBatchSize))
 	return batchSize
 }
 
 // 准备文件
+//
+// recover: 是否继续原文件下载
 func prepareOutputFile(targetPath string, recover bool) (*os.File, error) {
 	var f *os.File
 	var err error

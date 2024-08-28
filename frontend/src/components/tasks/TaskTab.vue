@@ -1,5 +1,5 @@
 <template>
-    <div class="p-4 h-full flex flex-col">
+  <!-- <div class="p-4 h-full flex flex-col">
         <div class="h-full" v-if="filteredTasks.length > 0">
             <div class="py-2 flex space-x-4 items-center">
                 <div class="badge badge-neutral badge-lg mr-auto text-neutral-content">
@@ -74,7 +74,7 @@
                             class="ml-3 h-full flex space-x-2 items-center justify-between transition-opacity duration-300 opacity-0 group-hover:opacity-100">
                             <span
                                 class="icon-[lucide--trash-2] size-8"
-                                @click="removeTask(task.TaskID)"></span>
+                                @click="removeTask(task.id)"></span>
                             <span
                                 class="icon-[ic--baseline-folder-open] size-8"
                                 @click="OpenExplorer(task.DownloadDir)"></span>
@@ -86,67 +86,38 @@
         <div class="pt-2 font-bold" v-else>
             <span>还木有任务捏~</span>
         </div>
-    </div>
+    </div> -->
 </template>
 
 <script setup lang="ts">
 import { OpenExplorer, RemoveTask, OpenFileWithSystemPlayer } from '@wailsjs/go/app/App'
 import { BrowserOpenURL } from '@wailsjs/runtime/runtime'
-import { Part } from '@/models/go'
 import { Tab } from '@/models/ui'
 const props = defineProps<{ tab: Tab }>()
 
 const { tasks } = storeToRefs(useBasicStore())
 
 const filteredTasks = computed(() => {
-    if (props.tab.id == 1) {
-        return tasks.value.filter((task) => task.State === '下载中')
-    } else if (props.tab.id == 2) {
-        return tasks.value.filter((task) => task.State === '队列中')
-    } else {
-        return tasks.value.filter((task) => task.State === '已完成')
-    }
+  if (props.tab.id == 1) {
+    return tasks.value.filter((task) => task.state === 2)
+  } else if (props.tab.id == 2) {
+    return tasks.value.filter((task) => task.state === 1)
+  } else {
+    return tasks.value.filter((task) => task.state === 3)
+  }
 })
 
 const removeTask = (uid: string) => {
-    RemoveTask(uid).then((ok) => {
-        if (ok) {
-            Message({ message: '删除任务成功', type: 'success' })
-            const index = tasks.value.findIndex((task) => task.TaskID === uid)
-            if (index !== -1) {
-                tasks.value.splice(index, 1)
-            }
-        } else {
-            Message({ message: '删除任务失败', type: 'error' })
-        }
-    })
-}
-
-const removeAll = () => {
-    VAlert({ alert: '确定要清理所有任务吗(不会删除文件)' }).then((ok) => {
-        if (ok) {
-            console.log(filteredTasks.value)
-
-            RemoveAllTask(filteredTasks.value).then((ok) => {
-                if (ok) {
-                    Message({ message: '删除任务成功', type: 'success' })
-                    console.log(tasks.value, 1)
-                    tasks.value.splice(
-                        0,
-                        tasks.value.length,
-                        ...subtractTaskLists(tasks.value, filteredTasks.value)
-                    )
-                    console.log(tasks.value, 2)
-                } else {
-                    Message({ message: '删除任务失败', type: 'error' })
-                }
-            })
-        }
-    })
-}
-
-function subtractTaskLists(tasks: Part[], filteredTasks: Part[]): Part[] {
-    const filteredTaskTaskIDs = new Set(filteredTasks.map((task) => task.TaskID))
-    return tasks.filter((task) => !filteredTaskTaskIDs.has(task.TaskID))
+  RemoveTask(uid).then((ok) => {
+    if (ok) {
+      Message({ message: '删除任务成功', type: 'success' })
+      const index = tasks.value.findIndex((task) => task.id === uid)
+      if (index !== -1) {
+        tasks.value.splice(index, 1)
+      }
+    } else {
+      Message({ message: '删除任务失败', type: 'error' })
+    }
+  })
 }
 </script>

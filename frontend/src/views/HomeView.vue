@@ -274,19 +274,18 @@ function handleSelectedAll(tasks: Task[]) {
 }
 
 // 获取视频信息
-function extractPlaylistInfo() {
+async function extractPlaylistInfo() {
   Message({ message: '获取视频信息中...请稍后', duration: 300 })
-  ShowDownloadInfo(link.value).then((vi: proto.InfoResponse) => {
-    if (vi.title == '') {
-      Message({ message: '获取视频信息失败, 请检查设置, 以及日志文件', type: 'warn' })
-    } else {
-      showPlaylistInfo.value = true
-      Object.assign(videoInfo, vi)
-      videoInfo.title = vi.title
-      console.log(videoInfo)
-      selectBest(videoInfo)
-    }
-  })
+  const result = await ShowDownloadInfo(link.value)
+
+  console.log(result)
+
+  if (result.title !== '') {
+    showPlaylistInfo.value = true
+    Object.assign(videoInfo, result)
+    console.log(videoInfo)
+    selectBest(videoInfo)
+  }
 }
 
 // 解析视频
@@ -299,7 +298,7 @@ function parsePlaylistInfo() {
     }
   })
 
-  ParsePlaylist(ids).then((vi: proto.ParseResponse) => {
+  ParsePlaylist(ids).then((vi: proto.TasksResponse) => {
     if (vi.id === '') {
       Message({ message: '获取视频信息失败, 请检查设置, 以及日志文件', type: 'warn' })
     } else {

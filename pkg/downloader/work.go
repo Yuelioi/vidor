@@ -6,11 +6,9 @@ import (
 	"io"
 	"log"
 	"sync"
-	"time"
 )
 
 func (d *Downloader) Download() error {
-
 	file, err := prepareOutputFile(d.targetPath, false)
 	if err != nil {
 		d.State = 4
@@ -21,7 +19,6 @@ func (d *Downloader) Download() error {
 	defer d.out.Close()
 	defer d.cancel()
 
-	go d.monitorDownloadSpeed()
 	d.allocateSegments()
 
 	d.State = 1
@@ -39,7 +36,6 @@ func (d *Downloader) Recover(segments []*Pair) error {
 	defer d.out.Close()
 	defer d.cancel()
 
-	go d.monitorDownloadSpeed()
 	d.loadSegments(segments)
 	d.State = 1
 	return d.start()
@@ -49,8 +45,8 @@ func (d *Downloader) Recover(segments []*Pair) error {
 func (d *Downloader) Parse() []Pair {
 	fmt.Print("暂停")
 	pairs := d.storeWork()
-	d.cancel()
 	d.State = 2
+	d.cancel()
 	return pairs
 }
 
@@ -58,29 +54,6 @@ func (d *Downloader) loadSegments(segments []*Pair) {
 	for _, seg := range segments {
 		pair := newPair(seg.start, seg.end)
 		d.segments = append(d.segments, pair)
-	}
-}
-
-func (d *Downloader) monitorDownloadSpeed() {
-	ticker := time.NewTicker(time.Duration(d.timeInterval) * time.Millisecond)
-	var previousBytesRead int64
-	defer ticker.Stop()
-
-	for range ticker.C {
-		select {
-		case <-d.ctx.Done():
-			fmt.Println("Context canceled")
-			return
-		default:
-			currentBytesRead := d.totalBytesRead.Load()
-			bytesRead := currentBytesRead - previousBytesRead
-			previousBytesRead = currentBytesRead
-
-			speedByte := float64(bytesRead)
-			speed := fmt.Sprintf("%.2f MB/s", speedByte*1000/(1024*1024*float64(d.timeInterval)))
-			fmt.Println(speed)
-			d.Status = speed
-		}
 	}
 }
 
@@ -101,7 +74,6 @@ func (d *Downloader) allocateSegments() {
 
 // 开始
 // TODO 错误处理
-
 func (d *Downloader) start() error {
 	d.State = 1
 	var wg sync.WaitGroup
@@ -207,10 +179,8 @@ func (d *Downloader) downloadChunk(seg *pair) error {
 func (d *Downloader) download() error {
 	fmt.Println("直接下载")
 
-	req := d.client.R().
-		SetDoNotParseResponse(true)
-
-	resp, err := req.Get(d.url)
+	resp, err := d.client.R().
+		SetDoNotParseResponse(true).Get(d.url)
 	if err != nil {
 		log.Println("请求失败:", err)
 		return err

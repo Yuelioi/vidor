@@ -1,21 +1,20 @@
 <template><div></div></template>
 
 <script setup lang="ts">
-import { Part } from '@/models/go'
-
 const _themes = ['light', 'dark']
 const { switchTheme } = useTheme(_themes)
 const { configs, tasks } = storeToRefs(useBasicStore())
+import { Task } from '@/models/go'
 
-EventsOn('updateInfo', (optionalData?: Part) => {
-  const index = tasks.value.findIndex((task) => task.TaskID === optionalData?.TaskID)
+EventsOn('updateInfo', (optionalData?: Task) => {
+  const index = tasks.value.findIndex((task) => task.id === optionalData?.id)
   if (index !== -1 && optionalData) {
     tasks.value.splice(index, 1, optionalData)
   }
 })
 
-EventsOn('message', (messageData: MessageData) => {
-  Message({ message: messageData['Message'], type: messageData['MessageType'] })
+EventsOn('system.message', (messageData: MessageData) => {
+  Message({ message: messageData['message'], type: messageData['messageType'] })
 })
 
 function blockWindowScale(event: KeyboardEvent) {
@@ -34,7 +33,7 @@ onMounted(async () => {
   }
 
   // 加载任务
-  const fetchedTasks = (await GetTaskParts()) as Part[]
+  const fetchedTasks = (await GetTaskParts()) as Task[]
   tasks.value.splice(0, tasks.value.length, ...fetchedTasks)
 
   // 切换主题

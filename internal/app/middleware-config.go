@@ -5,13 +5,14 @@ import (
 	"github.com/Yuelioi/vidor/internal/models"
 )
 
-// 获取主机配置信息
+// 获取主机所有配置信息
 func (app *App) GetConfig() *config.Config {
 	return app.config
 }
 
 // 保存配置文件到本地
 func (app *App) SaveConfig(config *config.Config) bool {
+	app.config = config
 	// 保存配置文件
 	err := app.config.Save()
 	if err != nil {
@@ -24,16 +25,17 @@ func (app *App) SaveConfig(config *config.Config) bool {
 }
 
 // 修改系统配置(不会保存)
-func (app *App) UpdateSystemConfig(systemConfig *models.SystemConfig) *App {
+func (app *App) SaveSystemConfig(systemConfig *models.SystemConfig) error {
 	app.config.SystemConfig = systemConfig
-	return app
+
+	return app.config.Save()
 }
 
 // 修改插件配置(不会保存)
-func (app *App) UpdatePluginsConfig(id string, pluginConfig *config.PluginConfig) *App {
+func (app *App) SavePluginsConfig(id string, pluginConfig *config.PluginConfig) error {
 	plugin, ok := app.plugins[id]
 	if ok {
 		plugin.PluginConfig = pluginConfig
 	}
-	return app
+	return app.config.Save()
 }

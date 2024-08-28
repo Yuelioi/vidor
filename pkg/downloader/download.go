@@ -3,7 +3,6 @@ package downloader
 import (
 	"context"
 	"errors"
-	"fmt"
 	"net/http"
 	"os"
 	"strconv"
@@ -31,18 +30,18 @@ type Downloader struct {
 	bufferSize      int
 	chunkSize       int64
 	batchSize       int64
+	contentLength   int64
+	url             string // 链接
+	targetPath      string // 目标路径
+	supportsChunked bool   // 是否支持分段
 	out             *os.File
 	totalBytesRead  atomic.Int64
-	contentLength   int64
-	timeInterval    int64
-	State           int64 // 0尚未下载 1下载中 2下载暂停 3下载完成 4下载出错
-	Status          string
-	url             string
-	targetPath      string
-	supportsChunked bool
 	mu              sync.RWMutex
 	segments        []*pair
 	cancel          context.CancelFunc
+
+	State  int64  // 0尚未下载 1下载中 2下载暂停 3下载完成 4下载出错
+	Status string // 状态信息
 }
 
 // 创建新的下载器
@@ -51,17 +50,17 @@ func New(ctx context.Context, url, targetPath string, isBatch bool) (*Downloader
 	newCtx, cancel := context.WithCancel(ctx)
 
 	d := &Downloader{
-		ctx:          newCtx,
-		client:       resty.New(),
-		bufferSize:   1024 * 256,
-		chunkSize:    5 * 1024 * 1024,
-		batchSize:    1,
-		State:        0,
-		timeInterval: 2333,
-		url:          url,
-		targetPath:   targetPath,
-		segments:     make([]*pair, 0),
-		cancel:       cancel,
+		url:            url,
+		targetPath:     targetPath,
+		ctx:            newCtx,
+		cancel:         cancel,
+		client:         resty.New(),
+		bufferSize:     1024 * 256,
+		chunkSize:      5 * 1024 * 1024,
+		batchSize:      1,
+		totalBytesRead: atomic.Int64{},
+		mu:             sync.RWMutex{},
+		segments:       make([]*pair, 0),
 	}
 
 	resp, err := d.client.R().
@@ -80,7 +79,6 @@ func New(ctx context.Context, url, targetPath string, isBatch bool) (*Downloader
 	} else {
 		// 服务器不支持分块下载
 		d.supportsChunked = false
-		fmt.Print("不支持分块下载")
 		return d, nil
 	}
 
@@ -96,10 +94,13 @@ func New(ctx context.Context, url, targetPath string, isBatch bool) (*Downloader
 	}
 
 	if isBatch {
-		d.batchSize = autoSetBatchSize(d.contentLength, 2, 5)
+		batchSize := autoSetBatchSize(d.contentLength, 1, 5)
+		if batchSize == 1 {
+			// 只有一段 直接下载
+			d.batchSize = 1
+			d.supportsChunked = false
+		}
 	}
-
-	fmt.Printf("Content-Length %+v\n", d.contentLength)
 
 	return d, nil
 }
