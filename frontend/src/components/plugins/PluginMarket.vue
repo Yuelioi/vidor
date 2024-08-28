@@ -11,18 +11,23 @@
 
       <!-- 插件列表 -->
       <div class="w-full flex flex-col items-center">
-        <div class="my-4 w-4/5 h-32" v-for="plugin in marketPlugins" :key="plugin.id">
+        <div class="my-4 w-4/5 h-32 group" v-for="plugin in marketPlugins" :key="plugin.id">
           <div class="card w-full h-full card-side bg-base-100 shadow-xl">
-            <figure class="basis-3/12">
+            <figure class="basis-3/12 relative">
               <img
                 src="https://img.daisyui.com/images/stock/photo-1635805737707-575885ab0820.webp"
                 alt="Movie" />
             </figure>
 
             <div class="card-body p-6 basis-9/12 relative">
-              <div class="card-title w-5/6">
-                <h2>{{ plugin.name }}</h2>
-                <span class="ml-auto space-x-2">
+              <div class="flex">
+                <h2 class="text-center text-lg">{{ plugin.name }}</h2>
+                <div class="flex items-center ml-3">
+                  <span class="size-4 mb-1 icon-[ic--outline-cloud-download]"></span>
+                  <span class="mx-1">100</span>
+                </div>
+
+                <span class="ml-auto space-x-2 opacity-0 group-hover:opacity-100">
                   <span
                     class="size-6 icon-[ic--round-home]"
                     @click="BrowserOpenURL(plugin.homepage)"></span>
@@ -31,6 +36,7 @@
                     @click="BrowserOpenURL(plugin.docs_url)"></span>
                 </span>
               </div>
+
               <p class="line-clamp-2 w-5/6">
                 {{
                   plugin.description +
@@ -43,12 +49,7 @@
                   plugin.description
                 }}
               </p>
-              <div class="absolute right-4 top-4">
-                <div class="flex items-center">
-                  <span class="size-5 icon-[ic--outline-cloud-download]"></span>
-                  <span class="mx-1">100</span>
-                </div>
-              </div>
+
               <div class="absolute right-4 bottom-4">
                 <button class="btn btn-sm btn-primary" @click="download(plugin)">下载</button>
               </div>
@@ -68,12 +69,21 @@ import { BrowserOpenURL } from '@wailsjs/runtime/runtime'
 const search = ref('')
 const marketPlugins = reactive<Plugin[]>([])
 
-onMounted(async () => {
-  const resp = await fetch('https://cdn.yuelili.com/market/vidor/plugins.json')
-  Object.assign(marketPlugins, await resp.json())
+EventsOn('plugin.downloading', (plugin?: Plugin) => {
+  console.log(plugin)
 })
 
-function download(plugin: Plugin) {
+onMounted(async () => {
+  const resp = await fetch('https://cdn.yuelili.com/market/vidor/plugins.json')
+  const data = await resp.json()
+  Object.assign(marketPlugins, data)
+  console.log(data)
+  console.log(marketPlugins)
+})
+
+async function download(plugin: Plugin) {
   console.log(plugin)
+  const p = await DownloadPlugin(plugin)
+  console.log(p)
 }
 </script>

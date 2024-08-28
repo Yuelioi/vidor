@@ -28,7 +28,7 @@ func (p *Plugin) Run(c *config.Config) error {
 	p.Port = port
 
 	// 获取命令
-	pluginPath := filepath.Join(p.baseDir, p.Location)
+	pluginPath := filepath.Join(p.baseDir, p.Executable)
 	cmd := exec.Command(pluginPath, "--port", strconv.Itoa(port))
 	cmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
 

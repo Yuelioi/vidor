@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"log"
 	"os"
 	"path/filepath"
@@ -26,6 +27,7 @@ var assetsDir string
 // 应用实例
 type App struct {
 	ctx       context.Context
+	location  string // 软件路径
 	appInfo   AppInfo
 	config    *config.Config            // 软件配置信息
 	taskQueue *task.TaskQueue           // 任务队列 用于分发任务
@@ -43,16 +45,20 @@ func NewApp() *App {
 func (app *App) Startup(ctx context.Context) {
 	app.ctx = ctx
 
-	appDir, err := tools.ExePath()
+	appDir, err := tools.ExeDir()
 	if err != nil {
 		log.Fatal()
 	}
 
+	app.location = appDir
+
+	// 初始化文件夹
 	loggerDir := filepath.Join(appDir, "logs")
 	configDir := filepath.Join(appDir, "configs")
 	pluginsDir = filepath.Join(appDir, "plugins")
 	assetsDir = filepath.Join(appDir, "assets")
 	// libDir := filepath.Join(appDir, "lib")
+	tools.MkDirs(loggerDir, configDir, pluginsDir, assetsDir)
 
 	// 加载配置
 	c, err := config.New(configDir)
@@ -101,7 +107,6 @@ func (app *App) Startup(ctx context.Context) {
 	app.logger.Info("缓存器加载中")
 	app.cache = NewCache()
 
-	app.logger.Info("APP 加载完毕")
 }
 
 func (app *App) Shutdown(ctx context.Context) {
@@ -178,6 +183,7 @@ func (app *App) loadPlugins() {
 
 			pluginDir := filepath.Join(pluginsDir, dir.Name())
 			plugin := plugin.New(pluginDir)
+			fmt.Printf("string(manifestData): %v\n", string(manifestData))
 			err = json.Unmarshal(manifestData, plugin)
 			if err != nil {
 				app.logger.Infof(globals.ErrConfigConversion.Error())

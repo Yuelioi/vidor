@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"strconv"
+	"sync"
 	"sync/atomic"
 
 	"github.com/go-resty/resty/v2"
@@ -34,10 +35,12 @@ type Downloader struct {
 	totalBytesRead  atomic.Int64
 	contentLength   int64
 	timeInterval    int64
-	state           int64 // 0尚未下载 1下载中 2下载完成 3下载出错
+	State           int64 // 0尚未下载 1下载中 2下载暂停 3下载完成 4下载出错
+	Status          string
 	url             string
 	targetPath      string
 	supportsChunked bool
+	mu              sync.RWMutex
 	segments        []*pair
 	cancel          context.CancelFunc
 }
@@ -53,7 +56,7 @@ func New(ctx context.Context, url, targetPath string, isBatch bool) (*Downloader
 		bufferSize:   1024 * 256,
 		chunkSize:    5 * 1024 * 1024,
 		batchSize:    1,
-		state:        0,
+		State:        0,
 		timeInterval: 2333,
 		url:          url,
 		targetPath:   targetPath,

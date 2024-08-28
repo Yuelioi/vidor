@@ -1,7 +1,6 @@
 package downloader
 
 import (
-	"errors"
 	"log"
 	"math"
 	"os"
@@ -27,26 +26,27 @@ func autoSetBatchSize(contentLength int64, minBatchSize, maxBatchSize int64) int
 }
 
 // 准备文件
-func prepareOutputFile(targetPath string) (*os.File, error) {
-	_, err := os.Stat(targetPath)
-	if err == nil {
-		out, err := os.OpenFile(targetPath, os.O_RDWR, 0666)
-		if err != nil {
-			log.Printf("无法打开文件：%v", err)
-			return out, err
+func prepareOutputFile(targetPath string, recover bool) (*os.File, error) {
+	var f *os.File
+	var err error
+
+	if recover {
+		f, err = os.OpenFile(targetPath, os.O_RDWR, 0644)
+		if os.IsNotExist(err) {
+			f, err = os.Create(targetPath)
 		}
-		log.Print("使用现有文件")
-		return out, nil
-	} else if errors.Is(err, os.ErrNotExist) {
-		out, err := os.Create(targetPath)
-		if err != nil {
-			log.Printf("无法创建文件：%v", err)
-			return out, err
-		}
-		return out, nil
 	} else {
-		// An unexpected error occurred
-		log.Printf("无法检查文件状态：%v", err)
+		f, err = os.Create(targetPath)
+	}
+
+	if err != nil {
+		log.Printf("无法创建或打开文件：%v", err)
 		return nil, err
 	}
+
+	if recover {
+		log.Print("使用现有文件")
+	}
+
+	return f, nil
 }

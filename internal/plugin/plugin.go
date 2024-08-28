@@ -14,15 +14,17 @@ type Plugin struct {
 	Author          string   `json:"author"`
 	Version         string   `json:"version"`
 	HomePage        string   `json:"homepage"`
-	Color           string   `json:"color"`
+	Color           string   `json:"color,omitempty"`
 	DocsURL         string   `json:"docs_url"`
-	DownloadURL     string   `json:"download_url"`
+	DownloadURLs    []string `json:"download_urls"`
 	Matches         []string `json:"matches"`
-	Type            string   `json:"type"`     // downloader/other
-	Location        string   `json:"location"` // 软件执行文件全名
-	State           int      `json:"state"`    // 1.运行中 2.运行中 尚未检测通信结果 3.未启动
-	Port            int      `json:"port"`
-	PID             int      `json:"pid"`
+	Categories      []string `json:"categories,omitempty"`
+	Tags            []string `json:"tags,omitempty"`
+	Executable      string   `json:"executable"`      // 软件执行文件全名
+	State           int      `json:"state,omitempty"` // 1.运行中 2.运行中 尚未检测通信结果 3.未启动
+	Status          string   `json:"status,omitempty"`
+	Port            int      `json:"port,omitempty"`
+	PID             int      `json:"pid,omitempty"`
 	Service         pb.DownloadServiceClient
 }
 
@@ -31,7 +33,10 @@ func New(baseDir string) *Plugin {
 		PluginConfig: &config.PluginConfig{
 			Settings: make(map[string]string),
 		},
-		baseDir: baseDir,
-		Matches: make([]string, 0),
+		baseDir:      baseDir,
+		DownloadURLs: make([]string, 0),
+		Categories:   make([]string, 0),
+		Tags:         make([]string, 0),
+		Matches:      make([]string, 0),
 	}
 }

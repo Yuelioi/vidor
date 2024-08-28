@@ -3,27 +3,117 @@ package app
 import (
 	"context"
 	"fmt"
+	"net/http"
+	"os"
+	"path/filepath"
+	"time"
+
+	"github.com/wailsapp/wails/v2/pkg/runtime"
 
 	"github.com/Yuelioi/vidor/internal/config"
 	"github.com/Yuelioi/vidor/internal/globals"
 	"github.com/Yuelioi/vidor/internal/plugin"
+	"github.com/Yuelioi/vidor/internal/tools"
+	"github.com/Yuelioi/vidor/pkg/downloader"
 	"github.com/go-resty/resty/v2"
+
+	"golift.io/xtractr"
 )
 
 func (app *App) GetPlugins() map[string]*plugin.Plugin {
 	return app.plugins
 }
 
+func fetchPlugins() ([]*plugin.Plugin, error) {
+	pluginsUrl := "https://cdn.yuelili.com/market/vidor/plugins.json"
+	plugins := make([]*plugin.Plugin, 0)
+	resp, err := resty.New().R().SetResult(&plugins).Get(pluginsUrl)
+	if err != nil {
+		return nil, err
+	}
+	if resp.StatusCode() != http.StatusOK {
+		return nil, fmt.Errorf("链接失败")
+	}
+
+	return plugins, nil
+}
+
 func (app *App) DownloadPlugin(p *plugin.Plugin) *plugin.Plugin {
-	pluginDir := fmt.Sprintf("https://cdn.yuelili.com/market/vidor/plugins/%s", p.ID)
 
-	client := &resty.Client{}
-	resp, err := client.R().Get(pluginDir + "/" + p.Location)
-
+	plugins, err := fetchPlugins()
+	fmt.Printf("plugins: %v\n", plugins[0])
 	if err != nil {
 		return nil
 	}
-	fmt.Println(resp)
+
+	targetPlugin := &plugin.Plugin{}
+
+	for _, plugin := range plugins {
+		if p.ID == plugin.ID {
+			targetPlugin = plugin
+		}
+	}
+
+	if len(targetPlugin.DownloadURLs) == 0 {
+		return nil
+	}
+
+	downUrl := targetPlugin.DownloadURLs[0]
+	name := tools.ExtractFileNameFromUrl(downUrl)
+	name = tools.SanitizeFileName(name)
+
+	tmpDir := filepath.Join(app.location, "tmp")
+
+	err = os.MkdirAll(tmpDir, os.ModePerm)
+	if err != nil {
+		return nil
+	}
+
+	zipPath := filepath.Join(tmpDir, name)
+	targetDir := filepath.Join(pluginsDir, targetPlugin.ID)
+	err = os.MkdirAll(targetDir, os.ModePerm)
+	if err != nil {
+		return nil
+	}
+
+	downloader, err := downloader.New(
+		context.Background(),
+		downUrl,
+		zipPath,
+		true)
+	if err != nil {
+		return nil
+	}
+
+	go downloader.Download()
+
+	tk := time.NewTicker(time.Second)
+	defer tk.Stop()
+
+	// 下载
+	for range tk.C {
+		targetPlugin.Status = downloader.Status
+		if downloader.State == 1 {
+			// 下载中
+			runtime.EventsEmit(app.ctx, "plugin.downloading", targetPlugin)
+		} else {
+			// 下载失败
+			runtime.EventsEmit(app.ctx, "plugin.downloading", targetPlugin)
+			break
+		}
+	}
+
+	// 解压
+
+	x := &xtractr.XFile{
+		FilePath:  zipPath,
+		OutputDir: targetDir,
+	}
+
+	_, files, _, err := xtractr.ExtractFile(x)
+	if err != nil || files == nil {
+		return nil
+	}
 
 	return nil
 }

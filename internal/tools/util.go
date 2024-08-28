@@ -20,7 +20,7 @@ func MkDirs(dirs ...string) error {
 }
 
 // 获取当前exe所在目录
-func ExePath() (string, error) {
+func ExeDir() (string, error) {
 	exePath, err := os.Executable()
 	if err != nil {
 		return "", err
@@ -42,6 +42,20 @@ func SanitizeFileName(input string) string {
 	}
 
 	return sanitized
+}
+
+func ExtractFileNameFromUrl(url string) string {
+	// 删除？之后的内容
+	if i := strings.LastIndex(url, "?"); i >= 0 {
+		url = url[:i]
+	}
+
+	// 删除最后一个/
+	url = strings.TrimSuffix(url, "/")
+
+	splitUrl := strings.Split(url, "/")
+	name := splitUrl[len(splitUrl)-1]
+	return name
 }
 
 func randomString(length int) string {
