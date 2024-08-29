@@ -1,6 +1,6 @@
 <template>
   <div class="flex flex-col">
-    <div v-for="(plugin, pluginKey) in plugins" :key="pluginKey">
+    <div v-for="(plugin, pluginKey) in plugins" :key="pluginKey" class="group">
       <div class="h-full">
         <div
           class="card w-full h-full p-4 pr-6 space-y-6 overflow-x-hidden overflow-y-auto select-none"
@@ -13,8 +13,8 @@
             <div class="flex items-center pb-4 pl-2">
               <span class="size-6" :class="tab.icon"></span>
               <span
-                class="ml-2 font-bold align-middle text-[var(--hover-color)]"
-                :style="{ '--hover-color': hoveredIndex == pluginKey ? plugin.color : '' }">
+                class="ml-2 font-bold align-middle group-hover:text-[var(--hover-color)]"
+                :style="{ '--hover-color': plugin.color }">
                 {{ plugin.name }}
               </span>
               <span
@@ -109,7 +109,6 @@ import { BrowserOpenURL } from '@wailsjs/runtime/runtime'
 import { Plugin } from '@/models/go'
 
 import { GetPlugins } from '@wailsjs/go/app/App'
-
 const { plugins } = storeToRefs(useBasicStore())
 
 const hoveredIndex = ref('')

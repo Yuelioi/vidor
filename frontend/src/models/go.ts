@@ -3,6 +3,7 @@ import { proto } from '@wailsjs/go/models'
 
 export class Plugin extends plugin.Plugin {
   lock?: boolean = true
+  downloaded?: boolean = false // 仅插件市场
 }
 
 export class Playlist {

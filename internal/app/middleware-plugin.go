@@ -114,7 +114,7 @@ func (app *App) DownloadPlugin(p *plugin.Plugin) *plugin.Plugin {
 		return nil
 	}
 
-	return nil
+	return targetPlugin
 }
 
 // 运行插件, 并建立连接

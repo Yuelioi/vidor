@@ -2,9 +2,16 @@
   "plugins": {
     "video-plugin-bilibili": {
       "id": "video-plugin-bilibili",
-      "enable": true,
+      "enable": false,
       "settings": {
-        "SESSDATA": ""
+        "SESSDATA": "some_value"
+      }
+    },
+    "video-plugin-youtube": {
+      "id": "video-plugin-youtube",
+      "enable": false,
+      "settings": {
+        "some_config": "some_value"
       }
     }
   },
@@ -14,11 +21,11 @@
     "proxy_url": "",
     "use_proxy": false,
     "magic_name": "{{Index}}-{{Title}}",
-    "download_dir": "C:\\Users\\yl\\downloads",
+    "download_dir": "C:\\Users\\yueli\\downloads",
     "download_video": true,
     "download_audio": true,
     "download_subtitle": true,
     "download_combine": true,
-    "download_limit": 5
+    "download_limit": 3
   }
 }
