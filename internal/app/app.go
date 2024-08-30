@@ -123,11 +123,11 @@ func (app *App) Shutdown(ctx context.Context) {
 	// 如果刚运行就关闭 有可能资源泄露
 
 	// 关闭插件
-	for _, plugin := range app.plugins {
-		if plugin.State == 1 {
-			plugin.Service.Shutdown(context.Background(), nil)
-		}
-	}
+	// for _, plugin := range app.plugins {
+	// 	if plugin.State == 1 {
+	// 		plugin.Service.Shutdown(context.Background(), nil)
+	// 	}
+	// }
 
 	// 保存配置
 
@@ -161,15 +161,22 @@ func (app *App) systemTray() {
 }
 
 // 基于链接获取下载器
-func (app *App) selectPlugin(url string) (*plugin.Plugin, error) {
-	for _, plugin := range app.plugins {
-		for _, match := range plugin.Matches {
+func (app *App) selectPlugin(url string) (*plugin.DownloadPlugin, error) {
+
+	for _, p := range app.plugins {
+
+		downloadPlugin, ok := (*p).(*plugin.DownloadPlugin)
+		if !ok {
+			return nil, nil
+		}
+
+		for _, match := range downloadPlugin.Matches {
 			reg, err := regexp.Compile(match)
 			if err != nil {
 				return nil, errors.New("插件正则表达式编译失败: " + err.Error())
 			}
 			if reg.MatchString(url) {
-				return plugin, nil
+				return downloadPlugin, nil
 			}
 		}
 	}
@@ -193,7 +200,7 @@ func (app *App) loadPlugins() {
 			}
 
 			pluginDir := filepath.Join(pluginsDir, dir.Name())
-			plugin := plugin.New(pluginDir)
+			plugin := plugin.NewDownloader(pluginDir)
 			err = json.Unmarshal(manifestData, plugin)
 			if err != nil {
 				app.logger.Infof(globals.ErrConfigConversion.Error())
@@ -207,7 +214,7 @@ func (app *App) loadPlugins() {
 
 				// 运行插件
 				if pluginConfig.Enable {
-					err = plugin.Run(app.config)
+					err = plugin.Run(context.Background())
 					if err != nil {
 						app.logger.Warnf(globals.ErrPluginRun.Error())
 						continue
@@ -215,7 +222,7 @@ func (app *App) loadPlugins() {
 
 					// 延迟加载插件
 					go func() {
-						err = plugin.Init()
+						err = plugin.Init(context.Background())
 						if err != nil {
 							app.logger.Warnf(globals.ErrPluginRun.Error())
 						}

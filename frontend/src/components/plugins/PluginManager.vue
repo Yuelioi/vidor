@@ -122,46 +122,6 @@ EventsOn('updateInfo', (plugin: Plugin) => {
   }
 })
 
-async function runPlugin(plugin: Plugin) {
-  plugin.lock = true
-  const fetchedPlugin = await RunPlugin(plugin)
-  if (fetchedPlugin) {
-    console.log(fetchedPlugin)
-    Object.assign(plugin, fetchedPlugin)
-    plugin.lock = false
-    console.log(plugins.value)
-  }
-}
-async function stopPlugin(plugin: Plugin) {
-  const fetchedPlugin = await StopPlugin(plugin)
-  if (fetchedPlugin) {
-    console.log(fetchedPlugin)
-    Object.assign(plugin, fetchedPlugin)
-    plugin.lock = false
-    console.log(plugins.value)
-  }
-}
-async function enablePlugin(plugin: Plugin) {
-  plugin.lock = true
-  const fetchedPlugin = await EnablePlugin(plugin)
-  if (fetchedPlugin) {
-    console.log(fetchedPlugin)
-    Object.assign(plugin, fetchedPlugin)
-    plugin.lock = false
-    console.log(plugins.value)
-  }
-}
-async function disenablePlugin(plugin: Plugin) {
-  plugin.lock = true
-  const fetchedPlugin = await DisablePlugin(plugin)
-  if (fetchedPlugin) {
-    console.log(fetchedPlugin)
-    Object.assign(plugin, fetchedPlugin)
-    plugin.lock = false
-    console.log(plugins.value)
-  }
-}
-
 async function savePlugin(plugin: Plugin) {
   const fetchedPlugin = await SavePluginConfig(plugin.id, plugin)
 
@@ -169,6 +129,34 @@ async function savePlugin(plugin: Plugin) {
 
   if (fetchedPlugin) {
     Object.assign(plugin, fetchedPlugin)
+  }
+}
+
+async function runPlugin(plugin: Plugin) {
+  await updatePluginStatus(plugin, RunPlugin)
+}
+async function stopPlugin(plugin: Plugin): Promise<void> {
+  await updatePluginStatus(plugin, StopPlugin)
+}
+async function enablePlugin(plugin: Plugin): Promise<void> {
+  await updatePluginStatus(plugin, EnablePlugin)
+}
+async function disenablePlugin(plugin: Plugin): Promise<void> {
+  await updatePluginStatus(plugin, DisablePlugin)
+}
+
+async function updatePluginStatus<T>(
+  plugin: Plugin,
+  action: (plugin: Plugin) => Promise<T>
+): Promise<void> {
+  plugin.lock = true
+  try {
+    const fetchedPlugin = await action(plugin)
+    if (fetchedPlugin) {
+      Object.assign(plugin, fetchedPlugin)
+    }
+  } finally {
+    plugin.lock = false
   }
 }
 

@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/Yuelioi/vidor/internal/plugin"
 	pb "github.com/Yuelioi/vidor/internal/proto"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
@@ -20,7 +21,7 @@ func (app *App) ShowDownloadInfo(link string) *pb.InfoResponse {
 	app.cache.ClearTasks()
 
 	// 获取下载器
-	plugin, err := app.selectPlugin(link)
+	p, err := app.selectPlugin(link)
 	if err != nil {
 		app.logger.Infof("未找到可用插件%+v", err)
 		runtime.EventsEmit(app.ctx, "system.message", &Notice{
@@ -32,20 +33,20 @@ func (app *App) ShowDownloadInfo(link string) *pb.InfoResponse {
 
 	app.logger.Infof("获取视频信息失败%+v", err)
 	runtime.EventsEmit(app.ctx, "system.message", &Notice{
-		Message:     fmt.Sprintf("获取视频信息失败%s", plugin.Name),
+		Message:     fmt.Sprintf("获取视频信息失败%s", p.Name),
 		MessageType: "info",
 	})
 
 	// 储存下载器
-	app.cache.SetDownloader(plugin)
+	app.cache.SetDownloader(p)
 
 	// 传递上下文
 	ctx := context.Background()
 	ctx = app.GetConfig().InjectMetadata(ctx)
-	ctx = plugin.InjectMetadata(ctx)
+	ctx = plugin.InjectMetadata(ctx, p.Settings)
 
 	// 获取展示信息
-	response, err := plugin.Service.GetInfo(ctx, &pb.InfoRequest{
+	response, err := p.Service.GetInfo(ctx, &pb.InfoRequest{
 		Url: link,
 	})
 

@@ -9,7 +9,7 @@ import (
 
 type Cache struct {
 	tasks      sync.Map
-	downloader *plugin.Plugin
+	downloader *plugin.DownloadPlugin
 }
 
 func NewCache() *Cache {
@@ -69,9 +69,9 @@ func (c *Cache) Tasks(ids []string) ([]*pb.Task, error) {
 }
 
 // 下载器缓存
-func (c *Cache) Downloader() *plugin.Plugin {
+func (c *Cache) Downloader() *plugin.DownloadPlugin {
 	return c.downloader
 }
-func (c *Cache) SetDownloader(p *plugin.Plugin) {
+func (c *Cache) SetDownloader(p *plugin.DownloadPlugin) {
 	c.downloader = p
 }

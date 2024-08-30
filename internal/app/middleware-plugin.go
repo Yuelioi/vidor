@@ -52,7 +52,7 @@ func (app *App) DownloadPlugin(p *plugin.Plugin) *plugin.Plugin {
 	// 	return nil
 	// }
 
-	targetPlugin := &plugin.Plugin{}
+	targetPlugin := plugin.NewDownloader("")
 
 	// for _, plugin := range plugins {
 	// 	if p.ID == plugin.ID {
@@ -60,11 +60,15 @@ func (app *App) DownloadPlugin(p *plugin.Plugin) *plugin.Plugin {
 	// 	}
 	// }
 
-	if len(p.DownloadURLs) == 0 {
+	p2, ok := (*p).(plugin.BasePlugin)
+	if !ok {
+
+	}
+	if len(p2.DownloadURLs) == 0 {
 		return nil
 	}
 
-	downUrl := p.DownloadURLs[0]
+	downUrl := p2.DownloadURLs[0]
 	name := tools.ExtractFileNameFromUrl(downUrl)
 	name = tools.SanitizeFileName(name)
 
@@ -76,7 +80,7 @@ func (app *App) DownloadPlugin(p *plugin.Plugin) *plugin.Plugin {
 	}
 
 	zipPath := filepath.Join(tmpDir, name)
-	targetDir := filepath.Join(pluginsDir, p.ID)
+	targetDir := filepath.Join(pluginsDir, p2.ID)
 	err = os.MkdirAll(targetDir, os.ModePerm)
 	if err != nil {
 		return nil
@@ -131,7 +135,7 @@ func (app *App) RunPlugin(p *plugin.Plugin) *plugin.Plugin {
 		return nil
 	}
 	// 运行
-	err := plugin.Run(app.config)
+	err := plugin.Run()
 	if err != nil {
 		app.logger.Infof("插件开启失败:%s", err)
 		return nil
@@ -153,7 +157,7 @@ func (app *App) UpdatePlugin(p *plugin.Plugin) *plugin.Plugin {
 		return nil
 	}
 	// TODO 跟新
-	err := plugin.Run(app.config)
+	err := plugin.Run()
 	if err != nil {
 		app.logger.Infof("插件开启失败:%s", err)
 		return nil
