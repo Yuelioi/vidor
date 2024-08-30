@@ -40,6 +40,7 @@ func New(baseDir string) (*Config, error) {
 
 // 保存配置
 func (c *Config) Save() error {
+
 	config := map[string]interface{}{
 		"system":  c.SystemConfig,
 		"plugins": c.PluginConfigs,
@@ -51,6 +52,7 @@ func (c *Config) Save() error {
 	}
 
 	configFile := filepath.Join(c.baseDir, "config.json")
+	log.Println(string(configData)) // log the JSON data
 
 	err = os.WriteFile(configFile, configData, 0644)
 	if err != nil {
@@ -61,6 +63,7 @@ func (c *Config) Save() error {
 
 // 加载/创建/初始化配置
 func (c *Config) load() error {
+
 	configFile := filepath.Join(c.baseDir, "config.json")
 
 	// 检查配置文件是否存在，如果不存在则创建一个空的配置文件
@@ -76,7 +79,10 @@ func (c *Config) load() error {
 		return err
 	}
 
-	config := &Config{}
+	config := &Config{
+		SystemConfig:  defaultSystemConfig,
+		PluginConfigs: map[string]*PluginConfig{},
+	}
 	err = json.Unmarshal(configData, config)
 	if err != nil {
 		return err

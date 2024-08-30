@@ -20,7 +20,7 @@ export class Task extends proto.Task {
   speed: string = ''
   size: string = ''
   duration: string = ''
-  percent: string = ''
+  percent: number = 0
   selected?: boolean = false
   segments?: Segment[]
 }

@@ -12,7 +12,7 @@ const tabs: Tab[] = [
   {
     id: 1,
     name: '插件市场',
-    icon: 'icon-[lucide--plug-2]',
+    icon: 'icon-[lucide--store]',
     component: PluginMarket,
     color: 'text-primary'
   },
@@ -20,7 +20,7 @@ const tabs: Tab[] = [
     id: 2,
     name: '插件管理',
     component: PluginManager,
-    icon: 'icon-[lucide--sailboat]',
+    icon: 'icon-[lucide--plug-2]',
     color: 'text-secondary'
   }
 ]

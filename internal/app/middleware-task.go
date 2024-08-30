@@ -7,7 +7,6 @@ import (
 	"log"
 
 	"github.com/Yuelioi/vidor/internal/proto"
-	"github.com/Yuelioi/vidor/internal/task"
 )
 
 func (app *App) GetTasks() []*proto.Task {
@@ -70,7 +69,6 @@ func (app *App) AddDownloadTasks(taskMaps []taskMap) bool {
 
 	return true
 
-	// return tasksToParts(tasks)
 }
 
 /*
@@ -82,32 +80,7 @@ func (app *App) AddDownloadTasks(taskMaps []taskMap) bool {
  3. 已完成
     直接删除对应任务
 */
-func (app *App) RemoveTask(uid string) bool {
-
-	// for i, task := range app.tasks {
-	// 	if task.part.TaskID == uid {
-
-	// 		if checkTaskQueueWorking(a) {
-	// 			if task.state == Queue {
-	// 				// 1. 正在队列中
-	// 				app.logger.Info("任务移除(队列中):", task.part.Title)
-	// 				app.taskQueue.removeQueueTasks([]*Task{task})
-	// 			} else {
-	// 				// 2. 正在下载中
-	// 				app.logger.Info("任务移除(下载中):", task.part.Title)
-	// 				app.taskQueue.stopTask(task)
-	// 			}
-	// 		}
-
-	// 		// 3. 直接删除
-	// 		app.tasks = append(app.tasks[:i], app.tasks[i+1:]...)
-
-	// 		if err := saveTasks(app.tasks, app.configDir); err != nil {
-	// 			app.logger.Warn(err)
-	// 		}
-	// 		return true
-	// 	}
-	// }
+func (app *App) RemoveTask(id string) bool {
 	return false
 }
 
@@ -115,66 +88,6 @@ func (app *App) RemoveTask(uid string) bool {
 // 移除完成任务: 去除app.tasks目标 并保存配置
 // 移除下载中任务: 调用下载器StopDownload函数 关闭stopChan
 // 移除队列中任务: 清理缓存队列的queueTasks
-func (app *App) RemoveAllTask(parts []Part) bool {
-
-	// newTasks := make([]*Task, 0)
-	// delQueueTasks := make([]*Task, 0)
-
-	// partTaskIDs := make(map[string]Part)
-
-	// for _, part := range parts {
-	// 	partTaskIDs[part.TaskID] = part
-	// }
-
-	// for i, task := range app.tasks {
-	// 	if _, found := partTaskIDs[task.part.TaskID]; found {
-
-	// 		if checkTaskQueueWorking(a) {
-	// 			if task.state == Queue {
-	// 				// 添加到待删队列
-	// 				delQueueTasks = append(delQueueTasks, task)
-	// 			} else {
-	// 				// 直接调用停止函数
-	// 				app.logger.Info("任务移除(下载中):", task.part.Title)
-	// 				task.downloader.Cancel(context.Background(), task.part)
-	// 			}
-	// 		}
-
-	// 	} else {
-	// 		newTasks = append(newTasks, app.tasks[i])
-	// 	}
-	// }
-
-	// // 移除队列中任务
-	// if checkTaskQueueWorking(a) {
-	// 	app.taskQueue.removeQueueTasks(delQueueTasks)
-	// }
-
-	// // 保存任务清单
-	// app.tasks = newTasks
-	// if err := saveTasks(newTasks, app.configDir); err != nil {
-	// 	app.logger.Warn(err)
-	// }
-	return true
-}
-
-// 获取前端任务片段
-func (app *App) TaskParts() []Part {
-	// return tasksToParts(app.tasks)
-	return []Part{}
-}
-
-// 任务转任务片段
-func tasksToParts(tasks []*task.Task) []Part {
-	// parts := make([]Part, len(tasks))
-	// for i, task := range tasks {
-	// 	parts[i] = *task.part
-	// }
-	// return parts
-	return []Part{}
-}
-
-func checkTaskQueueWorking(app *App) bool {
-	// return app.taskQueue != nil && app.taskQueue.state != Finished
+func (app *App) RemoveAllTask(ids []string) bool {
 	return true
 }

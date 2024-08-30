@@ -4,10 +4,13 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"log"
 	"os"
 	"path/filepath"
 	"regexp"
+
+	_ "embed"
 
 	"github.com/Yuelioi/vidor/internal/config"
 	"github.com/Yuelioi/vidor/internal/globals"
@@ -19,6 +22,9 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
+
+//go:embed icon.ico
+var iconData []byte
 
 var pluginsDir string
 var assetsDir string
@@ -36,19 +42,16 @@ type App struct {
 }
 
 func NewApp() *App {
-	return &App{
+	app := &App{
 		plugins: make(map[string]*plugin.Plugin),
 	}
-}
-
-func (app *App) Startup(ctx context.Context) {
-	app.ctx = ctx
 
 	appDir, err := tools.ExeDir()
 	if err != nil {
 		log.Fatal()
 	}
 
+	appDir, _ = filepath.Abs(appDir)
 	app.location = appDir
 
 	// 初始化文件夹
@@ -56,10 +59,11 @@ func (app *App) Startup(ctx context.Context) {
 	configDir := filepath.Join(appDir, "configs")
 	pluginsDir = filepath.Join(appDir, "plugins")
 	assetsDir = filepath.Join(appDir, "assets")
-	// libDir := filepath.Join(appDir, "lib")
-	tools.MkDirs(loggerDir, configDir, pluginsDir, assetsDir)
+	libDir := filepath.Join(appDir, "lib")
+	tools.MkDirs(loggerDir, configDir, libDir, pluginsDir)
 
 	// 加载配置
+	fmt.Printf("configDir: %v\n", configDir)
 	c, err := config.New(configDir)
 	if err != nil {
 		log.Fatalf("Start: %s", err.Error())
@@ -77,6 +81,13 @@ func (app *App) Startup(ctx context.Context) {
 	// 初始化软件信息
 	app.appInfo = NewAppInfo()
 	app.logger.Infof("当前版本%s", app.appInfo.version)
+
+	return app
+
+}
+
+func (app *App) Startup(ctx context.Context) {
+	app.ctx = ctx
 
 	go func() {
 		// 添加托盘
@@ -126,11 +137,12 @@ func (app *App) Shutdown(ctx context.Context) {
 
 // 系统托盘
 func (app *App) systemTray() {
-	iconPath := filepath.Join(assetsDir, "icon.ico")
-	iconData, err := os.ReadFile(iconPath)
-	if err != nil {
-		app.logger.Info("加载托盘图标失败")
-	}
+	// iconPath := filepath.Join(assetsDir, "icon.ico")
+
+	// iconData, err := os.ReadFile(iconPath)
+	// if err != nil {
+	// 	app.logger.Info("加载托盘图标失败")
+	// }
 
 	systray.SetIcon(iconData)
 

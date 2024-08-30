@@ -13,6 +13,8 @@
 </template>
 
 <script setup lang="ts">
+import { Tab } from '@/models/ui'
+
 const tabId = defineModel<number>('tabId')
 
 defineProps<{ tabs: Tab[] }>()

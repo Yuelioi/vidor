@@ -77,52 +77,6 @@ func MagicName(template, workDirname, title string, index int) string {
 	return template
 }
 
-// // 向上取画质代码
-// //
-// //	sortOrder?
-// func GetQualityID(label string, qualities []shared.StreamQuality) (int, error) {
-
-// 	if len(qualities) == 0 {
-// 		return 0, errors.New("视频质量列表为空")
-// 	}
-
-// 	qualitiesCopy := make([]shared.StreamQuality, len(qualities))
-// 	copy(qualitiesCopy, qualities)
-
-// 	sort.Slice(qualitiesCopy, func(i, j int) bool {
-// 		return qualitiesCopy[i].ID > qualitiesCopy[j].ID
-// 	})
-
-// 	for _, q := range qualitiesCopy {
-// 		if q.Label == label {
-// 			return q.ID, nil
-// 		}
-// 	}
-// 	return qualitiesCopy[0].ID, nil
-// }
-
-// func GetQualityLabel(id int, qualities []shared.StreamQuality) (string, error) {
-
-// 	if len(qualities) == 0 {
-// 		return "", errors.New("视频质量列表为空")
-// 	}
-
-// 	// 创建 qualities 的副本
-// 	qualitiesCopy := make([]shared.StreamQuality, len(qualities))
-// 	copy(qualitiesCopy, qualities)
-
-// 	sort.Slice(qualitiesCopy, func(i, j int) bool {
-// 		return qualitiesCopy[i].ID > qualitiesCopy[j].ID
-// 	})
-
-// 	for _, q := range qualitiesCopy {
-// 		if q.ID == id {
-// 			return q.Label, nil
-// 		}
-// 	}
-// 	return qualitiesCopy[0].Label, nil
-// }
-
 // 创建文件夹
 func CreateDirs(dirs []string) (err error) {
 	for _, dir := range dirs {

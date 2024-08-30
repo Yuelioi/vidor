@@ -19,10 +19,12 @@ import (
 	"golift.io/xtractr"
 )
 
+// 返回主机注册的插件
 func (app *App) GetPlugins() map[string]*plugin.Plugin {
 	return app.plugins
 }
 
+// 获取网络插件列表
 func fetchPlugins() ([]*plugin.Plugin, error) {
 	pluginsUrl := "https://cdn.yuelili.com/market/vidor/plugins.json"
 	plugins := make([]*plugin.Plugin, 0)
@@ -37,39 +39,44 @@ func fetchPlugins() ([]*plugin.Plugin, error) {
 	return plugins, nil
 }
 
+// 下载插件
+//
+// 1.下载
+// 2.解压
+// 3.注册到主机
 func (app *App) DownloadPlugin(p *plugin.Plugin) *plugin.Plugin {
 
-	plugins, err := fetchPlugins()
-	fmt.Printf("plugins: %v\n", plugins[0])
-	if err != nil {
-		return nil
-	}
+	// plugins, err := fetchPlugins()
+	// fmt.Printf("plugins: %v\n", plugins[0])
+	// if err != nil {
+	// 	return nil
+	// }
 
 	targetPlugin := &plugin.Plugin{}
 
-	for _, plugin := range plugins {
-		if p.ID == plugin.ID {
-			targetPlugin = plugin
-		}
-	}
+	// for _, plugin := range plugins {
+	// 	if p.ID == plugin.ID {
+	// 		targetPlugin = plugin
+	// 	}
+	// }
 
-	if len(targetPlugin.DownloadURLs) == 0 {
+	if len(p.DownloadURLs) == 0 {
 		return nil
 	}
 
-	downUrl := targetPlugin.DownloadURLs[0]
+	downUrl := p.DownloadURLs[0]
 	name := tools.ExtractFileNameFromUrl(downUrl)
 	name = tools.SanitizeFileName(name)
 
 	tmpDir := filepath.Join(app.location, "tmp")
 
-	err = os.MkdirAll(tmpDir, os.ModePerm)
+	err := os.MkdirAll(tmpDir, os.ModePerm)
 	if err != nil {
 		return nil
 	}
 
 	zipPath := filepath.Join(tmpDir, name)
-	targetDir := filepath.Join(pluginsDir, targetPlugin.ID)
+	targetDir := filepath.Join(pluginsDir, p.ID)
 	err = os.MkdirAll(targetDir, os.ModePerm)
 	if err != nil {
 		return nil

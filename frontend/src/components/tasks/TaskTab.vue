@@ -2,7 +2,7 @@
   <!-- <div class="p-4 h-full flex flex-col">
         <div class="h-full" v-if="filteredTasks.length > 0">
             <div class="py-2 flex space-x-4 items-center">
-                <div class="badge badge-neutral badge-lg mr-auto text-neutral-content">
+                <div class="badge ">
                     任务:{{ filteredTasks.length }}
                 </div>
 

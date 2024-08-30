@@ -35,7 +35,8 @@
     ".protolint.yaml": true,
     "go.mod": true,
     "go.sum": true,
-    "internal/proto": true
+    "internal/proto": true,
+    "frontend/wailsjs": true
   },
   "hide-files.files": [
     "frontend/dist",
@@ -67,7 +68,8 @@
     ".protolint.yaml",
     "go.mod",
     "go.sum",
-    "internal/proto"
+    "internal/proto",
+    "frontend/wailsjs"
   ],
   "editor.tabSize": 2,
   "prettier.tabWidth": 2,

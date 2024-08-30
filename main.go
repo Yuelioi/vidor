@@ -43,7 +43,6 @@ func (h *FileLoader) ServeHTTP(res http.ResponseWriter, req *http.Request) {
 
 	// Convert to normal Windows path
 	systemPath := filepath.FromSlash(relativePath)
-	println("Requesting file:", systemPath)
 
 	fileData, err := os.ReadFile(systemPath)
 	if err != nil {

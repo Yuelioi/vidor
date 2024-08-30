@@ -2,9 +2,7 @@
   <div class="p-4 h-full flex flex-col">
     <div class="h-full" v-if="filteredTasks.length > 0">
       <div class="pb-4 pt-2 flex space-x-4 items-center">
-        <div class="badge badge-neutral badge-lg mr-auto text-neutral-content">
-          任务:{{ filteredTasks.length }}
-        </div>
+        <div class="badge badge-lg mr-auto">任务:{{ filteredTasks.length }}</div>
 
         <div class="" @click="removeAll">
           <span class="icon-[ant-design--clear-outlined] size-6"></span>
@@ -92,7 +90,7 @@ const removeAll = () => {
     if (ok) {
       console.log(filteredTasks.value)
 
-      RemoveAllTask(filteredTasks.value).then((ok) => {
+      RemoveAllTask([]).then((ok) => {
         if (ok) {
           Message({ message: '删除任务成功', type: 'success' })
           console.log(tasks.value, 1)

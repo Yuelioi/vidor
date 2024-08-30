@@ -1,14 +1,11 @@
-package tools
+package convertor
 
 import (
 	"context"
 	"fmt"
 	"log"
 	"os"
-	"os/exec"
 	"path/filepath"
-
-	"strings"
 
 	ffmpeg_go "github.com/u2takey/ffmpeg-go"
 )
@@ -28,42 +25,6 @@ func createLogAdapter(logFilePath string) (*LogAdapter, error) {
 	}
 
 	return &LogAdapter{file: logFile}, nil
-}
-
-// 检查是否存在FFmpeg
-func CheckFFmpeg(target string) bool {
-	if err := SetFFmpegPath(target); err != nil {
-		return false
-	}
-	return true
-}
-
-// 设置FFmpeg完整路径
-func SetFFmpegPath(ffmpegPath string) error {
-	if _, err := os.Stat(ffmpegPath); err != nil {
-		return err
-	}
-
-	err := os.Setenv("FFMPEG_BIN", ffmpegPath)
-	if err != nil {
-		return err
-	}
-	if !isFFmpegExecutable(ffmpegPath) {
-		return fmt.Errorf("%s is not an ffmpeg executable", ffmpegPath)
-	}
-	return nil
-}
-
-func isFFmpegExecutable(path string) bool {
-	cmd := exec.Command(path, "-version")
-	output, err := cmd.Output()
-	if err != nil {
-		return false
-	}
-	if !strings.Contains(string(output), "ffmpeg") {
-		return false
-	}
-	return true
 }
 
 // func quotePath(path string) string {

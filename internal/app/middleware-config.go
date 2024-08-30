@@ -12,7 +12,8 @@ func (app *App) GetConfig() *config.Config {
 
 // 保存配置文件到本地
 func (app *App) SaveConfig(config *config.Config) bool {
-	app.config = config
+	app.config.PluginConfigs = config.PluginConfigs
+	app.config.SystemConfig = config.SystemConfig
 	// 保存配置文件
 	err := app.config.Save()
 	if err != nil {
@@ -24,14 +25,14 @@ func (app *App) SaveConfig(config *config.Config) bool {
 
 }
 
-// 修改系统配置(不会保存)
+// 保存系统配置
 func (app *App) SaveSystemConfig(systemConfig *models.SystemConfig) error {
 	app.config.SystemConfig = systemConfig
 
 	return app.config.Save()
 }
 
-// 修改插件配置(不会保存)
+// 保存插件配置
 func (app *App) SavePluginsConfig(id string, pluginConfig *config.PluginConfig) error {
 	plugin, ok := app.plugins[id]
 	if ok {

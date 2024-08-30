@@ -7,8 +7,7 @@ import (
 type Config struct {
 	baseDir       string
 	SystemConfig  *models.SystemConfig     `json:"system"`
-	PluginConfigs map[string]*PluginConfig `json:"plugins"`
-	Test          *models.SystemConfig     `json:"test"`
+	PluginConfigs map[string]*PluginConfig `json:"plugin"`
 }
 
 type PluginConfig struct {

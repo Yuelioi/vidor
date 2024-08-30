@@ -11,7 +11,10 @@
 
       <!-- 插件列表 -->
       <div class="w-full flex flex-col items-center">
-        <div class="my-4 w-4/5 h-32 group hover:shadow-2xl" v-for="plugin in filteredMarketPlugins" :key="plugin.id">
+        <div
+          class="my-4 w-4/5 h-32 group hover:shadow-2xl"
+          v-for="plugin in filteredMarketPlugins"
+          :key="plugin.id">
           <div class="card w-full h-full card-side bg-base-100 shadow-xl">
             <figure class="basis-3/12 relative">
               <img
@@ -20,29 +23,29 @@
             </figure>
 
             <div class="card-body py-4 px-6 basis-9/12 relative">
-              <!-- 内容第一行 -->
+              <!-- 内容第1行 -->
               <div class="flex items-center">
-                <span class="text-center text-lg font-bold]">
+                <span class="text-center text-lg font-bold">
                   {{ plugin.name }}
                 </span>
-                <span class="flex  ml-3">
+                <span class="flex ml-3">
                   <span class="size-4 mb-1 icon-[ic--outline-cloud-download]"></span>
                   <span class="mx-1">100</span>
                 </span>
 
-                <span class="ml-2 space-x-2 opacity-0 group-hover:opacity-100">
+                <span class="ml-2 mr-12 space-x-2">
                   <span
-                    class="size-6 icon-[ic--round-home]"
+                    class="size-5 icon-[ic--round-home] text-slate-300 cursor-pointer"
                     @click="BrowserOpenURL(plugin.homepage)"></span>
                   <span
-                    class="size-6 icon-[iconoir--book-solid]"
+                    class="size-5 icon-[iconoir--book-solid] text-slate-300 cursor-pointer"
                     @click="BrowserOpenURL(plugin.docs_url)"></span>
                 </span>
               </div>
 
-              <!-- 内容第一行 -->
-              <p class="w-5/6">
-                <div class="text-ellipsis line-clamp-1">
+              <!-- 内容第2行 -->
+              <div class="w-5/6 flex items-center">
+                <span class="text-ellipsis line-clamp-1">
                   {{
                     plugin.description +
                     plugin.description +
@@ -53,21 +56,20 @@
                     plugin.description +
                     plugin.description
                   }}
-                </div>
-              </p>
+                </span>
+              </div>
 
-              <div class="flex items-center">
-                <div class="">{{ plugin.author }}</div>
-
-                <div v-for="tag,index in plugin.tags" :key="tag">
-                  <span class="badge badge-neutral">tag</span>
-                </div>
+              <!-- 内容第3行 -->
+              <div class="flex items-center mt-auto">
+                <span v-for="(tag, index) in plugin.tags" :key="tag">
+                  <span class="badge badge-neutral mx-1 first:ml-0">{{ tag }}</span>
+                </span>
               </div>
 
               <!-- 右上 版本号 -->
               <div
-                class="absolute right-4 top-4 badge badge-neutral badge-sm mr-auto text-neutral-content">
-                <span class="text-slate-400" >{{ plugin.version }}</span>
+                class="absolute right-4 top-4 badge bg-base-300 badge-sm mr-auto text-neutral-content">
+                <span class="">{{ plugin.version }}</span>
               </div>
 
               <!-- 右下 下载按钮 -->
@@ -79,7 +81,6 @@
                   <span>{{ calculatePluginState(plugin) }}</span>
                 </button>
               </div>
-
             </div>
           </div>
         </div>
@@ -117,9 +118,9 @@ EventsOn('plugin.downloading', (plugin?: Plugin) => {
   console.log(plugin)
 })
 
-function calculateLock(plugin:Plugin){
+function calculateLock(plugin: Plugin) {
   // 下载中
-  if (plugin.lock){
+  if (plugin.lock) {
     return true
   }
 
@@ -131,21 +132,19 @@ function calculateLock(plugin:Plugin){
     }
   }
   return false
-  
 }
 
 function compareVersions(v1, v2) {
-  const v1Parts = v1.split('.').map(Number);
-  const v2Parts = v2.split('.').map(Number);
+  const v1Parts = v1.split('.').map(Number)
+  const v2Parts = v2.split('.').map(Number)
 
-  for (let i = 0; i < Math.max(v1Parts.length, v2Parts.length   
-); i++) {
+  for (let i = 0; i < Math.max(v1Parts.length, v2Parts.length); i++) {
     if (v1Parts[i] !== v2Parts[i]) {
-      return v1Parts[i] - v2Parts[i];
+      return v1Parts[i] - v2Parts[i]
     }
   }
 
-  return 0;
+  return 0
 }
 
 // 插件按钮所属状态
