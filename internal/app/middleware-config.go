@@ -3,7 +3,6 @@ package app
 import (
 	"github.com/Yuelioi/vidor/internal/config"
 	"github.com/Yuelioi/vidor/internal/models"
-	"github.com/Yuelioi/vidor/internal/plugin"
 )
 
 // 获取主机所有配置信息
@@ -11,7 +10,7 @@ func (app *App) GetConfig() *config.Config {
 	return app.config
 }
 
-// 保存配置文件到本地
+// 保存所有配置到本地
 func (app *App) SaveConfig(config *config.Config) bool {
 	app.config.PluginConfigs = config.PluginConfigs
 	app.config.SystemConfig = config.SystemConfig
@@ -26,20 +25,21 @@ func (app *App) SaveConfig(config *config.Config) bool {
 
 }
 
-// 保存系统配置
+// 保存系统配置到本地
 func (app *App) SaveSystemConfig(systemConfig *models.SystemConfig) error {
 	app.config.SystemConfig = systemConfig
 
 	return app.config.Save()
 }
 
-// 保存插件配置
+// 保存插件配置到本地
 func (app *App) SavePluginsConfig(id string, pluginConfig *config.PluginConfig) error {
 	p, ok := app.plugins[id]
 	if ok {
-		basePlugin, ok := (*p).(plugin.BasePlugin)
+
+		manifest := p.GetManifest()
 		if ok {
-			basePlugin.PluginConfig = pluginConfig
+			manifest.PluginConfig = pluginConfig
 		}
 	}
 	return app.config.Save()

@@ -21,21 +21,22 @@ var defaultSystemConfig = &models.SystemConfig{
 	DownloadLimit:    3,
 }
 
-func New(baseDir string) (*Config, error) {
-
-	c := &Config{
+func New(baseDir string) *Config {
+	return &Config{
 		baseDir:       baseDir,
 		SystemConfig:  defaultSystemConfig,
 		PluginConfigs: make(map[string]*PluginConfig),
 	}
+}
 
-	err := tools.MkDirs(baseDir)
+func (c *Config) Load() error {
+	err := tools.MkDirs(c.baseDir)
 	if err != nil {
 		log.Fatal("无法创建文件夹")
 	}
 
 	err = c.load()
-	return c, err
+	return err
 }
 
 // 保存配置

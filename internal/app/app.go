@@ -8,7 +8,6 @@ import (
 	"log"
 	"os"
 	"path/filepath"
-	"regexp"
 
 	_ "embed"
 
@@ -34,16 +33,16 @@ type App struct {
 	ctx       context.Context
 	location  string // 软件路径
 	appInfo   AppInfo
-	config    *config.Config            // 软件配置信息
-	taskQueue *task.TaskQueue           // 任务队列 用于分发任务
-	plugins   map[string]*plugin.Plugin // 插件
-	cache     *Cache                    // 缓存
+	config    *config.Config           // 软件配置信息
+	taskQueue *task.TaskQueue          // 任务队列 用于分发任务
+	plugins   map[string]plugin.Plugin // 插件
+	cache     *Cache                   // 缓存
 	logger    *logrus.Logger
 }
 
 func NewApp() *App {
 	app := &App{
-		plugins: make(map[string]*plugin.Plugin),
+		plugins: make(map[string]plugin.Plugin),
 	}
 
 	appDir, err := tools.ExeDir()
@@ -64,11 +63,11 @@ func NewApp() *App {
 
 	// 加载配置
 	fmt.Printf("configDir: %v\n", configDir)
-	c, err := config.New(configDir)
+	app.config = config.New(configDir)
+	err = app.config.Load()
 	if err != nil {
 		log.Fatalf("Start: %s", err.Error())
 	}
-	app.config = c
 
 	// 创建日志
 	appLogger, err := logger.New(loggerDir)
@@ -160,29 +159,6 @@ func (app *App) systemTray() {
 
 }
 
-// 基于链接获取下载器
-func (app *App) selectPlugin(url string) (*plugin.DownloadPlugin, error) {
-
-	for _, p := range app.plugins {
-
-		downloadPlugin, ok := (*p).(*plugin.DownloadPlugin)
-		if !ok {
-			return nil, nil
-		}
-
-		for _, match := range downloadPlugin.Matches {
-			reg, err := regexp.Compile(match)
-			if err != nil {
-				return nil, errors.New("插件正则表达式编译失败: " + err.Error())
-			}
-			if reg.MatchString(url) {
-				return downloadPlugin, nil
-			}
-		}
-	}
-	return nil, globals.ErrPluginNotFound
-}
-
 // 加载插件
 func (app *App) loadPlugins() {
 	dirs, err := os.ReadDir(pluginsDir)
@@ -198,44 +174,65 @@ func (app *App) loadPlugins() {
 				app.logger.Infof(globals.ErrFileRead.Error())
 				continue
 			}
-
 			pluginDir := filepath.Join(pluginsDir, dir.Name())
-			plugin := plugin.NewDownloader(pluginDir)
-			err = json.Unmarshal(manifestData, plugin)
+			manifest := plugin.NewManifest(pluginDir)
+
+			// p := plugin.NewDownloader(pluginDir)
+			err = json.Unmarshal(manifestData, manifest)
 			if err != nil {
 				app.logger.Infof(globals.ErrConfigConversion.Error())
 				continue
 			}
 
 			// 加载插件配置
-			pluginConfig, ok := app.config.PluginConfigs[plugin.ID]
+			var pc *config.PluginConfig
+			pluginConfig, ok := app.config.PluginConfigs[manifest.ID]
 			if ok {
-				plugin.Settings = pluginConfig.Settings
+				pc = pluginConfig
+			} else {
+				pc, err := config.New(app.appInfo.ConfigDir)
 
-				// 运行插件
-				if pluginConfig.Enable {
-					err = plugin.Run(context.Background())
-					if err != nil {
-						app.logger.Warnf(globals.ErrPluginRun.Error())
-						continue
-					}
-
-					// 延迟加载插件
-					go func() {
-						err = plugin.Init(context.Background())
-						if err != nil {
-							app.logger.Warnf(globals.ErrPluginRun.Error())
-						}
-						runtime.EventsEmit(app.ctx, "plugin-update", plugin)
-					}()
-
-				}
 			}
-			// 加载时, 需要绑定插件配置地址
-			app.config.PluginConfigs[plugin.ID] = plugin.PluginConfig
 
-			app.logger.Infof("成功加载插件:%v\n\n", plugin.PluginConfig)
-			app.plugins[plugin.ID] = plugin
+			// 加载时, 需要绑定插件配置地址
+			app.config.PluginConfigs[p.PluginConfig.ID] = p.PluginConfig
+
+			app.logger.Infof("成功加载插件:%v\n\n", p.PluginConfig)
+			app.plugins[p.PluginConfig.ID] = p
 		}
 	}
+}
+
+func (app *App) registerPlugin(m *plugin.Manifest, pluginConfig *config.PluginConfig) (plugin.Plugin, error) {
+
+	var p plugin.Plugin
+	// 先写个下载器的
+	if m.Type == "downloader" {
+		p := plugin.NewDownloader(m)
+		p.Manifest.PluginConfig.Settings = pluginConfig.Settings
+
+		// 运行插件
+		if pluginConfig.Enable {
+			err := p.Run(context.Background())
+			if err != nil {
+				app.logger.Warnf(globals.ErrPluginRun.Error())
+			}
+
+			// 延迟加载插件
+			go func() {
+				err = p.Init(context.Background())
+				if err != nil {
+					app.logger.Warnf(globals.ErrPluginRun.Error())
+				}
+				runtime.EventsEmit(app.ctx, "plugin-update", p)
+			}()
+
+		}
+
+	} else {
+		return nil, errors.New("没有匹配的插件类型")
+	}
+
+	return p, nil
+
 }

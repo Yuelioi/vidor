@@ -6,47 +6,43 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/Yuelioi/vidor/internal/config"
 	pb "github.com/Yuelioi/vidor/internal/proto"
 	"google.golang.org/protobuf/types/known/emptypb"
 )
 
 type DownloadPlugin struct {
-	BasePlugin
-	Service pb.DownloadServiceClient `json:"-"`
+	Manifest *Manifest
+	Service  pb.DownloadServiceClient `json:"-"`
 }
 
-func NewDownloader(baseDir string) *DownloadPlugin {
-	bp := BasePlugin{
-		PluginConfig:    &config.PluginConfig{Settings: make(map[string]string)},
-		BaseDir:         baseDir,
-		ManifestVersion: 0,
-		Name:            "",
-		Description:     "",
-		Author:          "",
-		Version:         "",
-		HomePage:        "",
-		Color:           "",
-		DocsURL:         "",
-		Addr:            "",
-		DownloadURLs:    []string{},
-		Matches:         []string{},
-		Categories:      []string{},
-		Tags:            []string{},
-		Executable:      "",
-		State:           0,
-		Status:          "",
-	}
-
+func NewDownloader(m *Manifest) *DownloadPlugin {
 	return &DownloadPlugin{
-		BasePlugin: bp,
+		Manifest: m,
 	}
 }
 
-func (p DownloadPlugin) Init() error {
+func (p *DownloadPlugin) GetManifest() *Manifest {
+	return p.Manifest
+}
+
+func (p *DownloadPlugin) Run(ctx context.Context) error {
+	return p.Manifest.Run(ctx)
+}
+
+func (p *DownloadPlugin) Check(ctx context.Context) error {
+	_, err := p.Service.Check(context.Background(), nil)
+	return err
+}
+
+func (p *DownloadPlugin) Shutdown(ctx context.Context) error {
+	_, err := p.Service.Shutdown(context.Background(), nil)
+	return err
+}
+
+func (p DownloadPlugin) Init(ctx context.Context) error {
 	timeout := time.Second * 10
 
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	ctx, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
 
 	ticker := time.NewTicker(2 * time.Second)
@@ -59,27 +55,18 @@ func (p DownloadPlugin) Init() error {
 		case <-ticker.C:
 			_, err := p.Service.Init(ctx, nil)
 			if err == nil {
-				p.State = 1
+				p.Manifest.State = 1
 				return nil
 			}
-			return fmt.Errorf("连接%s失败:%s", p.Name, err)
+			return fmt.Errorf("连接%s失败:%s", p.Manifest.Name, err)
 		}
 	}
 }
-
-// 关闭插件 停止进程
-func (p DownloadPlugin) Kill() error {
-	_, err := p.Service.Shutdown(context.Background(), nil)
-	return err
-}
-
-func (p DownloadPlugin) Update(ctx context.Context) error {
+func (p *DownloadPlugin) Update(ctx context.Context) error {
 	_, err := p.Service.Update(ctx, &emptypb.Empty{})
 	return err
 }
 
-// 停止插件
-func (p DownloadPlugin) Stop(ctx context.Context) (*Plugin, error) {
-	_, err := p.Service.Shutdown(ctx, &emptypb.Empty{})
-	return nil, err
+func (p *DownloadPlugin) Talk(ctx context.Context) error {
+	return nil
 }

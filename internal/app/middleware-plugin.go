@@ -20,7 +20,7 @@ import (
 )
 
 // 返回主机注册的插件
-func (app *App) GetPlugins() map[string]*plugin.Plugin {
+func (app *App) GetPlugins() map[string]plugin.Plugin {
 	return app.plugins
 }
 
@@ -44,7 +44,7 @@ func fetchPlugins() ([]*plugin.Plugin, error) {
 // 1.下载
 // 2.解压
 // 3.注册到主机
-func (app *App) DownloadPlugin(p *plugin.Plugin) *plugin.Plugin {
+func (app *App) DownloadPlugin(p plugin.Plugin) plugin.Plugin {
 
 	// plugins, err := fetchPlugins()
 	// fmt.Printf("plugins: %v\n", plugins[0])
@@ -60,7 +60,8 @@ func (app *App) DownloadPlugin(p *plugin.Plugin) *plugin.Plugin {
 	// 	}
 	// }
 
-	p2, ok := (*p).(plugin.BasePlugin)
+	// p是  plugin.Plugin接口类型,但是储存的是DownloadPlugin
+	p2, ok := p.(*plugin.BasePlugin)
 	if !ok {
 
 	}
@@ -125,11 +126,11 @@ func (app *App) DownloadPlugin(p *plugin.Plugin) *plugin.Plugin {
 		return nil
 	}
 
-	return targetPlugin
+	return *targetPlugin
 }
 
 // 运行插件, 并建立连接
-func (app *App) RunPlugin(p *plugin.Plugin) *plugin.Plugin {
+func (app *App) RunPlugin(p *plugin.Plugin) plugin.Plugin {
 	plugin, ok := app.plugins[p.ID]
 	if !ok {
 		return nil
