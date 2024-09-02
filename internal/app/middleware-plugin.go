@@ -2,6 +2,7 @@ package app
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"os"
@@ -25,15 +26,37 @@ func (app *App) GetPlugins() map[string]plugin.Plugin {
 }
 
 // 获取网络插件列表
-func fetchPlugins() ([]*plugin.Plugin, error) {
+func fetchPlugins(pluginDir string) ([]*plugin.Manifest, error) {
 	pluginsUrl := "https://cdn.yuelili.com/market/vidor/plugins.json"
-	plugins := make([]*plugin.Plugin, 0)
-	resp, err := resty.New().R().SetResult(&plugins).Get(pluginsUrl)
+
+	resp, err := resty.New().R().Get(pluginsUrl)
 	if err != nil {
 		return nil, err
 	}
 	if resp.StatusCode() != http.StatusOK {
 		return nil, fmt.Errorf("链接失败")
+	}
+
+	var rawPlugins []map[string]interface{}
+	err = json.Unmarshal(resp.Body(), &rawPlugins)
+	if err != nil {
+		return nil, err
+	}
+
+	plugins := make([]*plugin.Manifest, 0, len(rawPlugins))
+	for _, rawPlugin := range rawPlugins {
+		manifest := plugin.NewManifest(pluginDir)
+
+		manifestData, err := json.Marshal(rawPlugin)
+		if err != nil {
+			return nil, err
+		}
+		err = json.Unmarshal(manifestData, manifest)
+		if err != nil {
+			return nil, err
+		}
+
+		plugins = append(plugins, manifest)
 	}
 
 	return plugins, nil
@@ -44,15 +67,13 @@ func fetchPlugins() ([]*plugin.Plugin, error) {
 // 1.下载
 // 2.解压
 // 3.注册到主机
-func (app *App) DownloadPlugin(p plugin.Plugin) plugin.Plugin {
+func (app *App) DownloadPlugin(m plugin.Manifest) plugin.Manifest {
 
-	// plugins, err := fetchPlugins()
-	// fmt.Printf("plugins: %v\n", plugins[0])
-	// if err != nil {
-	// 	return nil
-	// }
-
-	targetPlugin := plugin.NewDownloader("")
+	plugins, err := fetchPlugins()
+	fmt.Printf("plugins: %v\n", plugins[0])
+	if err != nil {
+		return nil
+	}
 
 	// for _, plugin := range plugins {
 	// 	if p.ID == plugin.ID {

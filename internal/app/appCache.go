@@ -75,3 +75,5 @@ func (c *Cache) Downloader() *plugin.DownloadPlugin {
 func (c *Cache) SetDownloader(p *plugin.DownloadPlugin) {
 	c.downloader = p
 }
+
+// 插件列表缓存

@@ -6,10 +6,15 @@ import (
 	"io"
 	"log"
 
-	"github.com/Yuelioi/vidor/internal/proto"
+	pb "github.com/Yuelioi/vidor/internal/proto"
 )
 
-func (app *App) GetTasks() []*proto.Task {
+type taskMap struct {
+	id        string
+	formatIds []string
+}
+
+func (app *App) GetTasks() []*pb.Task {
 	return nil
 }
 
@@ -23,7 +28,7 @@ func (app *App) GetTasks() []*proto.Task {
 func (app *App) AddDownloadTasks(taskMaps []taskMap) bool {
 
 	// 获取任务
-	tasks := []*proto.Task{}
+	tasks := []*pb.Task{}
 	for _, taskMap := range taskMaps {
 		cacheTask, ok := app.cache.Task(taskMap.id)
 		if !ok {
@@ -48,7 +53,7 @@ func (app *App) AddDownloadTasks(taskMaps []taskMap) bool {
 	// 清除任务缓存
 	app.cache.ClearTasks()
 
-	stream, err := plugin.Service.Download(context.Background(), &proto.TasksRequest{
+	stream, err := plugin.Service.Download(context.Background(), &pb.TasksRequest{
 		Tasks: tasks,
 	})
 
@@ -90,4 +95,17 @@ func (app *App) RemoveTask(id string) bool {
 // 移除队列中任务: 清理缓存队列的queueTasks
 func (app *App) RemoveAllTask(ids []string) bool {
 	return true
+}
+
+// 过滤 segments 中的 formats
+func filterSegments(segments []*pb.Segment, formatSet map[string]struct{}) {
+	for _, seg := range segments {
+		filteredFormats := []*pb.Format{}
+		for _, format := range seg.Formats {
+			if _, exists := formatSet[format.Id]; exists {
+				filteredFormats = append(filteredFormats, format)
+			}
+		}
+		seg.Formats = filteredFormats
+	}
 }

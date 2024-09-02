@@ -9,6 +9,7 @@ import (
 	"regexp"
 
 	"github.com/Yuelioi/vidor/internal/globals"
+	"github.com/Yuelioi/vidor/internal/notify"
 	"github.com/Yuelioi/vidor/internal/plugin"
 	pb "github.com/Yuelioi/vidor/internal/proto"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
@@ -48,23 +49,16 @@ func (app *App) selectDownloadPlugin(url string) (*plugin.DownloadPlugin, error)
 func (a *App) ShowDownloadInfo(link string) *pb.InfoResponse {
 	// 清理上次查询任务缓存
 	a.cache.ClearTasks()
+	ns := notify.NewSystem(a.ctx)
 
 	// 获取下载器
 	p, err := a.selectDownloadPlugin(link)
 	if err != nil {
-		a.logger.Infof("未找到可用插件%+v", err)
-		runtime.EventsEmit(a.ctx, "system.message", &Notice{
-			Message:     "未找到可用插件",
-			MessageType: "info",
-		})
+		a.notification.Send(ns, p.Manifest.Name, "plugin.show", "未找到可用插件", "info")
 		return nil
 	}
 
-	a.logger.Infof("获取视频信息失败%+v", err)
-	runtime.EventsEmit(a.ctx, "system.message", &Notice{
-		Message:     fmt.Sprintf("获取视频信息失败%s", p.Manifest.Name),
-		MessageType: "info",
-	})
+	a.notification.Send(ns, p.Manifest.Name, "plugin.show", "获取视频信息失败", "info")
 
 	// 储存下载器
 	a.cache.SetDownloader(p)
@@ -80,11 +74,7 @@ func (a *App) ShowDownloadInfo(link string) *pb.InfoResponse {
 	})
 
 	if err != nil {
-		a.logger.Infof("获取视频信息失败%+v", err)
-		runtime.EventsEmit(a.ctx, "system.message", &Notice{
-			Message:     fmt.Sprintf("获取视频信息失败%+v", err),
-			MessageType: "error",
-		})
+		a.notification.Send(ns, p.Manifest.Name, "plugin.show", "获取视频信息失败", "error")
 		return nil
 	}
 
@@ -92,24 +82,6 @@ func (a *App) ShowDownloadInfo(link string) *pb.InfoResponse {
 	a.cache.AddTasks(response.Tasks)
 
 	return response
-}
-
-type taskMap struct {
-	id        string
-	formatIds []string
-}
-
-// 过滤 segments 中的 formats
-func filterSegments(segments []*pb.Segment, formatSet map[string]struct{}) {
-	for _, seg := range segments {
-		filteredFormats := []*pb.Format{}
-		for _, format := range seg.Formats {
-			if _, exists := formatSet[format.Id]; exists {
-				filteredFormats = append(filteredFormats, format)
-			}
-		}
-		seg.Formats = filteredFormats
-	}
 }
 
 /*
