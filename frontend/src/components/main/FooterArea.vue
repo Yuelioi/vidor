@@ -13,8 +13,8 @@ EventsOn('updateInfo', (optionalData?: Task) => {
   }
 })
 
-EventsOn('system.message', (messageData: MessageData) => {
-  Message({ message: messageData['message'], type: messageData['messageType'] })
+EventsOn('notice', (messageData: Notice) => {
+  Message({ message: messageData.content, type: messageData.noticeType })
 })
 
 function blockWindowScale(event: KeyboardEvent) {
@@ -37,10 +37,10 @@ onMounted(async () => {
   tasks.value.splice(0, tasks.value.length, ...fetchedTasks)
 
   // 切换主题
-  switchTheme(configs.value.system.theme)
+  switchTheme(configs.value.theme)
 
   // 设置字体大小
-  const scale = Math.min(Math.max(configs.value.system.scale_factor, 12), 32)
+  const scale = Math.min(Math.max(configs.value.scale_factor, 12), 32)
   document.documentElement.style.fontSize = `${scale}px`
 
   // 禁用页面缩放

@@ -174,16 +174,18 @@ func (a *App) loadPlugins() {
 
 	for _, dir := range dirs {
 		if dir.IsDir() {
-			// 加载插件主体信息
+			// 读取插件信息
 			pluginManifestPath := filepath.Join(pluginsDir, dir.Name(), "manifest.json")
 			manifestData, err := os.ReadFile(pluginManifestPath)
 			if err != nil {
 				a.logger.Infof(globals.ErrFileRead.Error())
 				continue
 			}
-			pluginDir := filepath.Join(pluginsDir, dir.Name())
-			manifest := plugin.NewManifest(pluginDir)
 
+			pluginDir := filepath.Join(pluginsDir, dir.Name())
+
+			// 解析插件信息
+			manifest := plugin.NewManifest(pluginDir)
 			err = json.Unmarshal(manifestData, manifest)
 			if err != nil {
 				a.logger.Infof(globals.ErrConfigConversion.Error())
@@ -191,44 +193,27 @@ func (a *App) loadPlugins() {
 			}
 
 			// 加载插件配置
-			pc := &config.PluginConfig{}
-			pluginConfig, ok := a.config.PluginConfigs[manifest.ID]
-			if ok {
-				pc = pluginConfig
-			}
-			manifest.PluginConfig = pc
 
-			var p plugin.Plugin
-
-			if manifest.Type == "downloader" {
-				dp := plugin.NewDownloader(manifest)
-
-				if pc.Enable {
-					dp.Run(context.Background())
-				}
-
-				dp.Manifest = manifest
-				p = dp
+			_, err = a.registerPlugin(manifest)
+			if err != nil {
+				continue
 			}
 
-			// 加载时, 需要绑定插件配置地址
-			a.config.PluginConfigs[manifest.ID] = pc
-			a.plugins[manifest.ID] = p
 		}
 	}
 }
 
-func (a *App) registerPlugin(m *plugin.Manifest, pluginConfig *config.PluginConfig) (plugin.Plugin, error) {
+func (a *App) registerPlugin(m *plugin.Manifest) (plugin.Plugin, error) {
+	// 获取插件配置
 
 	var p plugin.Plugin
 	// 先写个下载器的
 	if m.Type == "downloader" {
-		p := plugin.NewDownloader(m)
-		p.Manifest.PluginConfig.Settings = pluginConfig.Settings
+		pd := plugin.NewDownloader(m)
 
 		// 运行插件
-		if pluginConfig.Enable {
-			err := p.Run(context.Background())
+		if m.Enable {
+			err := pd.Run(context.Background())
 			if err != nil {
 				a.logger.Warnf(globals.ErrPluginRun.Error())
 			}
@@ -239,14 +224,17 @@ func (a *App) registerPlugin(m *plugin.Manifest, pluginConfig *config.PluginConf
 				if err != nil {
 					a.logger.Warnf(globals.ErrPluginRun.Error())
 				}
-				runtime.EventsEmit(a.ctx, "plugin-update", p)
+				runtime.EventsEmit(a.ctx, "plugin-update", pd)
 			}()
-
 		}
+		p = pd
 
 	} else {
 		return nil, errors.New("没有匹配的插件类型")
 	}
+
+	// 注册配置以及插件
+	a.plugins[m.ID] = p
 
 	return p, nil
 

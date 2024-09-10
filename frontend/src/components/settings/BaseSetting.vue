@@ -8,7 +8,7 @@
           role="button"
           class="btn btn-sm btn-outline"
           @click="showThemeOption = true">
-          {{ configs.system.theme }}
+          {{ configs.theme }}
         </div>
         <ul
           tabindex="0"
@@ -31,12 +31,12 @@
         type="range"
         min="12"
         max="24"
-        v-model.number.lazy="configs.system.scale_factor"
+        v-model.number.lazy="configs.scale_factor"
         value="16"
         class="range range-xs [--range-shdw:#788091]"
         @change="changeScaleFactor"
         step="1" />
-      <span class="pl-2 text-nowrap">{{ configs.system.scale_factor }}</span>
+      <span class="pl-2 text-nowrap">{{ configs.scale_factor }}</span>
     </label>
   </TabCard>
 </template>
@@ -50,16 +50,16 @@ const { themes, switchTheme } = useTheme(_themes)
 const showThemeOption = ref(false)
 
 function changeScaleFactor() {
-  document.documentElement.style.fontSize = `${configs.value.system.scale_factor}px`
+  document.documentElement.style.fontSize = `${configs.value.scale_factor}px`
 }
 
 function changeTheme(theme) {
-  configs.value.system.theme = theme
+  configs.value.theme = theme
   showThemeOption.value = false
 }
 
 watch(configs.value, async () => {
-  switchTheme(configs.value.system.theme)
+  switchTheme(configs.value.theme)
   SaveConfig(configs.value).then((result) => {
     console.log(result)
   })

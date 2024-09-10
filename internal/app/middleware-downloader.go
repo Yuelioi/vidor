@@ -75,7 +75,7 @@ func (a *App) ShowDownloadInfo(link string) *pb.InfoResponse {
 	// 传递上下文
 	ctx := context.Background()
 	ctx = a.GetConfig().InjectMetadata(ctx)
-	ctx = plugin.InjectMetadata(ctx, p.Manifest.PluginConfig.Settings)
+	ctx = plugin.InjectMetadata(ctx, p.Manifest.Settings)
 
 	// 获取展示信息
 	response, err := p.Service.GetInfo(ctx, &pb.InfoRequest{

@@ -85,7 +85,7 @@ func (p *DownloadPlugin) Run(ctx context.Context) error {
 	}
 
 	// 获取 exe 运行的 PID
-	p.Manifest.PluginConfig.Enable = true
+	p.Manifest.Enable = true
 	p.Manifest.State = Working
 
 	conn, err := connect(p.Manifest.Addr)

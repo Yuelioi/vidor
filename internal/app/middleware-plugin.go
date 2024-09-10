@@ -11,7 +11,7 @@ import (
 
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 
-	"github.com/Yuelioi/vidor/internal/config"
+	"github.com/Yuelioi/vidor/internal/notify"
 	"github.com/Yuelioi/vidor/internal/plugin"
 	"github.com/Yuelioi/vidor/internal/tools"
 	"github.com/Yuelioi/vidor/pkg/downloader"
@@ -28,7 +28,6 @@ func (app *App) GetPlugins() map[string]plugin.Manifest {
 		mf := plugin.GetManifest()
 		ms[mf.ID] = *mf
 	}
-
 	return ms
 }
 
@@ -79,6 +78,12 @@ func (app *App) DownloadPlugin(m plugin.Manifest) *plugin.Manifest {
 	plugins, err := fetchPlugins(pluginsDir)
 	fmt.Printf("plugins: %v\n", plugins[0])
 	if err != nil {
+		app.notification.Send(app.ctx, notify.Notice{
+			EventName:  "system.notice",
+			Content:    "获取插件信息失败:" + err.Error(),
+			NoticeType: "info",
+			Provider:   "system",
+		})
 		return nil
 	}
 
@@ -90,6 +95,12 @@ func (app *App) DownloadPlugin(m plugin.Manifest) *plugin.Manifest {
 	}
 
 	if len(targetManifest.DownloadURLs) == 0 {
+		app.notification.Send(app.ctx, notify.Notice{
+			EventName:  "system.notice",
+			Content:    "获取插件链接失败",
+			NoticeType: "info",
+			Provider:   "system",
+		})
 		return nil
 	}
 
@@ -117,6 +128,12 @@ func (app *App) DownloadPlugin(m plugin.Manifest) *plugin.Manifest {
 		zipPath,
 		true)
 	if err != nil {
+		app.notification.Send(app.ctx, notify.Notice{
+			EventName:  "system.notice",
+			Content:    "下载插件失败" + err.Error(),
+			NoticeType: "info",
+			Provider:   "system",
+		})
 		return nil
 	}
 
@@ -139,7 +156,6 @@ func (app *App) DownloadPlugin(m plugin.Manifest) *plugin.Manifest {
 	}
 
 	// 解压
-
 	x := &xtractr.XFile{
 		FilePath:  zipPath,
 		OutputDir: targetDir,
@@ -147,8 +163,17 @@ func (app *App) DownloadPlugin(m plugin.Manifest) *plugin.Manifest {
 
 	_, files, _, err := xtractr.ExtractFile(x)
 	if err != nil || files == nil {
+		app.notification.Send(app.ctx, notify.Notice{
+			EventName:  "system.notice",
+			Content:    "解压插件信息失败" + err.Error(),
+			NoticeType: "info",
+			Provider:   "system",
+		})
 		return nil
 	}
+
+	// 注册
+	app.registerPlugin(&m)
 
 	return targetManifest
 }
@@ -215,7 +240,7 @@ func (app *App) EnablePlugin(m plugin.Manifest) *plugin.Manifest {
 	}
 	manifest := plugin.GetManifest()
 	// 保存配置
-	p2 := app.SavePluginConfig(manifest.ID, manifest.PluginConfig)
+	p2 := app.SavePluginConfig(manifest.ID, manifest)
 	if p2 != nil {
 		return nil
 	}
@@ -241,10 +266,10 @@ func (app *App) DisablePlugin(m plugin.Manifest) *plugin.Manifest {
 	}
 
 	// 禁用并保存配置
-	manifest.PluginConfig.Enable = false
+	manifest.Enable = false
 	manifest.State = 3
 
-	p2 := app.SavePluginConfig(manifest.ID, manifest.PluginConfig)
+	p2 := app.SavePluginConfig(manifest.ID, manifest)
 	if p2 != nil {
 		return nil
 	}
@@ -252,7 +277,7 @@ func (app *App) DisablePlugin(m plugin.Manifest) *plugin.Manifest {
 }
 
 // 保存插件配置
-func (app *App) SavePluginConfig(id string, pluginConfig *config.PluginConfig) *plugin.Manifest {
+func (app *App) SavePluginConfig(id string, m *plugin.Manifest) *plugin.Manifest {
 	plugin, ok := app.plugins[id]
 	if !ok {
 		return nil
@@ -260,7 +285,7 @@ func (app *App) SavePluginConfig(id string, pluginConfig *config.PluginConfig) *
 
 	manifest := plugin.GetManifest()
 
-	err := app.SavePluginsConfig(id, pluginConfig)
+	err := plugin.GetManifest().Save()
 	if err != nil {
 		return nil
 	}

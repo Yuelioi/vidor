@@ -45,7 +45,7 @@
                 type="checkbox"
                 id="downloadVideo"
                 class="ml-2 checkbox checkbox-xs"
-                v-model="configs.system.download_video" />
+                v-model="configs.download_video" />
             </div>
           </div>
           <div class="px-2 basis-1/4">
@@ -57,7 +57,7 @@
                 type="checkbox"
                 id="downloadAudio"
                 class="ml-2 checkbox checkbox-xs"
-                v-model="configs.system.download_audio" />
+                v-model="configs.download_audio" />
             </div>
           </div>
           <div class="px-2 basis-1/4">
@@ -69,7 +69,7 @@
                 type="checkbox"
                 id="downloadSubtitle"
                 class="ml-2 checkbox checkbox-xs"
-                v-model="configs.system.download_subtitle" />
+                v-model="configs.download_subtitle" />
             </div>
           </div>
           <div class="px-2 basis-1/4">
@@ -81,7 +81,7 @@
                 type="checkbox"
                 id="downloadCombine"
                 class="ml-2 checkbox checkbox-xs"
-                v-model="configs.system.download_combine" />
+                v-model="configs.download_combine" />
             </div>
           </div>
         </div>
@@ -92,7 +92,7 @@
             <input
               type="text"
               class="grow"
-              v-model.lazy="configs.system.magic_name"
+              v-model.lazy="configs.magic_name"
               placeholder="下载文件魔法名称" />
             <button class="btn" @click="applyMagicName">应用</button>
           </label>
@@ -357,7 +357,7 @@ function addTasks() {
 function applyMagicName() {
   // videoInfo.tasks.forEach((element, index) => {
   //   // element.magicNamee = MagicName(
-  //   //   configs.value.system.magic_name,
+  //   //   configs.value.magic_name,
   //   //   videoInfo.WorkDirName,
   //   //   element.Name,
   //   //   index + 1

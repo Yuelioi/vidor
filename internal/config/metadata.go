@@ -11,7 +11,7 @@ import (
 
 // 注入系统配置元数据
 func (c *Config) InjectMetadata(ctx context.Context) context.Context {
-	v := reflect.ValueOf(c.SystemConfig).Elem()
+	v := reflect.ValueOf(c).Elem()
 	t := v.Type()
 
 	// Iterate over all fields in the struct

@@ -1,13 +1,20 @@
 <template>
-  <div class="w-full h-full">
+  <div class="w-full h-full relative">
     <div class="flex flex-col items-center">
+      <!-- 刷新 -->
+      <button class="btn absolute right-4 bottom-4">
+        <span class="icon-[lucide--refresh-ccw] size-5" @click="refreshPlugins"></span>
+      </button>
+
       <div class="font-bold text-2xl py-4">插件商店</div>
 
       <div class="py-3">当前共有 {{ marketPlugins.length }} 个插件</div>
-      <label class="input input-bordered w-4/5 flex items-center gap-2">
-        <input type="text" class="grow" v-model="search" placeholder="搜索" />
-        <span class="icon-[lucide--search]"></span>
-      </label>
+      <div class="flex w-4/5">
+        <label class="input input-bordered flex w-full items-center gap-2">
+          <input type="text" class="grow" v-model="search" placeholder="搜索" />
+          <span class="icon-[lucide--search]"></span>
+        </label>
+      </div>
 
       <!-- 插件列表 -->
       <div class="w-full flex flex-col items-center">
@@ -164,11 +171,19 @@ function calculatePluginState(plugin: Plugin) {
   return '下载'
 }
 
-onMounted(async () => {
-  const resp = await fetch('https://cdn.yuelili.com/market/vidor/plugins.json')
+async function refreshPlugins() {
+  const resp = await fetch('https://cdn.yuelili.com/market/vidor/plugins.json', {
+    // cache: 'no-cache'
+  })
   const data = await resp.json()
   Object.assign(marketPlugins, data)
+  console.log(data)
   console.log(marketPlugins)
+}
+
+onMounted(async () => {
+  // TODO 增加缓存
+  await refreshPlugins()
 })
 
 // 下载插件

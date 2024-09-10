@@ -13,6 +13,13 @@ export class Playlist {
   tasks?: Task[] = []
 }
 
+export class Notice {
+  eventName?: string
+  content?: string
+  noticeType?: string
+  provider?: string
+}
+
 export class Task extends proto.Task {
   magicName: string = ''
   state: number = 0

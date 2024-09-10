@@ -9,7 +9,6 @@ import (
 	"strconv"
 	"syscall"
 
-	"github.com/Yuelioi/vidor/internal/config"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 )
@@ -37,38 +36,45 @@ type Plugin interface {
 }
 
 type Manifest struct {
-	BaseDir         string               // 插件所在的文件夹路径(app生成)。
-	PluginConfig    *config.PluginConfig `json:"plugin_config"`    // 配置(app生成,放在config目录)
-	ManifestVersion int                  `json:"manifest_version"` // 插件清单的版本号。
-	ID              string               `json:"id"`               // 插件ID。
-	Name            string               `json:"name"`             // 插件的名称。
-	Type            string               `json:"type"`             // 插件类型
-	Description     string               `json:"description"`      // 插件的描述信息。
-	Author          string               `json:"author"`           // 插件的作者。
-	Version         string               `json:"version"`          // 插件的版本号。
-	HomePage        string               `json:"homepage"`         // 插件的主页地址。
-	DocsURL         string               `json:"docs_url"`         // 插件文档的URL。
-	Color           string               `json:"color"`            // 插件在用户界面中的颜色标识。
-	Addr            string               `json:"addr"`             // 插件运行时的服务地址或端口。
-	DownloadURLs    []string             `json:"download_urls"`    // 插件的下载链接列表。
-	Matches         []string             `json:"matches"`          // 插件适用的内容匹配规则或模式。
-	Categories      []string             `json:"categories"`       // 插件所属类别。
-	Tags            []string             `json:"tags"`             // 插件的标签，用于分类或搜索。
-	Executable      string               `json:"executable"`       // 软件执行文件的全名，即启动程序的名字。
-	State           int                  `json:"state"`            // 插件的状态码，状态管理。
-	Status          string               `json:"status"`           // 插件的状态内容，状态的文字描述。
+	BaseDir string // 插件所在的文件夹路径(app生成)。
+
+	Enable          bool              `json:"enable"`           // 插件是否开机启动(仅前端)
+	Settings        map[string]string `json:"settings"`         // 插件设置
+	ManifestVersion int               `json:"manifest_version"` // 插件清单的版本号。
+	ID              string            `json:"id"`               // 插件ID。
+	Name            string            `json:"name"`             // 插件的名称。
+	Type            string            `json:"type"`             // 插件类型
+	Description     string            `json:"description"`      // 插件的描述信息。
+	Author          string            `json:"author"`           // 插件的作者。
+	Version         string            `json:"version"`          // 插件的版本号。
+	HomePage        string            `json:"homepage"`         // 插件的主页地址。
+	DocsURL         string            `json:"docs_url"`         // 插件文档的URL。
+	Color           string            `json:"color"`            // 插件在用户界面中的颜色标识。
+	Addr            string            `json:"addr"`             // 插件运行时的服务地址或端口。
+	DownloadURLs    []string          `json:"download_urls"`    // 插件的下载链接列表。
+	Matches         []string          `json:"matches"`          // 插件适用的内容匹配规则或模式。
+	Categories      []string          `json:"categories"`       // 插件所属类别。
+	Tags            []string          `json:"tags"`             // 插件的标签，用于分类或搜索。
+	Executable      string            `json:"executable"`       // 软件执行文件的全名，即启动程序的名字。
+	State           int               `json:"state"`            // 插件的状态码，状态管理。
+	Status          string            `json:"status"`           // 插件的状态内容，状态的文字描述。
 }
 
 // baseDir app插件目录
 func NewManifest(baseDir string) *Manifest {
 	return &Manifest{
 		BaseDir:      baseDir,
-		PluginConfig: &config.PluginConfig{},
+		Settings:     make(map[string]string),
 		DownloadURLs: []string{},
 		Matches:      []string{},
 		Categories:   []string{},
 		Tags:         []string{},
 	}
+}
+
+func (*Manifest) Save() error {
+	// TODO
+	return nil
 }
 
 func getLocalAddr(pluginPath string) (string, error) {

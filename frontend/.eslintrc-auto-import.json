@@ -158,6 +158,7 @@
     "UpdatePluginsConfig": true,
     "UpdateSystemConfig": true,
     "DownloadPlugin": true,
-    "GetTasks": true
+    "GetTasks": true,
+    "Notice": true
   }
 }
