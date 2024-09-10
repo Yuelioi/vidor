@@ -49,16 +49,25 @@ func (app *App) selectDownloadPlugin(url string) (*plugin.DownloadPlugin, error)
 func (a *App) ShowDownloadInfo(link string) *pb.InfoResponse {
 	// 清理上次查询任务缓存
 	a.cache.ClearTasks()
-	ns := notify.NewSystem(a.ctx)
 
 	// 获取下载器
 	p, err := a.selectDownloadPlugin(link)
 	if err != nil {
-		a.notification.Send(ns, p.Manifest.Name, "plugin.show", "未找到可用插件", "info")
+		a.notification.Send(a.ctx, notify.Notice{
+			EventName:  "plugin.show",
+			Content:    "未找到可用插件",
+			NoticeType: "info",
+			Provider:   p.Manifest.Name},
+		)
 		return nil
 	}
 
-	a.notification.Send(ns, p.Manifest.Name, "plugin.show", "获取视频信息失败", "info")
+	a.notification.Send(a.ctx, notify.Notice{
+		EventName:  "plugin.show",
+		Content:    "获取视频信息失败",
+		NoticeType: "info",
+		Provider:   p.Manifest.Name},
+	)
 
 	// 储存下载器
 	a.cache.SetDownloader(p)
@@ -74,7 +83,12 @@ func (a *App) ShowDownloadInfo(link string) *pb.InfoResponse {
 	})
 
 	if err != nil {
-		a.notification.Send(ns, p.Manifest.Name, "plugin.show", "获取视频信息失败", "error")
+		a.notification.Send(a.ctx, notify.Notice{
+			EventName:  "plugin.show",
+			Content:    "获取视频信息失败",
+			NoticeType: "info",
+			Provider:   p.Manifest.Name},
+		)
 		return nil
 	}
 

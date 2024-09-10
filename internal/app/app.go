@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"log"
 	"os"
 	"path/filepath"
@@ -34,11 +33,11 @@ type App struct {
 	ctx          context.Context
 	location     string // 软件路径
 	appInfo      AppInfo
-	config       *config.Config           // 软件配置信息
-	taskQueue    *task.TaskQueue          // 任务队列 用于分发任务
-	plugins      map[string]plugin.Plugin // 插件
-	cache        *Cache                   // 缓存
-	notification *notify.Notification     // 消息分发
+	config       *config.Config              // 软件配置信息
+	taskQueue    *task.TaskQueue             // 任务队列 用于分发任务
+	plugins      map[string]plugin.Plugin    // 插件
+	cache        *Cache                      // 缓存
+	notification *notify.LoggingNotification // 消息分发
 	logger       *logrus.Logger
 }
 
@@ -64,7 +63,6 @@ func NewApp() *App {
 	tools.MkDirs(loggerDir, configDir, libDir, pluginsDir)
 
 	// 加载配置
-	fmt.Printf("configDir: %v\n", configDir)
 	a.config = config.New(configDir)
 	err = a.config.Load()
 	if err != nil {
@@ -115,7 +113,8 @@ func (a *App) Startup(ctx context.Context) {
 
 	go func() {
 		// 消息注册
-		a.notification = notify.New(ctx, a.logger)
+		systemNotification := notify.NewSystem(a.ctx)
+		a.notification = notify.NewLoggingNotification(a.logger, systemNotification)
 
 	}()
 
@@ -207,6 +206,8 @@ func (a *App) loadPlugins() {
 				if pc.Enable {
 					dp.Run(context.Background())
 				}
+
+				dp.Manifest = manifest
 				p = dp
 			}
 

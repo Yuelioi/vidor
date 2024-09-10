@@ -4,6 +4,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"os/exec"
+	"path/filepath"
+	"strings"
+	"syscall"
 	"time"
 
 	pb "github.com/Yuelioi/vidor/internal/proto"
@@ -26,7 +30,71 @@ func (p *DownloadPlugin) GetManifest() *Manifest {
 }
 
 func (p *DownloadPlugin) Run(ctx context.Context) error {
-	return p.Manifest.Run(ctx)
+
+	// 获取命令
+	pluginPath := filepath.Join(p.Manifest.BaseDir, p.Manifest.Executable)
+
+	if p.Manifest.Addr == "" {
+		// 自动生成本地地址
+		pluginPath := filepath.Join(p.Manifest.BaseDir, p.Manifest.ID, p.Manifest.Executable)
+		addr, err := getLocalAddr(pluginPath)
+		if err != nil {
+			return err
+		}
+		p.Manifest.Addr = addr
+	}
+
+	// 调试模式 debug:port
+	if strings.HasPrefix(p.Manifest.Addr, "debug") {
+		addrs := strings.Split(p.Manifest.Addr, ":")
+		if len(addrs) == 2 {
+			cmd := exec.Command(pluginPath, "--port", addrs[1])
+			cmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
+
+			// 启动进程
+			err := cmd.Start()
+			if err != nil {
+				return errors.New("启动进程失败: " + err.Error())
+			}
+		}
+
+	}
+
+	// 本地启动 localhost[:port]
+	if strings.HasPrefix(p.Manifest.Addr, "localhost") {
+		addrs := strings.Split(p.Manifest.Addr, ":")
+
+		// 使用端口启动(可用于调试)
+		if len(addrs) == 2 {
+			cmd := exec.Command(pluginPath, "--port", addrs[1])
+			cmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
+
+			// 启动进程
+			err := cmd.Start()
+			if err != nil {
+				return errors.New("启动进程失败: " + err.Error())
+			}
+		} else {
+
+		}
+
+	}
+	// 远程
+	if strings.HasPrefix(p.Manifest.Addr, "remote") {
+		// ...
+	}
+
+	// 获取 exe 运行的 PID
+	p.Manifest.PluginConfig.Enable = true
+	p.Manifest.State = Working
+
+	conn, err := connect(p.Manifest.Addr)
+	if err != nil {
+		return err
+	}
+	p.Service = pb.NewDownloadServiceClient(conn)
+	conn.Connect()
+	return nil
 }
 
 func (p *DownloadPlugin) Check(ctx context.Context) error {

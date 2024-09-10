@@ -2,7 +2,6 @@ package config
 
 import (
 	"encoding/json"
-	"log"
 	"os"
 	"path/filepath"
 
@@ -29,41 +28,11 @@ func New(baseDir string) *Config {
 	}
 }
 
+// 加载配置
 func (c *Config) Load() error {
-	err := tools.MkDirs(c.baseDir)
-	if err != nil {
-		log.Fatal("无法创建文件夹")
-	}
-
-	err = c.load()
-	return err
-}
-
-// 保存配置
-func (c *Config) Save() error {
-
-	config := map[string]interface{}{
-		"system":  c.SystemConfig,
-		"plugins": c.PluginConfigs,
-	}
-
-	configData, err := json.MarshalIndent(config, "", "  ")
-	if err != nil {
+	if err := tools.MkDirs(c.baseDir); err != nil {
 		return err
 	}
-
-	configFile := filepath.Join(c.baseDir, "config.json")
-	log.Println(string(configData)) // log the JSON data
-
-	err = os.WriteFile(configFile, configData, 0644)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-// 加载/创建/初始化配置
-func (c *Config) load() error {
 
 	configFile := filepath.Join(c.baseDir, "config.json")
 
@@ -80,17 +49,16 @@ func (c *Config) load() error {
 		return err
 	}
 
-	config := &Config{
+	tempConfig := &Config{
 		SystemConfig:  defaultSystemConfig,
-		PluginConfigs: map[string]*PluginConfig{},
+		PluginConfigs: make(map[string]*PluginConfig),
 	}
-	err = json.Unmarshal(configData, config)
-	if err != nil {
+	if err := json.Unmarshal(configData, tempConfig); err != nil {
 		return err
 	}
 
-	c.SystemConfig = config.SystemConfig
-	c.PluginConfigs = config.PluginConfigs
+	c.SystemConfig = tempConfig.SystemConfig
+	c.PluginConfigs = tempConfig.PluginConfigs
 
 	// 初始化下载文件夹
 	if _, err := os.Stat(c.SystemConfig.DownloadDir); os.IsNotExist(err) {
@@ -102,6 +70,28 @@ func (c *Config) load() error {
 		if err := c.Save(); err != nil {
 			return err
 		}
+	}
+	return nil
+}
+
+// 保存配置
+func (c *Config) Save() error {
+
+	config := map[string]interface{}{
+		"system":  c.SystemConfig,
+		"plugins": c.PluginConfigs,
+	}
+
+	configData, err := json.MarshalIndent(config, "", "  ")
+	if err != nil {
+		return err
+	}
+
+	configFile := filepath.Join(c.baseDir, "config.json")
+
+	err = os.WriteFile(configFile, configData, os.ModePerm)
+	if err != nil {
+		return err
 	}
 	return nil
 }

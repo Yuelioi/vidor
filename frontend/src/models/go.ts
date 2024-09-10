@@ -1,7 +1,7 @@
 import { plugin } from '@wailsjs/go/models'
 import { proto } from '@wailsjs/go/models'
 
-export class Plugin extends plugin.Plugin {
+export class Plugin extends plugin.Manifest {
   lock?: boolean = true
   downloaded?: boolean = false // 仅插件市场
 }

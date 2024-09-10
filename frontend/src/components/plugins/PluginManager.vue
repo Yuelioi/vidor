@@ -17,16 +17,12 @@
                 :style="{ '--hover-color': plugin.color }">
                 {{ plugin.name }}
               </span>
-              <span
-                :class="{ 'opacity-80': hoveredIndex == pluginKey }"
-                class="ml-auto mx-4 opacity-0">
-                pid:{{ plugin.pid }}
-              </span>
+
               <span
                 class=""
                 :class="{
-                  'opacity-80 filter grayscale': !plugin.enable,
-                  'opacity-100': plugin.enable
+                  'opacity-80 filter grayscale': !plugin.plugin_config.enable,
+                  'opacity-100': plugin.plugin_config.enable
                 }">
                 <template v-if="plugin.state == 1">
                   <span class="size-6 text-success icon-[ic--outline-check-circle-outline]"></span>
@@ -44,14 +40,14 @@
             <div class="m-2 mb-4 space-y-2">{{ plugin.description }}</div>
 
             <!-- 设置 -->
-            <div class="my-2" v-for="(value, key) in plugin.settings" :key="key">
+            <div class="my-2" v-for="(value, key) in plugin.plugin_config.settings" :key="key">
               <label class="flex items-center gap-2 input input-bordered">
                 {{ key }}
                 <input
                   type="text"
                   class="ml-2 grow"
-                  v-model.lazy="plugin.settings[key]"
-                  :disabled="plugin.lock || !plugin.enable"
+                  v-model.lazy="plugin.plugin_config.settings[key]"
+                  :disabled="plugin.lock || !plugin.plugin_config.enable"
                   @change="savePlugin(plugin)" />
               </label>
             </div>
@@ -60,7 +56,7 @@
 
             <!-- 底部命令工具 -->
             <div class="flex items-center">
-              <template v-if="plugin.enable">
+              <template v-if="plugin.plugin_config.enable">
                 <template v-if="plugin.state !== 1">
                   <span
                     class="size-6 icon-[ic--round-play-arrow] hover:text-success"
@@ -75,7 +71,7 @@
                 </template>
               </template>
 
-              <template v-if="plugin.enable == true">
+              <template v-if="plugin.plugin_config.enable == true">
                 <span
                   class="ml-2 icon-[fluent--presence-blocked-12-regular] hover:warning"
                   :disabled="plugin.lock"
@@ -123,7 +119,7 @@ EventsOn('updateInfo', (plugin: Plugin) => {
 })
 
 async function savePlugin(plugin: Plugin) {
-  const fetchedPlugin = await SavePluginConfig(plugin.id, plugin)
+  const fetchedPlugin = await SavePluginConfig(plugin.id, plugin.plugin_config)
 
   console.log(fetchedPlugin)
 
