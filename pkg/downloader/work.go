@@ -11,7 +11,6 @@ import (
 func (d *Downloader) Download() error {
 	file, err := prepareOutputFile(d.targetPath, false)
 	if err != nil {
-		d.State = 4
 		return err
 	}
 
@@ -29,7 +28,6 @@ func (d *Downloader) Download() error {
 func (d *Downloader) Recover(segments []*Pair) error {
 	file, err := prepareOutputFile(d.targetPath, true)
 	if err != nil {
-		d.State = 4
 		return err
 	}
 	d.out = file
@@ -37,7 +35,6 @@ func (d *Downloader) Recover(segments []*Pair) error {
 	defer d.cancel()
 
 	d.loadSegments(segments)
-	d.State = 1
 	return d.start()
 }
 
@@ -45,7 +42,6 @@ func (d *Downloader) Recover(segments []*Pair) error {
 func (d *Downloader) Parse() []Pair {
 	fmt.Print("暂停")
 	pairs := d.storeWork()
-	d.State = 2
 	d.cancel()
 	return pairs
 }
@@ -75,7 +71,6 @@ func (d *Downloader) allocateSegments() {
 // 开始
 // TODO 错误处理
 func (d *Downloader) start() error {
-	d.State = 1
 	var wg sync.WaitGroup
 
 	if d.supportsChunked {
@@ -83,12 +78,10 @@ func (d *Downloader) start() error {
 			wg.Add(1)
 			go func(pair *pair) {
 				defer wg.Done()
-				fmt.Printf("seg: %v\n", seg)
 				err := d.downloadChunk(seg)
 				if err != nil {
 					d.mu.Lock()
 					defer d.mu.Unlock()
-					d.State = 4
 					d.Status = err.Error()
 				}
 
@@ -98,13 +91,11 @@ func (d *Downloader) start() error {
 		err := d.download()
 		if err != nil {
 			// 单线程
-			d.State = 4
 			d.Status = err.Error()
 		}
 	}
 
 	wg.Wait()
-	d.State = 3
 	d.Status = "下载完成"
 	return nil
 }
@@ -139,7 +130,6 @@ func (d *Downloader) downloadChunk(seg *pair) error {
 	defer resp.RawBody().Close()
 
 	if resp.RawBody() == nil {
-
 		return errors.New("response body is nil")
 	}
 

@@ -14,13 +14,9 @@ import (
 )
 
 const (
-	Initializing = iota + 1 // 插件正在初始化过程中
-	Working                 // 插件正在处理任务
-	NotWork                 // 插件不工作（可能因为故障或其他原因）
-	Stopping                // 插件正在停止过程中
-	Paused                  // 插件已暂停
-	Failed                  // 插件遇到错误或故障
-	Disabled                // 插件被禁用
+	Working  = iota + 1 // 插件正在工作中
+	NotWork             // 插件不工作（可能因为故障或其他原因）
+	Disabled            // 插件被禁用
 )
 
 type Plugin interface {
