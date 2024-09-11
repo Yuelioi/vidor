@@ -1,7 +1,7 @@
 package config
 
 type Config struct {
-	baseDir          string // 配置所在文件夹
+	BaseDir          string // 配置所在文件夹
 	Theme            string `json:"theme"`
 	ScaleFactor      int    `json:"scale_factor"`
 	ProxyURL         string `json:"proxy_url"`

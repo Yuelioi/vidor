@@ -4,7 +4,7 @@
 const _themes = ['light', 'dark']
 const { switchTheme } = useTheme(_themes)
 const { configs, tasks } = storeToRefs(useBasicStore())
-import { Task } from '@/models/go'
+import { Notice, Task } from '@/models/go'
 
 EventsOn('updateInfo', (optionalData?: Task) => {
   const index = tasks.value.findIndex((task) => task.id === optionalData?.id)

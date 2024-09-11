@@ -21,10 +21,10 @@ import (
 )
 
 // 返回主机注册的插件
-func (app *App) GetPlugins() map[string]plugin.Manifest {
+func (a *App) GetPlugins() map[string]plugin.Manifest {
 	ms := make(map[string]plugin.Manifest, 0)
 
-	for _, plugin := range app.plugins {
+	for _, plugin := range a.plugins {
 		mf := plugin.GetManifest()
 		ms[mf.ID] = *mf
 	}
@@ -32,7 +32,7 @@ func (app *App) GetPlugins() map[string]plugin.Manifest {
 }
 
 // 获取网络插件列表
-func fetchPlugins(pluginDir string) ([]*plugin.Manifest, error) {
+func fetchPlugins(pluginsDir string) ([]*plugin.Manifest, error) {
 	pluginsUrl := "https://cdn.yuelili.com/market/vidor/plugins.json"
 
 	resp, err := resty.New().R().Get(pluginsUrl)
@@ -51,7 +51,7 @@ func fetchPlugins(pluginDir string) ([]*plugin.Manifest, error) {
 
 	plugins := make([]*plugin.Manifest, 0, len(rawPlugins))
 	for _, rawPlugin := range rawPlugins {
-		manifest := plugin.NewManifest(pluginDir)
+		manifest := plugin.NewManifest(pluginsDir)
 
 		manifestData, err := json.Marshal(rawPlugin)
 		if err != nil {
@@ -73,12 +73,12 @@ func fetchPlugins(pluginDir string) ([]*plugin.Manifest, error) {
 // 1.下载
 // 2.解压
 // 3.注册到主机
-func (app *App) DownloadPlugin(m plugin.Manifest) *plugin.Manifest {
+func (a *App) DownloadPlugin(m plugin.Manifest) *plugin.Manifest {
 
-	plugins, err := fetchPlugins(pluginsDir)
+	plugins, err := fetchPlugins(a.appDirs.Plugins)
 	fmt.Printf("plugins: %v\n", plugins[0])
 	if err != nil {
-		app.notification.Send(app.ctx, notify.Notice{
+		a.notification.Send(a.ctx, notify.Notice{
 			EventName:  "system.notice",
 			Content:    "获取插件信息失败:" + err.Error(),
 			NoticeType: "info",
@@ -95,7 +95,7 @@ func (app *App) DownloadPlugin(m plugin.Manifest) *plugin.Manifest {
 	}
 
 	if len(targetManifest.DownloadURLs) == 0 {
-		app.notification.Send(app.ctx, notify.Notice{
+		a.notification.Send(a.ctx, notify.Notice{
 			EventName:  "system.notice",
 			Content:    "获取插件链接失败",
 			NoticeType: "info",
@@ -108,27 +108,20 @@ func (app *App) DownloadPlugin(m plugin.Manifest) *plugin.Manifest {
 	name := tools.ExtractFileNameFromUrl(downUrl)
 	name = tools.SanitizeFileName(name)
 
-	tmpDir := filepath.Join(app.location, "tmp")
-
-	err = os.MkdirAll(tmpDir, os.ModePerm)
-	if err != nil {
-		return nil
-	}
-
-	zipPath := filepath.Join(tmpDir, name)
-	targetDir := filepath.Join(pluginsDir, targetManifest.ID)
+	zipPath := filepath.Join(a.appDirs.Temps, name)
+	targetDir := filepath.Join(a.appDirs.Plugins, targetManifest.ID)
 	err = os.MkdirAll(targetDir, os.ModePerm)
 	if err != nil {
 		return nil
 	}
 
-	downloader, err := downloader.New(
+	dl, err := downloader.New(
 		context.Background(),
 		downUrl,
 		zipPath,
 		true)
 	if err != nil {
-		app.notification.Send(app.ctx, notify.Notice{
+		a.notification.Send(a.ctx, notify.Notice{
 			EventName:  "system.notice",
 			Content:    "下载插件失败" + err.Error(),
 			NoticeType: "info",
@@ -137,20 +130,20 @@ func (app *App) DownloadPlugin(m plugin.Manifest) *plugin.Manifest {
 		return nil
 	}
 
-	go downloader.Download()
+	go dl.Download()
 
 	tk := time.NewTicker(time.Second)
 	defer tk.Stop()
 
 	// 下载
 	for range tk.C {
-		targetManifest.Status = downloader.Status
-		if downloader.State == 1 {
+		targetManifest.Status = dl.Status
+		if dl.State == 1 {
 			// 下载中
-			runtime.EventsEmit(app.ctx, "plugin.downloading", targetManifest)
+			runtime.EventsEmit(a.ctx, "plugin.downloading", targetManifest)
 		} else {
 			// 下载失败
-			runtime.EventsEmit(app.ctx, "plugin.downloading", targetManifest)
+			runtime.EventsEmit(a.ctx, "plugin.downloading", targetManifest)
 			break
 		}
 	}
@@ -163,7 +156,7 @@ func (app *App) DownloadPlugin(m plugin.Manifest) *plugin.Manifest {
 
 	_, files, _, err := xtractr.ExtractFile(x)
 	if err != nil || files == nil {
-		app.notification.Send(app.ctx, notify.Notice{
+		a.notification.Send(a.ctx, notify.Notice{
 			EventName:  "system.notice",
 			Content:    "解压插件信息失败" + err.Error(),
 			NoticeType: "info",
@@ -173,14 +166,14 @@ func (app *App) DownloadPlugin(m plugin.Manifest) *plugin.Manifest {
 	}
 
 	// 注册
-	app.registerPlugin(&m)
+	a.registerPlugin(&m)
 
 	return targetManifest
 }
 
 // 运行插件, 并建立连接
-func (app *App) RunPlugin(m plugin.Manifest) *plugin.Manifest {
-	plugin, ok := app.plugins[m.ID]
+func (a *App) RunPlugin(m plugin.Manifest) *plugin.Manifest {
+	plugin, ok := a.plugins[m.ID]
 	if !ok {
 		return nil
 	}
@@ -188,13 +181,13 @@ func (app *App) RunPlugin(m plugin.Manifest) *plugin.Manifest {
 	// 运行
 	err := plugin.Run(context.Background())
 	if err != nil {
-		app.logger.Infof("插件开启失败:%s", err)
+		a.logger.Infof("插件开启失败:%s", err)
 		return nil
 	}
 
 	err = plugin.Init(context.Background())
 	if err != nil {
-		app.logger.Infof("插件开启失败:%s", err)
+		a.logger.Infof("插件开启失败:%s", err)
 		return nil
 	}
 
@@ -202,8 +195,8 @@ func (app *App) RunPlugin(m plugin.Manifest) *plugin.Manifest {
 }
 
 // 更新插件参数
-func (app *App) UpdatePlugin(m plugin.Manifest) *plugin.Manifest {
-	plugin, ok := app.plugins[m.ID]
+func (a *App) UpdatePlugin(m plugin.Manifest) *plugin.Manifest {
+	plugin, ok := a.plugins[m.ID]
 	if !ok {
 		return nil
 	}
@@ -211,15 +204,15 @@ func (app *App) UpdatePlugin(m plugin.Manifest) *plugin.Manifest {
 	// TODO 跟新
 	err := plugin.Update(context.Background())
 	if err != nil {
-		app.logger.Infof("插件开启失败:%s", err)
+		a.logger.Infof("插件开启失败:%s", err)
 		return nil
 	}
 
 	return plugin.GetManifest()
 }
 
-func (app *App) StopPlugin(m plugin.Manifest) *plugin.Manifest {
-	plugin, ok := app.plugins[m.ID]
+func (a *App) StopPlugin(m plugin.Manifest) *plugin.Manifest {
+	plugin, ok := a.plugins[m.ID]
 	if !ok {
 		return nil
 	}
@@ -233,14 +226,14 @@ func (app *App) StopPlugin(m plugin.Manifest) *plugin.Manifest {
 }
 
 // 启用插件, 但是不会运行
-func (app *App) EnablePlugin(m plugin.Manifest) *plugin.Manifest {
-	plugin, ok := app.plugins[m.ID]
+func (a *App) EnablePlugin(m plugin.Manifest) *plugin.Manifest {
+	plugin, ok := a.plugins[m.ID]
 	if !ok {
 		return nil
 	}
 	manifest := plugin.GetManifest()
 	// 保存配置
-	p2 := app.SavePluginConfig(manifest.ID, manifest)
+	p2 := a.SavePluginConfig(manifest.ID, manifest)
 	if p2 != nil {
 		return nil
 	}
@@ -248,10 +241,10 @@ func (app *App) EnablePlugin(m plugin.Manifest) *plugin.Manifest {
 }
 
 // 关闭插件,并禁用插件
-func (app *App) DisablePlugin(m plugin.Manifest) *plugin.Manifest {
-	plugin, ok := app.plugins[m.ID]
+func (a *App) DisablePlugin(m plugin.Manifest) *plugin.Manifest {
+	plugin, ok := a.plugins[m.ID]
 	if !ok {
-		app.logger.Infof("没有找到插件:%s", m.ID)
+		a.logger.Infof("没有找到插件:%s", m.ID)
 		return nil
 	}
 
@@ -269,7 +262,7 @@ func (app *App) DisablePlugin(m plugin.Manifest) *plugin.Manifest {
 	manifest.Enable = false
 	manifest.State = 3
 
-	p2 := app.SavePluginConfig(manifest.ID, manifest)
+	p2 := a.SavePluginConfig(manifest.ID, manifest)
 	if p2 != nil {
 		return nil
 	}
@@ -277,8 +270,8 @@ func (app *App) DisablePlugin(m plugin.Manifest) *plugin.Manifest {
 }
 
 // 保存插件配置
-func (app *App) SavePluginConfig(id string, m *plugin.Manifest) *plugin.Manifest {
-	plugin, ok := app.plugins[id]
+func (a *App) SavePluginConfig(id string, m *plugin.Manifest) *plugin.Manifest {
+	plugin, ok := a.plugins[id]
 	if !ok {
 		return nil
 	}

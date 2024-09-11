@@ -131,13 +131,6 @@ function calculateLock(plugin: Plugin) {
     return true
   }
 
-  if (plugin.id in plugins.value) {
-    if (plugin.version < plugins[plugin.id]) {
-      return false
-    } else {
-      return true
-    }
-  }
   return false
 }
 
@@ -161,7 +154,7 @@ function calculatePluginState(plugin: Plugin) {
     if (plugin.version < plugins[plugin.id]) {
       return '更新'
     } else {
-      return '已下载'
+      return '移除'
     }
   }
   // 下载中

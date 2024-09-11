@@ -45,6 +45,7 @@
 </template>
 
 <script setup lang="ts">
+import { SetDownloadDir } from '@wailsjs/go/app/App'
 defineProps<{ tab: Tab }>()
 const { configs } = storeToRefs(useBasicStore())
 

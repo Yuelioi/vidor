@@ -19,19 +19,34 @@ var defaultSystemConfig = &Config{
 	DownloadLimit:    3,
 }
 
-func New(baseDir string) *Config {
-	return &Config{
-		baseDir: baseDir,
+func New(baseDir string) (*Config, error) {
+
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return nil, err
 	}
+
+	return &Config{
+		BaseDir:          baseDir,
+		Theme:            defaultSystemConfig.Theme,
+		ScaleFactor:      defaultSystemConfig.ScaleFactor,
+		MagicName:        defaultSystemConfig.MagicName,
+		DownloadVideo:    defaultSystemConfig.DownloadVideo,
+		DownloadAudio:    defaultSystemConfig.DownloadAudio,
+		DownloadSubtitle: defaultSystemConfig.DownloadSubtitle,
+		DownloadCombine:  defaultSystemConfig.DownloadCombine,
+		DownloadLimit:    defaultSystemConfig.DownloadLimit,
+		DownloadDir:      filepath.Join(home, "downloads"),
+	}, nil
 }
 
 // 加载配置
 func (c *Config) Load() error {
-	if err := tools.MkDirs(c.baseDir); err != nil {
+	if err := tools.MkDirs(c.BaseDir); err != nil {
 		return err
 	}
 
-	configFile := filepath.Join(c.baseDir, "config.json")
+	configFile := filepath.Join(c.BaseDir, "config.json")
 
 	// 检查配置文件是否存在，如果不存在则创建一个空的配置文件
 	if _, err := os.Stat(configFile); os.IsNotExist(err) {
@@ -53,11 +68,7 @@ func (c *Config) Load() error {
 
 	// 初始化下载文件夹
 	if _, err := os.Stat(c.DownloadDir); os.IsNotExist(err) {
-		home, err := os.UserHomeDir()
-		if err != nil {
-			return err
-		}
-		c.DownloadDir = filepath.Join(home, "downloads")
+
 		if err := c.Save(); err != nil {
 			return err
 		}
@@ -73,7 +84,7 @@ func (c *Config) Save() error {
 		return err
 	}
 
-	configFile := filepath.Join(c.baseDir, "config.json")
+	configFile := filepath.Join(c.BaseDir, "config.json")
 
 	err = os.WriteFile(configFile, configData, os.ModePerm)
 	if err != nil {

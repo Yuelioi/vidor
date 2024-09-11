@@ -4,14 +4,13 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"log"
 	"os"
 	"path/filepath"
+	"sync"
 
 	_ "embed"
 
 	"github.com/Yuelioi/vidor/internal/config"
-	"github.com/Yuelioi/vidor/internal/globals"
 	"github.com/Yuelioi/vidor/internal/logger"
 	"github.com/Yuelioi/vidor/internal/notify"
 	"github.com/Yuelioi/vidor/internal/plugin"
@@ -25,105 +24,132 @@ import (
 //go:embed icon.ico
 var iconData []byte
 
-var pluginsDir string
-var assetsDir string
-
 // 应用实例
 type App struct {
 	ctx          context.Context
-	location     string // 软件路径
-	appInfo      AppInfo
+	appDirs      *AppDirs                    // 软件路径
+	appInfo      AppInfo                     // 软件信息
 	config       *config.Config              // 软件配置信息
 	taskQueue    *task.TaskQueue             // 任务队列 用于分发任务
 	plugins      map[string]plugin.Plugin    // 插件
 	cache        *Cache                      // 缓存
 	notification *notify.LoggingNotification // 消息分发
-	logger       *logrus.Logger
+	logger       *logrus.Logger              // 日志系统
 }
 
-func NewApp() *App {
+func initDirs() (*AppDirs, error) {
+	root, err := tools.ExeDir()
+	if err != nil {
+		return nil, err
+	}
+
+	appDirs := &AppDirs{
+		AppRoot: root,
+		Libs:    filepath.Join(root, "libs"),
+		Temps:   filepath.Join(root, "temps"),
+		Plugins: filepath.Join(root, "plugins"),
+		Configs: filepath.Join(root, "configs"),
+		Logs:    filepath.Join(root, "logs"),
+	}
+
+	err = tools.MkDirs(appDirs.Libs, appDirs.Temps, appDirs.Plugins, appDirs.Configs, appDirs.Logs)
+	if err != nil {
+		return nil, err
+	}
+
+	return appDirs, nil
+}
+
+func NewApp() (*App, error) {
 	a := &App{
 		plugins: make(map[string]plugin.Plugin),
 	}
 
-	appDir, err := tools.ExeDir()
-	if err != nil {
-		log.Fatal()
-	}
-
-	appDir, _ = filepath.Abs(appDir)
-	a.location = appDir
-
 	// 初始化文件夹
-	loggerDir := filepath.Join(appDir, "logs")
-	configDir := filepath.Join(appDir, "configs")
-	pluginsDir = filepath.Join(appDir, "plugins")
-	assetsDir = filepath.Join(appDir, "assets")
-	libDir := filepath.Join(appDir, "lib")
-	tools.MkDirs(loggerDir, configDir, libDir, pluginsDir)
+	dirs, err := initDirs()
+	if err != nil {
+		return nil, err
+	}
+	a.appDirs = dirs
 
 	// 加载配置
-	a.config = config.New(configDir)
+	cf, err := config.New(a.appDirs.Configs)
+	if err != nil {
+		return nil, err
+	}
+	a.config = cf
 	err = a.config.Load()
 	if err != nil {
-		log.Fatalf("Start: %s", err.Error())
+		return nil, err
 	}
 
 	// 创建日志
-	appLogger, err := logger.New(loggerDir)
+	appLogger, err := logger.New(a.appDirs.Logs)
 	if err != nil {
-		log.Fatal("init: ", err.Error())
+		return nil, err
 	}
 	a.logger = appLogger
 
 	// 初始化软件信息
 	a.appInfo = NewAppInfo()
-	a.logger.Infof("当前版本%s", a.appInfo.version)
-
-	return a
-
+	a.logger.Infof("加载成功, 当前版本%s", a.appInfo.version)
+	return a, nil
 }
 
 func (a *App) Startup(ctx context.Context) {
 	a.ctx = ctx
 
+	var wg sync.WaitGroup
+	wg.Add(5)
+
 	go func() {
+		defer wg.Done()
 		// 添加托盘
 		a.logger.Info("加载系统托盘")
 		systray.Run(a.systemTray, func() {})
 	}()
 
 	go func() {
+		defer wg.Done()
 		// 任务队列
 		a.logger.Info("任务队列加载中")
 		a.taskQueue = task.New()
 	}()
 
 	go func() {
+		defer wg.Done()
 		// 注册事件
 		a.logger.Info("注册事件")
 		registerEvents(a)
 	}()
 
 	go func() {
+		defer wg.Done()
 		// 加载本地插件
 		a.logger.Info("加载插件")
-		a.loadPlugins()
+		if err := a.loadPlugins(); err != nil {
+			a.logger.Infof("加载插件失败,err:%s", err)
+		}
+
 	}()
 
 	go func() {
+		defer wg.Done()
 		// 消息注册
 		systemNotification := notify.NewSystem(a.ctx)
 		a.notification = notify.NewLoggingNotification(a.logger, systemNotification)
 
 	}()
-
 	// 缓存
 	a.logger.Info("缓存器加载中")
 	a.cache = NewCache()
 
+	wg.Wait()
+	a.logger.Info("应用启动完成")
+
 }
 
+// TODO 关闭
 func (a *App) Shutdown(ctx context.Context) {
 	// 如果刚运行就关闭 有可能资源泄露
 
@@ -134,6 +160,12 @@ func (a *App) Shutdown(ctx context.Context) {
 	// 	}
 	// }
 
+	// 清理tmp文件夹
+	err := tools.CleanDir(a.appDirs.Temps)
+	if err != nil {
+		a.logger.Warnf("清理临时文件夹失败: %s", err)
+	}
+
 	// 保存配置
 
 	// 关闭托盘
@@ -142,12 +174,6 @@ func (a *App) Shutdown(ctx context.Context) {
 
 // 系统托盘
 func (a *App) systemTray() {
-	// iconPath := filepath.Join(assetsDir, "icon.ico")
-
-	// iconData, err := os.ReadFile(iconPath)
-	// if err != nil {
-	// 	a.logger.Info("加载托盘图标失败")
-	// }
 
 	systray.SetIcon(iconData)
 
@@ -166,29 +192,28 @@ func (a *App) systemTray() {
 }
 
 // 加载插件
-func (a *App) loadPlugins() {
-	dirs, err := os.ReadDir(pluginsDir)
+func (a *App) loadPlugins() error {
+	dirs, err := os.ReadDir(a.appDirs.Plugins)
 	if err != nil {
-		log.Fatal(globals.ErrFileRead.Error())
+		return err
 	}
 
 	for _, dir := range dirs {
 		if dir.IsDir() {
 			// 读取插件信息
-			pluginManifestPath := filepath.Join(pluginsDir, dir.Name(), "manifest.json")
+			pluginDir := filepath.Join(a.appDirs.Plugins, dir.Name())
+			pluginManifestPath := filepath.Join(pluginDir, "manifest.json")
 			manifestData, err := os.ReadFile(pluginManifestPath)
 			if err != nil {
-				a.logger.Infof(globals.ErrFileRead.Error())
+				a.logger.Infof("读取插件文件失败: %s", err)
 				continue
 			}
-
-			pluginDir := filepath.Join(pluginsDir, dir.Name())
 
 			// 解析插件信息
 			manifest := plugin.NewManifest(pluginDir)
 			err = json.Unmarshal(manifestData, manifest)
 			if err != nil {
-				a.logger.Infof(globals.ErrConfigConversion.Error())
+				a.logger.Infof("插件配置转换失败: %s", err)
 				continue
 			}
 
@@ -196,11 +221,12 @@ func (a *App) loadPlugins() {
 
 			_, err = a.registerPlugin(manifest)
 			if err != nil {
+				a.logger.Warnf("注册插件失败: %s", err)
 				continue
 			}
-
 		}
 	}
+	return nil
 }
 
 func (a *App) registerPlugin(m *plugin.Manifest) (plugin.Plugin, error) {
@@ -208,34 +234,32 @@ func (a *App) registerPlugin(m *plugin.Manifest) (plugin.Plugin, error) {
 
 	var p plugin.Plugin
 	// 先写个下载器的
-	if m.Type == "downloader" {
+	switch m.Type {
+	case "downloader":
 		pd := plugin.NewDownloader(m)
 
-		// 运行插件
 		if m.Enable {
 			err := pd.Run(context.Background())
 			if err != nil {
-				a.logger.Warnf(globals.ErrPluginRun.Error())
+				a.logger.Warnf("插件启动失败: %s", err)
 			}
 
-			// 延迟加载插件
 			go func() {
-				err = p.Init(context.Background())
+				err = pd.Init(context.Background())
 				if err != nil {
-					a.logger.Warnf(globals.ErrPluginRun.Error())
+					a.logger.Warnf("插件初始化失败: %s", err)
 				}
 				runtime.EventsEmit(a.ctx, "plugin-update", pd)
 			}()
 		}
 		p = pd
 
-	} else {
-		return nil, errors.New("没有匹配的插件类型")
+	default:
+		return nil, errors.New("未知的插件类型")
 	}
 
 	// 注册配置以及插件
 	a.plugins[m.ID] = p
 
 	return p, nil
-
 }

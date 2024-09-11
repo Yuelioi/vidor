@@ -19,6 +19,16 @@ func MkDirs(dirs ...string) error {
 	return nil
 }
 
+func CleanDir(dirs ...string) error {
+	for _, dir := range dirs {
+		err := os.RemoveAll(dir)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 // 获取当前exe所在目录
 func ExeDir() (string, error) {
 	exePath, err := os.Executable()

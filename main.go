@@ -54,10 +54,20 @@ func (h *FileLoader) ServeHTTP(res http.ResponseWriter, req *http.Request) {
 	res.Write(fileData)
 }
 
-func AppLaunch() {
-	a := app.NewApp()
+// 创建日志前报错处理
+func writeLog(format string, a ...any) {
+	data := []byte(fmt.Sprintf(format, a...))
+	os.WriteFile("error.log", data, os.ModePerm)
+}
 
-	err := wails.Run(&options.App{
+func AppLaunch() {
+	a, err := app.NewApp()
+	if err != nil {
+		writeLog("创建App实例失败%s", err.Error())
+		return
+	}
+
+	err = wails.Run(&options.App{
 		Title:     "Vidor",
 		Width:     1050,
 		Height:    720,

@@ -1,6 +1,6 @@
 module github.com/Yuelioi/vidor
 
-go 1.23.0
+go 1.22.6
 
 require (
 	github.com/energye/systray v1.0.2

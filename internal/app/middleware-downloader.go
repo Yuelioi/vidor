@@ -16,8 +16,8 @@ import (
 )
 
 // 基于链接获取下载器
-func (app *App) selectDownloadPlugin(url string) (*plugin.DownloadPlugin, error) {
-	for _, p := range app.plugins {
+func (a *App) selectDownloadPlugin(url string) (*plugin.DownloadPlugin, error) {
+	for _, p := range a.plugins {
 
 		base := p.GetManifest()
 		if base.Type == "downloader" {
@@ -133,7 +133,11 @@ func (a *App) ParsePlaylist(ids []string) *pb.TasksResponse {
 }
 
 func (a *App) SetDownloadDir(title string) string {
-	home, _ := os.UserHomeDir()
+	home, err := os.UserHomeDir()
+	if err != nil {
+		a.logger.Warnf("获取用户文件夹失败:%s", err)
+		return ""
+	}
 	downloadsFolder := filepath.Join(home, "Downloads")
 
 	target, err := runtime.OpenDirectoryDialog(a.ctx, runtime.OpenDialogOptions{
