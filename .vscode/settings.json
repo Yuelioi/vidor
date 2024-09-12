@@ -86,6 +86,7 @@
     "energye",
     "epid",
     "Frameless",
+    "golift",
     "iconoir",
     "Infof",
     "joho",
@@ -107,6 +108,7 @@
     "wailsapp",
     "wailsjs",
     "Warnf",
+    "xtractr",
     "Yuelioi"
   ],
   "tailwindCSS.experimental.configFile": "./frontend/tailwind.config.ts"

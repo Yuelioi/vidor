@@ -237,21 +237,6 @@ func (a *App) registerPlugin(m *plugin.Manifest) (plugin.Plugin, error) {
 	switch m.Type {
 	case "downloader":
 		pd := plugin.NewDownloader(m)
-
-		if m.Enable {
-			err := pd.Run(context.Background())
-			if err != nil {
-				a.logger.Warnf("插件启动失败: %s", err)
-			}
-
-			go func() {
-				err = pd.Init(context.Background())
-				if err != nil {
-					a.logger.Warnf("插件初始化失败: %s", err)
-				}
-				runtime.EventsEmit(a.ctx, "plugin-update", pd)
-			}()
-		}
 		p = pd
 
 	default:
