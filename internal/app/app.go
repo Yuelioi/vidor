@@ -3,7 +3,6 @@ package app
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"os"
 	"path/filepath"
 	"sync"
@@ -31,12 +30,13 @@ type App struct {
 	appInfo      AppInfo                     // 软件信息
 	config       *config.Config              // 软件配置信息
 	taskQueue    *task.TaskQueue             // 任务队列 用于分发任务
-	plugins      map[string]plugin.Plugin    // 插件
+	manager      *plugin.PluginManager       // 插件管理系统
 	cache        *Cache                      // 缓存
 	notification *notify.LoggingNotification // 消息分发
 	logger       *logrus.Logger              // 日志系统
 }
 
+// 初始化必要文件夹
 func initDirs() (*AppDirs, error) {
 	root, err := tools.ExeDir()
 	if err != nil {
@@ -61,9 +61,7 @@ func initDirs() (*AppDirs, error) {
 }
 
 func NewApp() (*App, error) {
-	a := &App{
-		plugins: make(map[string]plugin.Plugin),
-	}
+	a := &App{}
 
 	// 初始化文件夹
 	dirs, err := initDirs()
@@ -78,8 +76,7 @@ func NewApp() (*App, error) {
 		return nil, err
 	}
 	a.config = cf
-	err = a.config.Load()
-	if err != nil {
+	if err := a.config.Load(); err != nil {
 		return nil, err
 	}
 
@@ -98,6 +95,10 @@ func NewApp() (*App, error) {
 
 func (a *App) Startup(ctx context.Context) {
 	a.ctx = ctx
+
+	ctxM := context.WithValue(ctx, plugin.KeyApp, a)
+
+	a.manager = plugin.NewPluginManager(ctxM)
 
 	var wg sync.WaitGroup
 	wg.Add(5)
@@ -130,7 +131,6 @@ func (a *App) Startup(ctx context.Context) {
 		if err := a.loadPlugins(); err != nil {
 			a.logger.Infof("加载插件失败,err:%s", err)
 		}
-
 	}()
 
 	go func() {
@@ -140,13 +140,13 @@ func (a *App) Startup(ctx context.Context) {
 		a.notification = notify.NewLoggingNotification(a.logger, systemNotification)
 
 	}()
+
 	// 缓存
 	a.logger.Info("缓存器加载中")
 	a.cache = NewCache()
 
 	wg.Wait()
 	a.logger.Info("应用启动完成")
-
 }
 
 // TODO 关闭
@@ -174,7 +174,6 @@ func (a *App) Shutdown(ctx context.Context) {
 
 // 系统托盘
 func (a *App) systemTray() {
-
 	systray.SetIcon(iconData)
 
 	show := systray.AddMenuItem("显示", "Show The Window")
@@ -188,7 +187,6 @@ func (a *App) systemTray() {
 
 	systray.SetOnClick(func(menu systray.IMenu) { runtime.WindowShow(a.ctx) })
 	systray.SetOnRClick(func(menu systray.IMenu) { menu.ShowMenu() })
-
 }
 
 // 加载插件
@@ -217,34 +215,12 @@ func (a *App) loadPlugins() error {
 				continue
 			}
 
-			// 加载插件配置
-
-			_, err = a.registerPlugin(manifest)
-			if err != nil {
+			// 注册插件
+			if err := a.manager.Register(manifest); err != nil {
 				a.logger.Warnf("注册插件失败: %s", err)
 				continue
 			}
 		}
 	}
 	return nil
-}
-
-func (a *App) registerPlugin(m *plugin.Manifest) (plugin.Plugin, error) {
-	// 获取插件配置
-
-	var p plugin.Plugin
-	// 先写个下载器的
-	switch m.Type {
-	case "downloader":
-		pd := plugin.NewDownloader(m)
-		p = pd
-
-	default:
-		return nil, errors.New("未知的插件类型")
-	}
-
-	// 注册配置以及插件
-	a.plugins[m.ID] = p
-
-	return p, nil
 }

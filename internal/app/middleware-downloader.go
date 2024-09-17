@@ -2,44 +2,15 @@ package app
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
-	"regexp"
 
-	"github.com/Yuelioi/vidor/internal/globals"
 	"github.com/Yuelioi/vidor/internal/notify"
 	"github.com/Yuelioi/vidor/internal/plugin"
 	pb "github.com/Yuelioi/vidor/internal/proto"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
-
-// 基于链接获取下载器
-func (a *App) selectDownloadPlugin(url string) (*plugin.DownloadPlugin, error) {
-	for _, p := range a.plugins {
-
-		base := p.GetManifest()
-		if base.Type == "downloader" {
-			downloadPlugin, ok := p.(*plugin.DownloadPlugin)
-			if !ok {
-				return nil, nil
-			}
-
-			for _, match := range downloadPlugin.Manifest.Matches {
-				reg, err := regexp.Compile(match)
-				if err != nil {
-					return nil, errors.New("插件正则表达式编译失败: " + err.Error())
-				}
-				if reg.MatchString(url) {
-					return downloadPlugin, nil
-				}
-			}
-		}
-
-	}
-	return nil, globals.ErrPluginNotFound
-}
 
 // 获取主页选择下载详情列表
 //
@@ -51,7 +22,7 @@ func (a *App) ShowDownloadInfo(link string) *pb.InfoResponse {
 	a.cache.ClearTasks()
 
 	// 获取下载器
-	p, err := a.selectDownloadPlugin(link)
+	p, err := a.manager.Select(link)
 	if err != nil {
 		a.notification.Send(a.ctx, notify.Notice{
 			EventName:  "plugin.show",
