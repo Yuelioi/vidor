@@ -13,7 +13,8 @@ type PluginManager struct {
 
 func NewPluginManager(ctx context.Context) *PluginManager {
 	return &PluginManager{
-		ctx: ctx,
+		ctx:     ctx,
+		plugins: make(map[string]Plugin, 0),
 	}
 }
 
@@ -44,7 +45,6 @@ func (pm *PluginManager) Select(url string) (*DownloadPlugin, error) {
 }
 
 // 检查插件是否存在
-
 func (pm *PluginManager) Check(id string) (Plugin, bool) {
 	p, ok := pm.plugins[id]
 	if !ok {
@@ -64,22 +64,13 @@ func (pm *PluginManager) Manifests() map[string]Manifest {
 	return ms
 }
 
-func (pm *PluginManager) Register(m *Manifest) error {
-	// 注册
-	var p Plugin
-
-	switch m.Type {
-	case "downloader":
-		pd := NewDownloader(m)
-		p = pd
-
-	default:
-		return errors.New("未知的插件类型")
+func (pm *PluginManager) UpdatePluginParams(m *Manifest) error {
+	p, ok := pm.Check(m.ID)
+	if !ok {
+		return errors.New("未找到插件")
 	}
-
-	// 注册配置以及插件
-	pm.plugins[m.ID] = p
-	return nil
+	ctx := InjectMetadata(context.Background(), p.GetManifest().Settings)
+	return p.Update(ctx)
 }
 
 // ------------------------------------ Handlers ------------------------------------
@@ -106,7 +97,9 @@ func (pm *PluginManager) Download(m *Manifest) error {
 	handlerChain := pm.createHandlerChain(
 		&DownloadHandler{},
 		&ExtractHandler{},
-		&RunHandler{},
+		&RegisterPMHandler{pm: pm},
+		&RunnerPMHandler{pm: pm},
+		&SaveHandler{},
 	)
 	return handlerChain.Handle(pm.ctx, m)
 }
@@ -115,14 +108,14 @@ func (pm *PluginManager) Download(m *Manifest) error {
 //
 // 1.禁用当前插件并删除
 // 2.下载并解压
-// 3.注册到主机
-// 4.运行
+// 3.运行
 func (pm *PluginManager) UpdatePlugin(m *Manifest) error {
 	handlerChain := pm.createHandlerChain(
-	// &RegisterHandler{},
-	// &DownloadHandler{},
-	// &ExtractHandler{},
-	// &RegisterHandler{},
+		&StopperPMHandler{pm: pm},
+		&RemoveHandler{},
+		&DownloadHandler{},
+		&RegisterPMHandler{pm: pm},
+		&RunnerPMHandler{pm: pm},
 	)
 
 	return handlerChain.Handle(pm.ctx, m)
@@ -134,10 +127,8 @@ func (pm *PluginManager) UpdatePlugin(m *Manifest) error {
 // 2.注销插件
 func (pm *PluginManager) RemovePlugin(m *Manifest) error {
 	handlerChain := pm.createHandlerChain(
-	// &RegisterHandler{},
-	// &DownloadHandler{},
-	// &ExtractHandler{},
-	// &RegisterHandler{},
+		&StopperPMHandler{pm: pm},
+		&RemoveHandler{},
 	)
 	return handlerChain.Handle(pm.ctx, m)
 }
@@ -148,10 +139,15 @@ func (pm *PluginManager) RemovePlugin(m *Manifest) error {
 // 2.注销插件
 func (pm *PluginManager) RunPlugin(m *Manifest) error {
 	handlerChain := pm.createHandlerChain(
-	// &RegisterHandler{},
-	// &DownloadHandler{},
-	// &ExtractHandler{},
-	// &RegisterHandler{},
+		&RunnerPMHandler{pm: pm},
+	)
+	return handlerChain.Handle(pm.ctx, m)
+}
+
+// 注册插件
+func (pm *PluginManager) Register(m *Manifest) error {
+	handlerChain := pm.createHandlerChain(
+		&RegisterPMHandler{pm: pm},
 	)
 	return handlerChain.Handle(pm.ctx, m)
 }

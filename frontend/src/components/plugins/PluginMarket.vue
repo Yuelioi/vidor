@@ -165,28 +165,30 @@ function calculatePluginState(plugin: Plugin) {
 }
 
 async function refreshPlugins() {
-  const resp = await fetch('https://cdn.yuelili.com/market/vidor/plugins.json', {
-    // cache: 'no-cache'
+  const resp = await fetch('http://cdn.yuelili.com/market/vidor/plugins.json', {
+    method: 'GET',
+    redirect: 'follow'
   })
+
   const data = await resp.json()
   Object.assign(marketPlugins, data)
+  console.log(123)
   console.log(data)
   console.log(marketPlugins)
 }
 
 onMounted(async () => {
   // TODO 增加缓存
-  await refreshPlugins()
 })
 
 // 下载插件
 async function download(plugin: Plugin) {
   console.log(plugin)
   plugin.lock = true
-  const p = await DownloadPlugin(plugin)
+  const p = await DownloadPlugin(plugin.id)
 
   if (p) {
-    plugins.value[plugin.id] = p
+    plugins.value[plugin.id] = plugin
   }
 
   plugin.lock = false
@@ -196,7 +198,10 @@ async function download(plugin: Plugin) {
 function searchPlugin() {}
 
 onMounted(async () => {
-  // 加载插件
+  // 加载插件市场
+  await refreshPlugins()
+
+  // 加载本地插件
   const fetchedPlugins = await GetPlugins()
   if (fetchedPlugins) {
     console.log(plugins.value)

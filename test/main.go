@@ -1,22 +1,23 @@
 package main
 
 import (
-	"strings"
+	"context"
+	"fmt"
 )
 
+type keyType struct{}
+
+var KeyApp = keyType{}
+
 func main() {
-	downUrl := "124"
+	ctx := context.Background() // 或者使用其他已存在的 Context
+	appValue := "YourAppValue"  // 你的应用程序相关的值
+	ctxWithValue := context.WithValue(ctx, KeyApp, appValue)
 
-	// 删除?之后的内容
-	if i := strings.LastIndex(downUrl, "?"); i >= 0 {
-		downUrl = downUrl[:i]
+	// 假设 ctxWithValue 已经被正确地传递到了这里
+	if value, ok := ctxWithValue.Value(KeyApp).(string); ok {
+		fmt.Println("App Value:", value)
+	} else {
+		fmt.Println("No App Value found in the context")
 	}
-
-	// 删除最后一个/
-	downUrl = strings.TrimSuffix(downUrl, "/")
-
-	splitUrl := strings.Split(downUrl, "/")
-	name := splitUrl[len(splitUrl)-1]
-	print(name)
-
 }

@@ -135,25 +135,38 @@ async function savePlugin(plugin: Plugin) {
 }
 
 async function runPlugin(plugin: Plugin) {
-  await updatePluginStatus(plugin, RunPlugin)
+  try {
+    const fetchedPlugin = await RunPlugin(plugin.id)
+    if (fetchedPlugin) {
+      Object.assign(plugin, fetchedPlugin)
+    }
+  } finally {
+    plugin.lock = false
+  }
 }
 async function stopPlugin(plugin: Plugin): Promise<void> {
-  await updatePluginStatus(plugin, StopPlugin)
+  try {
+    const fetchedPlugin = await StopPlugin(plugin.id)
+    if (fetchedPlugin) {
+      Object.assign(plugin, fetchedPlugin)
+    }
+  } finally {
+    plugin.lock = false
+  }
 }
 async function enablePlugin(plugin: Plugin): Promise<void> {
-  await updatePluginStatus(plugin, EnablePlugin)
+  try {
+    const fetchedPlugin = await EnablePlugin(plugin.id)
+    if (fetchedPlugin) {
+      Object.assign(plugin, fetchedPlugin)
+    }
+  } finally {
+    plugin.lock = false
+  }
 }
 async function disenablePlugin(plugin: Plugin): Promise<void> {
-  await updatePluginStatus(plugin, DisablePlugin)
-}
-
-async function updatePluginStatus<T>(
-  plugin: Plugin,
-  action: (plugin: Plugin) => Promise<T>
-): Promise<void> {
-  plugin.lock = true
   try {
-    const fetchedPlugin = await action(plugin)
+    const fetchedPlugin = await DisablePlugin(plugin.id)
     if (fetchedPlugin) {
       Object.assign(plugin, fetchedPlugin)
     }

@@ -30,7 +30,7 @@ func (a *App) DownloadPlugin(id string) bool {
 	return true
 }
 
-// 更新插件
+// 更新插件本体
 //
 // 1.禁用当前插件并删除
 // 2.下载并解压
@@ -93,7 +93,6 @@ func (a *App) RunPlugin(id string) bool {
 	return true
 }
 
-// !!!更新插件参数
 func (a *App) UpdatePluginPrams(id string, settings map[string]string) bool {
 	p, ok := a.manager.Check(id)
 	if !ok {
@@ -101,12 +100,16 @@ func (a *App) UpdatePluginPrams(id string, settings map[string]string) bool {
 	}
 
 	p.GetManifest().Settings = settings
-	err := p.Update(context.Background())
-	if err != nil {
-		a.logger.Infof("插件开启失败:%s", err)
+
+	if err := a.manager.UpdatePluginParams(p.GetManifest()); err != nil {
+		a.notification.Send(a.ctx, notify.Notice{
+			EventName:  "system.notice",
+			Content:    "下载插件失败" + err.Error(),
+			NoticeType: "info",
+			Provider:   "system",
+		})
 		return false
 	}
-
 	return true
 }
 
@@ -149,7 +152,9 @@ func (a *App) EnablePlugin(id string) bool {
 	manifest := p.GetManifest()
 	manifest.Enable = true
 
-	return true
+	// 更新插件设置
+	ok = a.SavePluginConfig(id, manifest)
+	return ok
 }
 
 // 关闭插件,并禁用插件

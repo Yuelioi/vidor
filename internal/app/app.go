@@ -96,9 +96,7 @@ func NewApp() (*App, error) {
 func (a *App) Startup(ctx context.Context) {
 	a.ctx = ctx
 
-	ctxM := context.WithValue(ctx, plugin.KeyApp, a)
-
-	a.manager = plugin.NewPluginManager(ctxM)
+	a.manager = plugin.NewPluginManager(ctx)
 
 	var wg sync.WaitGroup
 	wg.Add(5)

@@ -19,7 +19,7 @@ type key int
 
 // 上下文键
 const (
-	KeyApp key = iota
+	KeyAppPath key = iota
 	keyZipPath
 )
 
@@ -108,8 +108,13 @@ func (d *DownloadHandler) Handle(ctx context.Context, m *Manifest) error {
 	name := tools.ExtractFileNameFromUrl(downUrl)
 	name = tools.SanitizeFileName(name)
 
-	zipPath := filepath.Join(a.appDirs.Temps, name)
-	targetDir := filepath.Join(a.appDirs.Plugins, targetManifest.ID)
+	appDir, ok := ctx.Value(KeyAppPath).(string)
+	if !ok {
+		return errors.New("未找到上下文值")
+	}
+
+	zipPath := filepath.Join(appDir, "temps", name)
+	targetDir := filepath.Join(appDir, "plugin", targetManifest.ID)
 	err = os.MkdirAll(targetDir, os.ModePerm)
 	if err != nil {
 		return err
@@ -143,15 +148,19 @@ type ExtractHandler struct {
 }
 
 func (e *ExtractHandler) Handle(ctx context.Context, m *Manifest) error {
-	zipPathFromCtx := ctx.Value(keyZipPath)
-	zipPath, ok := zipPathFromCtx.(string)
+	zipPath, ok := ctx.Value(keyZipPath).(string)
 	if !ok {
 		fmt.Println("zipPath from context:", zipPath)
 	} else {
 		return errors.New("未找到解压路径")
 	}
 
-	targetDir := filepath.Join(a.appDirs.Plugins, m.ID)
+	appDir, ok := ctx.Value(KeyAppPath).(string)
+	if !ok {
+		return errors.New("未找到上下文值")
+	}
+
+	targetDir := filepath.Join(appDir, "plugins", m.ID)
 
 	x := &xtractr.XFile{
 		FilePath:  zipPath,
@@ -182,20 +191,6 @@ func (r *RemoveHandler) Handle(ctx context.Context, m *Manifest) error {
 	return r.BaseHandler.next.Handle(ctx, m)
 }
 
-// 注销
-type DeRegisterHandler struct {
-	BaseHandler
-}
-
-func (r *DeRegisterHandler) Handle(ctx context.Context, m *Manifest) error {
-	for id := range a.plugins {
-		if id == m.ID {
-			delete(a.plugins, id)
-		}
-	}
-	return r.BaseHandler.next.Handle(ctx, m)
-}
-
 // 保存配置
 type SaveHandler struct {
 	BaseHandler
@@ -208,36 +203,70 @@ func (r *SaveHandler) Handle(ctx context.Context, m *Manifest) error {
 	return r.BaseHandler.next.Handle(ctx, m)
 }
 
-type RunHandler struct {
+// -------------------------------------------------------------------------------
+
+// 注册
+type RegisterPMHandler struct {
 	BaseHandler
+	pm *PluginManager
 }
 
-func (r *RunHandler) Handle(ctx context.Context, m *Manifest) error {
+func (r *RegisterPMHandler) Handle(ctx context.Context, m *Manifest) error {
+	var p Plugin
 
-	// 是否已经启动
-	if m.Enable {
-		if err := p.Run(context.Background()); err != nil {
-			return err
+	switch m.Type {
+	case "downloader":
+		pd := NewDownloader(m)
+		p = pd
+
+	default:
+		return errors.New("未知的插件类型")
+	}
+
+	r.pm.plugins[m.ID] = p
+	return nil
+}
+
+// 注销
+type DeRegisterPMHandler struct {
+	BaseHandler
+	pm *PluginManager
+}
+
+func (r *DeRegisterPMHandler) Handle(ctx context.Context, m *Manifest) error {
+	for key := range r.pm.plugins {
+		if key == m.ID {
+			delete(r.pm.plugins, key)
+			return nil
 		}
 	}
-	return r.BaseHandler.next.Handle(ctx, m)
+	return errors.New("未找到插件")
 }
 
-type StopHandler struct {
+type RunnerPMHandler struct {
 	BaseHandler
+	pm *PluginManager
 }
 
-func (r *StopHandler) Handle(ctx context.Context, m *Manifest) error {
-	p, ok := a.plugins[m.ID]
-	if !ok {
-		return errors.New("未找到")
-	}
-
-	// 是否已经启动
-	if m.Enable {
-		if err := p.Shutdown(context.Background()); err != nil {
-			return err
+func (r *RunnerPMHandler) Handle(ctx context.Context, m *Manifest) error {
+	for key, plugin := range r.pm.plugins {
+		if key == m.ID {
+			return plugin.Run(ctx)
 		}
 	}
-	return r.BaseHandler.next.Handle(ctx, m)
+	return errors.New("未找到插件")
+}
+
+type StopperPMHandler struct {
+	BaseHandler
+	pm *PluginManager
+}
+
+func (r *StopperPMHandler) Handle(ctx context.Context, m *Manifest) error {
+	for key, plugin := range r.pm.plugins {
+		if key == m.ID {
+			return plugin.Shutdown(ctx)
+		}
+	}
+	return errors.New("未找到插件")
 }
