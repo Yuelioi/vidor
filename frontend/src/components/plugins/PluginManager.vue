@@ -125,10 +125,9 @@ EventsOn('updateInfo', (plugin: Plugin) => {
 })
 
 async function savePlugin(plugin: Plugin) {
+  console.log(plugin)
+
   const fetchedPlugin = await SavePluginConfig(plugin.id, plugin)
-
-  console.log(fetchedPlugin)
-
   if (fetchedPlugin) {
     Object.assign(plugin, fetchedPlugin)
   }
@@ -157,8 +156,10 @@ async function stopPlugin(plugin: Plugin): Promise<void> {
 async function enablePlugin(plugin: Plugin): Promise<void> {
   try {
     const fetchedPlugin = await EnablePlugin(plugin.id)
+    console.log(fetchedPlugin)
+
     if (fetchedPlugin) {
-      Object.assign(plugin, fetchedPlugin)
+      plugin.enable = true
     }
   } finally {
     plugin.lock = false

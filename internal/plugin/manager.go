@@ -64,6 +64,10 @@ func (pm *PluginManager) Manifests() map[string]Manifest {
 	return ms
 }
 
+func (pm *PluginManager) NetManifests() ([]*Manifest, error) {
+	return fetchPlugins()
+}
+
 func (pm *PluginManager) UpdatePluginParams(m *Manifest) error {
 	p, ok := pm.Check(m.ID)
 	if !ok {

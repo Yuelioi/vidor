@@ -161,6 +161,7 @@
     "GetTasks": true,
     "Notice": true,
     "RemovePlugin": true,
-    "UpdatePluginPrams": true
+    "UpdatePluginPrams": true,
+    "GetMarketPlugins": true
   }
 }

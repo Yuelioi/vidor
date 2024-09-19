@@ -12,6 +12,16 @@ func (a *App) GetPlugins() map[string]plugin.Manifest {
 	return a.manager.Manifests()
 }
 
+// 返回主机注册的插件
+func (a *App) GetMarketPlugins() []*plugin.Manifest {
+
+	ms, err := a.manager.NetManifests()
+	if err != nil {
+		return nil
+	}
+	return ms
+}
+
 // 下载插件
 func (a *App) DownloadPlugin(id string) bool {
 	m := &plugin.Manifest{

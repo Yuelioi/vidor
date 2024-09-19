@@ -99,6 +99,8 @@
 <script setup lang="ts">
 import { Plugin } from '@/models/go'
 
+import { GetMarketPlugins } from '@wailsjs/go/app/App'
+
 import { BrowserOpenURL } from '@wailsjs/runtime/runtime'
 
 import { GetPlugins } from '@wailsjs/go/app/App'
@@ -165,16 +167,10 @@ function calculatePluginState(plugin: Plugin) {
 }
 
 async function refreshPlugins() {
-  const resp = await fetch('http://cdn.yuelili.com/market/vidor/plugins.json', {
-    method: 'GET',
-    redirect: 'follow'
-  })
-
-  const data = await resp.json()
-  Object.assign(marketPlugins, data)
-  console.log(123)
-  console.log(data)
-  console.log(marketPlugins)
+  const fetchedPlugins = await GetMarketPlugins()
+  if (fetchedPlugins) {
+    Object.assign(marketPlugins, fetchedPlugins)
+  }
 }
 
 onMounted(async () => {
@@ -195,8 +191,6 @@ async function download(plugin: Plugin) {
   console.log(plugin)
 }
 
-function searchPlugin() {}
-
 onMounted(async () => {
   // 加载插件市场
   await refreshPlugins()
@@ -204,10 +198,7 @@ onMounted(async () => {
   // 加载本地插件
   const fetchedPlugins = await GetPlugins()
   if (fetchedPlugins) {
-    console.log(plugins.value)
     Object.assign(plugins.value, fetchedPlugins)
-    console.log('加载插件')
-    console.log(plugins.value)
   }
 })
 </script>
