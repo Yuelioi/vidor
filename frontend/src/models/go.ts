@@ -7,10 +7,15 @@ export class Plugin extends plugin.Manifest {
 }
 
 export class Playlist {
+  workDir?: string
   title?: string
   cover?: string
   author?: string
   tasks?: Task[] = []
+
+  constructor(workDir: string) {
+    this.workDir = workDir
+  }
 }
 
 export class Notice {

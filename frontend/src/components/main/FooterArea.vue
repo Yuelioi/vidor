@@ -13,7 +13,7 @@ EventsOn('updateInfo', (optionalData?: Task) => {
   }
 })
 
-EventsOn('notice', (messageData: Notice) => {
+EventsOn('system.notice', (messageData: Notice) => {
   Message({ message: messageData.content, type: messageData.noticeType })
 })
 

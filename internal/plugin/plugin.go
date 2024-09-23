@@ -2,15 +2,19 @@ package plugin
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net"
+	"os"
 	"os/exec"
+	"path/filepath"
 	"strconv"
 	"syscall"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/health/grpc_health_v1"
 )
 
 const (
@@ -25,9 +29,10 @@ type Plugin interface {
 	Run(ctx context.Context) error
 
 	Init(ctx context.Context) error
-	Check(ctx context.Context) error
 	Update(ctx context.Context) error
 	Shutdown(ctx context.Context) error
+
+	// TODO
 	Talk(ctx context.Context) error
 }
 
@@ -68,9 +73,15 @@ func NewManifest(baseDir string) *Manifest {
 	}
 }
 
-func (*Manifest) Save() error {
-	// TODO
-	return nil
+func (m *Manifest) Save() error {
+
+	configPath := filepath.Join(m.BaseDir, "manifest.json")
+	data, err := json.Marshal(m)
+	if err != nil {
+		return err
+	}
+	return os.WriteFile(configPath, data, os.ModePerm)
+
 }
 
 func getLocalAddr(pluginPath string) (string, error) {
@@ -98,6 +109,20 @@ func connect(addr string) (*grpc.ClientConn, error) {
 	conn, err := grpc.NewClient(addr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		return nil, errors.New("连接失败: " + err.Error())
+	}
+
+	healthClient := grpc_health_v1.NewHealthClient(conn)
+	res, err := healthClient.Check(context.Background(), &grpc_health_v1.HealthCheckRequest{
+		Service: "health_check", // 这里的 Service 名称要与服务端一致
+	})
+
+	if err != nil {
+		return nil, errors.New("连接失败: " + err.Error())
+	}
+
+	// 根据返回结果判断健康状态
+	if res.Status != grpc_health_v1.HealthCheckResponse_SERVING {
+		return nil, errors.New("服务不可用")
 	}
 	return conn, nil
 }

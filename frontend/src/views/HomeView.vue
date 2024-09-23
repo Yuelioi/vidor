@@ -232,6 +232,7 @@ const mediaTypes = ['video', 'audio']
 
 import { Playlist, Task } from '@/models/go'
 import { ShowDownloadInfo, AddDownloadTasks, ParsePlaylist } from '@wailsjs/go/app/App'
+import { MagicName } from '@/utils/util'
 // import { MagicName } from '@/utils/util'
 
 const { configs } = storeToRefs(useBasicStore())
@@ -240,7 +241,7 @@ const link = ref('https://www.bilibili.com/video/BV1k14y117di/')
 
 const showPlaylistInfo = ref(false)
 const showMagicName = ref(false)
-const videoInfo = reactive<Playlist>(new Playlist())
+const videoInfo = reactive<Playlist>(new Playlist(configs.value.download_dir))
 
 const hasVideo = computed(() => {
   return videoInfo.tasks[0].segments.some((segment) => segment.mime_type === 'video')
@@ -355,14 +356,14 @@ function addTasks() {
 }
 
 function applyMagicName() {
-  // videoInfo.tasks.forEach((element, index) => {
-  //   // element.magicNamee = MagicName(
-  //   //   configs.value.magic_name,
-  //   //   videoInfo.WorkDirName,
-  //   //   element.Name,
-  //   //   index + 1
-  //   // )
-  // })
+  videoInfo.tasks.forEach((element, index) => {
+    element.magicName = MagicName(
+      configs.value.magic_name,
+      videoInfo.workDir,
+      element.title,
+      index + 1
+    )
+  })
 }
 
 watch(configs.value, async () => {

@@ -125,19 +125,17 @@ EventsOn('updateInfo', (plugin: Plugin) => {
 })
 
 async function savePlugin(plugin: Plugin) {
-  console.log(plugin)
-
-  const fetchedPlugin = await SavePluginConfig(plugin.id, plugin)
-  if (fetchedPlugin) {
-    Object.assign(plugin, fetchedPlugin)
+  const ok = await UpdatePluginPrams(plugin.id, plugin.settings)
+  if (ok) {
+    Message({ message: '保存配置成功', type: 'success' })
   }
 }
 
 async function runPlugin(plugin: Plugin) {
   try {
-    const fetchedPlugin = await RunPlugin(plugin.id)
-    if (fetchedPlugin) {
-      Object.assign(plugin, fetchedPlugin)
+    const ok = await RunPlugin(plugin.id)
+    if (ok) {
+      plugin.state = 1
     }
   } finally {
     plugin.lock = false
@@ -145,9 +143,9 @@ async function runPlugin(plugin: Plugin) {
 }
 async function stopPlugin(plugin: Plugin): Promise<void> {
   try {
-    const fetchedPlugin = await StopPlugin(plugin.id)
-    if (fetchedPlugin) {
-      Object.assign(plugin, fetchedPlugin)
+    const ok = await StopPlugin(plugin.id)
+    if (ok) {
+      plugin.state = 2
     }
   } finally {
     plugin.lock = false
@@ -155,10 +153,8 @@ async function stopPlugin(plugin: Plugin): Promise<void> {
 }
 async function enablePlugin(plugin: Plugin): Promise<void> {
   try {
-    const fetchedPlugin = await EnablePlugin(plugin.id)
-    console.log(fetchedPlugin)
-
-    if (fetchedPlugin) {
+    const ok = await EnablePlugin(plugin.id)
+    if (ok) {
       plugin.enable = true
     }
   } finally {
@@ -167,9 +163,9 @@ async function enablePlugin(plugin: Plugin): Promise<void> {
 }
 async function disenablePlugin(plugin: Plugin): Promise<void> {
   try {
-    const fetchedPlugin = await DisablePlugin(plugin.id)
-    if (fetchedPlugin) {
-      Object.assign(plugin, fetchedPlugin)
+    const ok = await DisablePlugin(plugin.id)
+    if (ok) {
+      plugin.enable = false
     }
   } finally {
     plugin.lock = false

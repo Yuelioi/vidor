@@ -42,6 +42,7 @@ const currentFormat = (formats: Format[]) => {
 }
 
 function selectFormat(formats: Format[], index: number) {
+  // 正常选择单个label
   for (let i = 0; i < formats.length; i++) {
     if (i == index) {
       formats[i].selected = true

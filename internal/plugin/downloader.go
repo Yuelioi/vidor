@@ -34,59 +34,50 @@ func (p *DownloadPlugin) Run(ctx context.Context) error {
 	// 获取命令
 	pluginPath := filepath.Join(p.Manifest.BaseDir, p.Manifest.Executable)
 
-	if p.Manifest.Addr == "" {
-		// 自动生成本地地址
-		pluginPath := filepath.Join(p.Manifest.BaseDir, p.Manifest.ID, p.Manifest.Executable)
-		addr, err := getLocalAddr(pluginPath)
-		if err != nil {
-			return err
+	// 本地启动 localhost[:port]
+	if strings.HasPrefix(p.Manifest.Addr, "localhost") {
+		addrs := strings.Split(p.Manifest.Addr, ":")
+
+		var port string
+
+		// 使用端口启动(可用于调试)
+		if len(addrs) == 1 {
+			// 自动生成本地地址
+			pluginPath := filepath.Join(p.Manifest.BaseDir, p.Manifest.Executable)
+			addr, err := getLocalAddr(pluginPath)
+			if err != nil {
+				return err
+			}
+			port = addr
+		} else {
+			// 使用设置的
+			port = addrs[1]
 		}
-		p.Manifest.Addr = addr
+
+		cmd := exec.Command(pluginPath, "--port", port)
+		cmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
+
+		// 启动进程
+		err := cmd.Start()
+		if err != nil {
+			return errors.New("启动进程失败: " + err.Error())
+		}
+		p.Manifest.Addr = "localhost:" + port
+
 	}
 
 	// 调试模式 debug:port
 	if strings.HasPrefix(p.Manifest.Addr, "debug") {
 		addrs := strings.Split(p.Manifest.Addr, ":")
 		if len(addrs) == 2 {
-			cmd := exec.Command(pluginPath, "--port", addrs[1])
-			cmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
-
 			// 启动进程
-			err := cmd.Start()
-			if err != nil {
-				return errors.New("启动进程失败: " + err.Error())
-			}
+			p.Manifest.Addr = "localhost:9001"
 		}
-
 	}
-
-	// 本地启动 localhost[:port]
-	if strings.HasPrefix(p.Manifest.Addr, "localhost") {
-		addrs := strings.Split(p.Manifest.Addr, ":")
-
-		// 使用端口启动(可用于调试)
-		if len(addrs) == 2 {
-			cmd := exec.Command(pluginPath, "--port", addrs[1])
-			cmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
-
-			// 启动进程
-			err := cmd.Start()
-			if err != nil {
-				return errors.New("启动进程失败: " + err.Error())
-			}
-		} else {
-
-		}
-
-	}
-	// 远程
+	// TODO 远程
 	if strings.HasPrefix(p.Manifest.Addr, "remote") {
 		// ...
 	}
-
-	// 获取 exe 运行的 PID
-	p.Manifest.Enable = true
-	p.Manifest.State = Working
 
 	conn, err := connect(p.Manifest.Addr)
 	if err != nil {
@@ -94,12 +85,9 @@ func (p *DownloadPlugin) Run(ctx context.Context) error {
 	}
 	p.Service = pb.NewDownloadServiceClient(conn)
 	conn.Connect()
-	return nil
-}
+	fmt.Printf("p.Manifest: %v\n", p.Manifest.Addr)
 
-func (p *DownloadPlugin) Check(ctx context.Context) error {
-	_, err := p.Service.Check(context.Background(), nil)
-	return err
+	return nil
 }
 
 func (p *DownloadPlugin) Shutdown(ctx context.Context) error {
