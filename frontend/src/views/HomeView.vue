@@ -167,7 +167,7 @@
                   </div>
                 </td>
                 <template v-for="type in mediaTypes" :key="type">
-                  <media-cell :task="task" :type="type" />
+                  <media-cell :task="task" :type="type" :tasks="videoInfo.tasks" />
                 </template>
               </tr>
             </tbody>
@@ -284,7 +284,6 @@ async function extractPlaylistInfo() {
   if (result.title !== '') {
     showPlaylistInfo.value = true
     Object.assign(videoInfo, result)
-    console.log(videoInfo)
     selectBest(videoInfo)
   }
 }

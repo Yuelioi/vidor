@@ -10,7 +10,7 @@
         <button
           :class="format.selected ? '' : ''"
           class="py-1 btn btn-xs"
-          @click="selectFormat(formats, index)">
+          @click="selectFormat(formats, index, $event)">
           {{ format.label }}
         </button>
       </template>
@@ -22,14 +22,13 @@
 import { Segment, Task, Format } from '@/models/go'
 
 const props = defineProps<{
+  tasks: Task[]
   task: Task
   type: string
 }>()
 
 function filterSegments(segments: Segment[], mimeType: string) {
   const result = segments.find((segment) => segment.mime_type === mimeType) || new Segment()
-  console.log(result)
-
   return result
 }
 
@@ -41,13 +40,31 @@ const currentFormat = (formats: Format[]) => {
   return selectedFormat ? selectedFormat.label : '选择'
 }
 
-function selectFormat(formats: Format[], index: number) {
-  // 正常选择单个label
-  for (let i = 0; i < formats.length; i++) {
-    if (i == index) {
-      formats[i].selected = true
-    } else {
-      formats[i].selected = false
+function selectFormat(formats: Format[], index: number, event: MouseEvent) {
+  if (event.shiftKey) {
+    // 批量选择
+    const currentFormat = formats[index]
+    props.tasks.forEach((task: Task) => {
+      task.segments.forEach((seg: Segment) => {
+        if (seg.mime_type === props.type) {
+          seg.formats.forEach((format: Format) => {
+            if (format.label === currentFormat.label) {
+              format.selected = true
+            } else {
+              format.selected = false
+            }
+          })
+        }
+      })
+    })
+  } else {
+    // 正常选择单个label
+    for (let i = 0; i < formats.length; i++) {
+      if (i == index) {
+        formats[i].selected = true
+      } else {
+        formats[i].selected = false
+      }
     }
   }
 }

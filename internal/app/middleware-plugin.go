@@ -92,7 +92,9 @@ func (a *App) RunPlugin(id string) bool {
 		return false
 	}
 
-	if err := a.manager.RunPlugin(p.GetManifest()); err != nil {
+	ctx := a.injectMetadata()
+
+	if err := a.manager.RunPlugin(p.GetManifest(), ctx); err != nil {
 		a.notification.Send(a.ctx, notify.Notice{
 			EventName:  "system.notice",
 			Content:    "运行插件失败: " + err.Error(),
@@ -101,7 +103,18 @@ func (a *App) RunPlugin(id string) bool {
 		})
 		return false
 	}
+
 	p.GetManifest().State = plugin.Working
+
+	if err := a.manager.UpdatePluginParams(p.GetManifest()); err != nil {
+		a.notification.Send(a.ctx, notify.Notice{
+			EventName:  "system.notice",
+			Content:    "运行插件, 更新插件参数失败: " + err.Error(),
+			NoticeType: "info",
+			Provider:   "system",
+		})
+		return false
+	}
 
 	return true
 }

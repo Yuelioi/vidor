@@ -77,6 +77,15 @@ func (pm *PluginManager) UpdatePluginParams(m *Manifest) error {
 	return p.Update(ctx)
 }
 
+func (pm *PluginManager) UpdateSystemParams(ctx context.Context) error {
+	for _, p := range pm.plugins {
+		if p.GetManifest().State == Working {
+			p.Update(ctx)
+		}
+	}
+	return nil
+}
+
 // ------------------------------------ Handlers ------------------------------------
 
 func (pm *PluginManager) createHandlerChain(handlers ...PluginHandler) PluginHandler {
@@ -103,6 +112,7 @@ func (pm *PluginManager) Download(m *Manifest) error {
 		&ExtractHandler{},
 		&RegisterPMHandler{pm: pm},
 		&RunnerPMHandler{pm: pm},
+		&UpdatePluginParamsPMHandler{pm: pm},
 		&SaveHandler{},
 	)
 	return handlerChain.Handle(pm.ctx, m)
@@ -120,6 +130,8 @@ func (pm *PluginManager) UpdatePlugin(m *Manifest) error {
 		&DownloadHandler{},
 		&RegisterPMHandler{pm: pm},
 		&RunnerPMHandler{pm: pm},
+		&UpdatePluginParamsPMHandler{pm: pm},
+		&SaveHandler{},
 	)
 
 	return handlerChain.Handle(pm.ctx, m)
@@ -141,11 +153,17 @@ func (pm *PluginManager) RemovePlugin(m *Manifest) error {
 //
 // 1.禁用当前插件并删除
 // 2.注销插件
-func (pm *PluginManager) RunPlugin(m *Manifest) error {
+func (pm *PluginManager) RunPlugin(m *Manifest, ctx context.Context) error {
 	handlerChain := pm.createHandlerChain(
 		&RunnerPMHandler{pm: pm},
+		&UpdatePluginParamsPMHandler{pm: pm},
 	)
-	return handlerChain.Handle(pm.ctx, m)
+	err := handlerChain.Handle(ctx, m)
+	if err != nil {
+		return err
+	}
+
+	return pm.UpdateSystemParams(ctx)
 }
 
 // 注册插件

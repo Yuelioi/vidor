@@ -270,3 +270,19 @@ func (r *StopperPMHandler) Handle(ctx context.Context, m *Manifest) error {
 	}
 	return errors.New("未找到插件")
 }
+
+type UpdatePluginParamsPMHandler struct {
+	BaseHandler
+	pm *PluginManager
+}
+
+func (r *UpdatePluginParamsPMHandler) Handle(ctx context.Context, m *Manifest) error {
+	for key, plugin := range r.pm.plugins {
+		if key == m.ID {
+			fmt.Printf("m.Settings: %v\n", m.Settings)
+			ctx = InjectMetadata(ctx, m.Settings)
+			return plugin.Update(ctx)
+		}
+	}
+	return errors.New("未找到插件")
+}

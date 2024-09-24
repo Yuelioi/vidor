@@ -1,7 +1,11 @@
 package app
 
 import (
+	"context"
+	"path/filepath"
+
 	"github.com/Yuelioi/vidor/internal/config"
+	"google.golang.org/grpc/metadata"
 )
 
 // 获取主机配置
@@ -23,9 +27,27 @@ func (a *App) SaveConfig(config *config.Config) bool {
 	err := a.config.Save()
 	if err != nil {
 		a.logger.Warnf("保存设置失败: %s", err)
+		return false
 	} else {
 		a.logger.Info("保存设置成功")
 	}
 
+	a.manager.UpdateSystemParams(a.injectMetadata())
+
 	return err == nil
+}
+
+// 注入系统metadata
+func (a *App) injectMetadata() context.Context {
+	configs := map[string]string{
+		"system.ffmpeg": filepath.Join(a.appDirs.Libs, "ffmpeg.exe"),
+	}
+
+	ctx := context.Background()
+
+	for key, value := range configs {
+		ctx = metadata.AppendToOutgoingContext(ctx, key, value)
+	}
+
+	return a.config.InjectMetadata(ctx)
 }

@@ -214,10 +214,25 @@ func (a *App) loadPlugins() error {
 			}
 
 			// 注册插件
+			manifest.State = plugin.NotWork
 			if err := a.manager.Register(manifest); err != nil {
 				a.logger.Warnf("注册插件失败: %s", err)
 				continue
 			}
+
+			if manifest.Enable {
+
+				ctx := a.injectMetadata()
+
+				if err := a.manager.RunPlugin(manifest, ctx); err != nil {
+					a.logger.Warnf("启动插件失败: %s", err)
+					continue
+				} else {
+					manifest.State = plugin.Working
+					a.logger.Infof("插件启动成功: %s", manifest.Name)
+				}
+			}
+
 		}
 	}
 	return nil

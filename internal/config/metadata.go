@@ -32,7 +32,7 @@ func (c *Config) InjectMetadata(ctx context.Context) context.Context {
 			valueStr = fmt.Sprintf("%v", val)
 		}
 
-		ctx = metadata.AppendToOutgoingContext(ctx, "app."+strings.ToLower(fieldName), valueStr)
+		ctx = metadata.AppendToOutgoingContext(ctx, "system."+strings.ToLower(fieldName), valueStr)
 	}
 
 	return ctx
