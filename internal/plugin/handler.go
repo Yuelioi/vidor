@@ -249,12 +249,27 @@ type RunnerPMHandler struct {
 }
 
 func (r *RunnerPMHandler) Handle(ctx context.Context, m *Manifest) error {
-	for key, plugin := range r.pm.plugins {
+	for key, p := range r.pm.plugins {
 		if key == m.ID {
-			err := plugin.Run(ctx)
+			err := p.Run(ctx)
 			if err == nil {
 				m.State = Working
 			}
+		}
+	}
+	return errors.New("未找到插件")
+}
+
+type InitPMHandler struct {
+	BaseHandler
+	pm *PluginManager
+}
+
+func (r *InitPMHandler) Handle(ctx context.Context, m *Manifest) error {
+	fmt.Printf("初始化\n")
+	for key, p := range r.pm.plugins {
+		if key == m.ID {
+			return p.Init(ctx)
 		}
 	}
 	return errors.New("未找到插件")
@@ -266,9 +281,9 @@ type StopperPMHandler struct {
 }
 
 func (r *StopperPMHandler) Handle(ctx context.Context, m *Manifest) error {
-	for key, plugin := range r.pm.plugins {
+	for key, p := range r.pm.plugins {
 		if key == m.ID {
-			err := plugin.Shutdown(ctx)
+			err := p.Shutdown(ctx)
 			if err == nil {
 				m.State = NotWork
 			}

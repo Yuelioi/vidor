@@ -97,6 +97,7 @@ func (pm *PluginManager) Download(m *Manifest, ctx context.Context) error {
 		&ExtractHandler{},
 		&RegisterPMHandler{pm: pm},
 		&RunnerPMHandler{pm: pm},
+		&InitPMHandler{pm: pm},
 		&UpdatePluginParamsPMHandler{pm: pm},
 		&UpdateSystemParamsPMHandler{pm: pm},
 		&SaveHandler{},
@@ -120,6 +121,7 @@ func (pm *PluginManager) UpdatePlugin(m *Manifest, ctx context.Context) error {
 		&DownloadHandler{},
 		&RegisterPMHandler{pm: pm},
 		&RunnerPMHandler{pm: pm},
+		&InitPMHandler{pm: pm},
 		&UpdatePluginParamsPMHandler{pm: pm},
 		&UpdateSystemParamsPMHandler{pm: pm},
 		&SaveHandler{},
@@ -150,6 +152,7 @@ func (pm *PluginManager) RemovePlugin(m *Manifest) error {
 func (pm *PluginManager) RunPlugin(m *Manifest, ctx context.Context) error {
 	handlerChain := pm.createHandlerChain(
 		&RunnerPMHandler{pm: pm},
+		&InitPMHandler{pm: pm},
 		&UpdatePluginParamsPMHandler{pm: pm},
 		&UpdateSystemParamsPMHandler{pm: pm},
 	)

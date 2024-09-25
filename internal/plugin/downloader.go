@@ -71,7 +71,7 @@ func (p *DownloadPlugin) Run(ctx context.Context) error {
 		addrs := strings.Split(p.Manifest.Addr, ":")
 		if len(addrs) == 2 {
 			// 启动进程
-			p.Manifest.Addr = "localhost:9001"
+			p.Manifest.Addr = "localhost:" + addrs[1]
 		}
 	}
 	// TODO 远程
