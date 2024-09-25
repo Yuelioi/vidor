@@ -221,18 +221,13 @@ func (a *App) loadPlugins() error {
 			}
 
 			if manifest.Enable {
-
 				ctx := a.injectMetadata()
-
 				if err := a.manager.RunPlugin(manifest, ctx); err != nil {
-					a.logger.Warnf("启动插件失败: %s", err)
-					continue
+					a.logger.Warnf("插件启动失败: %s", err)
 				} else {
-					manifest.State = plugin.Working
 					a.logger.Infof("插件启动成功: %s", manifest.Name)
 				}
 			}
-
 		}
 	}
 	return nil

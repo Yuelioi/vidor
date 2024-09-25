@@ -2,7 +2,6 @@ package app
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/Yuelioi/vidor/internal/notify"
 	"github.com/Yuelioi/vidor/internal/plugin"
@@ -29,7 +28,9 @@ func (a *App) DownloadPlugin(id string) bool {
 		ID: id,
 	}
 
-	if err := a.manager.Download(m); err != nil {
+	ctx := a.injectMetadata()
+
+	if err := a.manager.Download(m, ctx); err != nil {
 		a.notification.Send(a.ctx, notify.Notice{
 			EventName:  "system.notice",
 			Content:    "下载插件失败: " + err.Error(),
@@ -52,7 +53,9 @@ func (a *App) UpdatePlugin(id string) bool {
 		return false
 	}
 
-	if err := a.manager.UpdatePlugin(p.GetManifest()); err != nil {
+	ctx := a.injectMetadata()
+
+	if err := a.manager.UpdatePlugin(p.GetManifest(), ctx); err != nil {
 		a.notification.Send(a.ctx, notify.Notice{
 			EventName:  "system.notice",
 			Content:    "更新插件失败: " + err.Error(),
@@ -93,7 +96,7 @@ func (a *App) RunPlugin(id string) bool {
 	}
 
 	ctx := a.injectMetadata()
-
+	m := p.GetManifest()
 	if err := a.manager.RunPlugin(p.GetManifest(), ctx); err != nil {
 		a.notification.Send(a.ctx, notify.Notice{
 			EventName:  "system.notice",
@@ -104,19 +107,7 @@ func (a *App) RunPlugin(id string) bool {
 		return false
 	}
 
-	p.GetManifest().State = plugin.Working
-
-	if err := a.manager.UpdatePluginParams(p.GetManifest()); err != nil {
-		a.notification.Send(a.ctx, notify.Notice{
-			EventName:  "system.notice",
-			Content:    "运行插件, 更新插件参数失败: " + err.Error(),
-			NoticeType: "info",
-			Provider:   "system",
-		})
-		return false
-	}
-
-	return true
+	return a.savePluginConfig(m)
 }
 
 func (a *App) UpdatePluginPrams(id string, settings map[string]string) bool {
@@ -138,10 +129,7 @@ func (a *App) UpdatePluginPrams(id string, settings map[string]string) bool {
 			return false
 		}
 	}
-
-	// TODO 判断一下插件是否运行
-
-	return a.savePluginConfig(id, manifest)
+	return a.savePluginConfig(manifest)
 }
 
 // 停止插件
@@ -150,19 +138,20 @@ func (a *App) StopPlugin(id string) bool {
 	if !ok {
 		return false
 	}
+	manifest := p.GetManifest()
 	// 停止
-	err := p.Shutdown(context.Background())
-
-	if err != nil {
-		a.notification.Send(a.ctx, notify.Notice{
-			EventName:  "system.notice",
-			Content:    "插件关闭失败: " + err.Error(),
-			NoticeType: "info",
-			Provider:   "system",
-		})
-		return false
+	if manifest.State == plugin.Working {
+		if err := a.manager.StopPlugin(manifest); err != nil {
+			a.notification.Send(a.ctx, notify.Notice{
+				EventName:  "system.notice",
+				Content:    "插件关闭失败: " + err.Error(),
+				NoticeType: "info",
+				Provider:   "system",
+			})
+			return false
+		}
 	}
-	p.GetManifest().State = plugin.NotWork
+
 	return true
 }
 
@@ -182,12 +171,10 @@ func (a *App) EnablePlugin(id string) bool {
 		return false
 	}
 	manifest := p.GetManifest()
-	fmt.Printf("manifest: %v\n", manifest)
 	manifest.Enable = true
 
 	// 更新插件设置
-	ok = a.savePluginConfig(id, manifest)
-	return ok
+	return a.savePluginConfig(manifest)
 }
 
 // 关闭插件,并禁用插件
@@ -210,46 +197,36 @@ func (a *App) DisablePlugin(id string) bool {
 	// 禁用并保存配置
 	manifest.Enable = false
 
-	ok = a.savePluginConfig(id, manifest)
-	return ok
+	return a.savePluginConfig(manifest)
 }
 
 // 保存插件配置
-func (a *App) savePluginConfig(id string, m *plugin.Manifest) bool {
-	p, ok := a.manager.Check(id)
+func (a *App) savePluginConfig(m *plugin.Manifest) bool {
+	p, ok := a.manager.Check(m.ID)
 	if !ok {
 		return false
 	}
 
 	manifest := p.GetManifest()
 	manifest.Settings = m.Settings
-	fmt.Printf("manifest: %v\n", manifest)
 
-	err := manifest.Save()
-	if err != nil {
-		return false
-	}
-
-	err = a.manager.UpdatePluginParams(manifest)
-	return err == nil
+	return manifest.Save() == nil
 }
 
-// 保存插件配置
-func (a *App) SavePluginConfig(id string, m *plugin.Manifest) bool {
-	p, ok := a.manager.Check(id)
+// 保存插件配置并更新参数
+func (a *App) SavePluginConfig(m *plugin.Manifest) bool {
+	p, ok := a.manager.Check(m.ID)
 	if !ok {
 		return false
 	}
 
 	manifest := p.GetManifest()
 	manifest.Settings = m.Settings
-	fmt.Printf("manifest: %v\n", manifest)
 
 	err := manifest.Save()
 	if err != nil {
 		return false
 	}
 
-	err = a.manager.UpdatePluginParams(manifest)
-	return err == nil
+	return a.manager.UpdatePluginParams(manifest) == nil
 }

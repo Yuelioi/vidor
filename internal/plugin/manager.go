@@ -68,26 +68,7 @@ func (pm *PluginManager) NetManifests() ([]*Manifest, error) {
 	return fetchPlugins()
 }
 
-func (pm *PluginManager) UpdatePluginParams(m *Manifest) error {
-	p, ok := pm.Check(m.ID)
-	if !ok {
-		return errors.New("未找到插件")
-	}
-	ctx := InjectMetadata(context.Background(), p.GetManifest().Settings)
-	return p.Update(ctx)
-}
-
-func (pm *PluginManager) UpdateSystemParams(ctx context.Context) error {
-	for _, p := range pm.plugins {
-		if p.GetManifest().State == Working {
-			p.Update(ctx)
-		}
-	}
-	return nil
-}
-
 // ------------------------------------ Handlers ------------------------------------
-
 func (pm *PluginManager) createHandlerChain(handlers ...PluginHandler) PluginHandler {
 	if len(handlers) == 0 {
 		return nil
@@ -106,13 +87,18 @@ func (pm *PluginManager) createHandlerChain(handlers ...PluginHandler) PluginHan
 // 2.解压
 // 3.注册到主机
 // 4.运行
-func (pm *PluginManager) Download(m *Manifest) error {
+// 5.注入上下文
+// 6.保存插件配置
+//
+// 需要传入正确的系统参数上下文
+func (pm *PluginManager) Download(m *Manifest, ctx context.Context) error {
 	handlerChain := pm.createHandlerChain(
 		&DownloadHandler{},
 		&ExtractHandler{},
 		&RegisterPMHandler{pm: pm},
 		&RunnerPMHandler{pm: pm},
 		&UpdatePluginParamsPMHandler{pm: pm},
+		&UpdateSystemParamsPMHandler{pm: pm},
 		&SaveHandler{},
 	)
 	return handlerChain.Handle(pm.ctx, m)
@@ -120,17 +106,22 @@ func (pm *PluginManager) Download(m *Manifest) error {
 
 // 更新插件
 //
-// 1.禁用当前插件并删除
+// 1.禁用,注销插件并删除
 // 2.下载并解压
 // 3.运行
-func (pm *PluginManager) UpdatePlugin(m *Manifest) error {
+// 4.注入上下文, 保存配置
+//
+// 需要传入正确的系统参数上下文
+func (pm *PluginManager) UpdatePlugin(m *Manifest, ctx context.Context) error {
 	handlerChain := pm.createHandlerChain(
 		&StopperPMHandler{pm: pm},
+		&DeRegisterPMHandler{pm: pm},
 		&RemoveHandler{},
 		&DownloadHandler{},
 		&RegisterPMHandler{pm: pm},
 		&RunnerPMHandler{pm: pm},
 		&UpdatePluginParamsPMHandler{pm: pm},
+		&UpdateSystemParamsPMHandler{pm: pm},
 		&SaveHandler{},
 	)
 
@@ -144,6 +135,7 @@ func (pm *PluginManager) UpdatePlugin(m *Manifest) error {
 func (pm *PluginManager) RemovePlugin(m *Manifest) error {
 	handlerChain := pm.createHandlerChain(
 		&StopperPMHandler{pm: pm},
+		&DeRegisterPMHandler{pm: pm},
 		&RemoveHandler{},
 	)
 	return handlerChain.Handle(pm.ctx, m)
@@ -151,19 +143,24 @@ func (pm *PluginManager) RemovePlugin(m *Manifest) error {
 
 // 运行插件
 //
-// 1.禁用当前插件并删除
-// 2.注销插件
+// 1.运行
+// 2.注入上下文
+//
+// 需要传入正确的系统参数上下文
 func (pm *PluginManager) RunPlugin(m *Manifest, ctx context.Context) error {
 	handlerChain := pm.createHandlerChain(
 		&RunnerPMHandler{pm: pm},
 		&UpdatePluginParamsPMHandler{pm: pm},
+		&UpdateSystemParamsPMHandler{pm: pm},
 	)
-	err := handlerChain.Handle(ctx, m)
-	if err != nil {
-		return err
-	}
+	return handlerChain.Handle(ctx, m)
+}
 
-	return pm.UpdateSystemParams(ctx)
+func (pm *PluginManager) StopPlugin(m *Manifest) error {
+	handlerChain := pm.createHandlerChain(
+		&StopperPMHandler{pm: pm},
+	)
+	return handlerChain.Handle(pm.ctx, m)
 }
 
 // 注册插件
@@ -171,5 +168,30 @@ func (pm *PluginManager) Register(m *Manifest) error {
 	handlerChain := pm.createHandlerChain(
 		&RegisterPMHandler{pm: pm},
 	)
+
 	return handlerChain.Handle(pm.ctx, m)
+}
+
+// 更新插件系统参数
+func (pm *PluginManager) UpdatePluginParams(m *Manifest) error {
+	handlerChain := pm.createHandlerChain(
+		&UpdatePluginParamsPMHandler{pm: pm},
+	)
+
+	return handlerChain.Handle(pm.ctx, m)
+}
+
+// 更新系统参数
+func (pm *PluginManager) UpdateSystemParams(ctx context.Context) error {
+
+	handlerChain := pm.createHandlerChain(
+		&UpdateSystemParamsPMHandler{pm: pm},
+	)
+
+	for _, p := range pm.plugins {
+		if p.GetManifest().State == Working {
+			handlerChain.Handle(ctx, p.GetManifest())
+		}
+	}
+	return nil
 }

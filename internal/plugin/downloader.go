@@ -85,7 +85,6 @@ func (p *DownloadPlugin) Run(ctx context.Context) error {
 	}
 	p.Service = pb.NewDownloadServiceClient(conn)
 	conn.Connect()
-	fmt.Printf("p.Manifest: %v\n", p.Manifest.Addr)
 
 	return nil
 }

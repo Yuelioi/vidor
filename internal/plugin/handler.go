@@ -251,7 +251,10 @@ type RunnerPMHandler struct {
 func (r *RunnerPMHandler) Handle(ctx context.Context, m *Manifest) error {
 	for key, plugin := range r.pm.plugins {
 		if key == m.ID {
-			return plugin.Run(ctx)
+			err := plugin.Run(ctx)
+			if err == nil {
+				m.State = Working
+			}
 		}
 	}
 	return errors.New("未找到插件")
@@ -265,24 +268,46 @@ type StopperPMHandler struct {
 func (r *StopperPMHandler) Handle(ctx context.Context, m *Manifest) error {
 	for key, plugin := range r.pm.plugins {
 		if key == m.ID {
-			return plugin.Shutdown(ctx)
+			err := plugin.Shutdown(ctx)
+			if err == nil {
+				m.State = NotWork
+			}
+			return err
 		}
 	}
 	return errors.New("未找到插件")
 }
 
+// 注入插件参数
 type UpdatePluginParamsPMHandler struct {
 	BaseHandler
 	pm *PluginManager
 }
 
 func (r *UpdatePluginParamsPMHandler) Handle(ctx context.Context, m *Manifest) error {
-	for key, plugin := range r.pm.plugins {
+	fmt.Printf("更新插件参数\n")
+	for key, p := range r.pm.plugins {
 		if key == m.ID {
-			fmt.Printf("m.Settings: %v\n", m.Settings)
 			ctx = InjectMetadata(ctx, m.Settings)
-			return plugin.Update(ctx)
+			return p.Update(ctx)
 		}
 	}
 	return errors.New("未找到插件")
+}
+
+// 注入系统参数(请提前传正确的ctx)
+type UpdateSystemParamsPMHandler struct {
+	BaseHandler
+	pm *PluginManager
+}
+
+func (r *UpdateSystemParamsPMHandler) Handle(ctx context.Context, m *Manifest) error {
+	fmt.Printf("更新系统参数\n")
+
+	for key, p := range r.pm.plugins {
+		if key == m.ID {
+			p.Update(ctx)
+		}
+	}
+	return nil
 }
