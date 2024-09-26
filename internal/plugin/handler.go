@@ -34,7 +34,7 @@ type BaseHandler struct {
 
 func (bh *BaseHandler) Handle(ctx context.Context, m *Manifest) error {
 	if bh.next != nil {
-		return bh.Handle(ctx, m)
+		return bh.next.Handle(ctx, m)
 	}
 	return nil
 }
@@ -188,7 +188,7 @@ func (r *RemoveHandler) Handle(ctx context.Context, m *Manifest) error {
 	if err := os.RemoveAll(m.BaseDir); err != nil {
 		return err
 	}
-	return r.BaseHandler.next.Handle(ctx, m)
+	return r.BaseHandler.Handle(ctx, m)
 }
 
 // 保存配置
@@ -200,7 +200,7 @@ func (r *SaveHandler) Handle(ctx context.Context, m *Manifest) error {
 	if err := m.Save(); err != nil {
 		return err
 	}
-	return r.BaseHandler.next.Handle(ctx, m)
+	return r.BaseHandler.Handle(ctx, m)
 }
 
 // -------------------------------------------------------------------------------
@@ -212,6 +212,7 @@ type RegisterPMHandler struct {
 }
 
 func (r *RegisterPMHandler) Handle(ctx context.Context, m *Manifest) error {
+	fmt.Printf("Register Handle\n")
 	var p Plugin
 
 	switch m.Type {
@@ -224,7 +225,7 @@ func (r *RegisterPMHandler) Handle(ctx context.Context, m *Manifest) error {
 	}
 
 	r.pm.plugins[m.ID] = p
-	return nil
+	return r.BaseHandler.Handle(ctx, m)
 }
 
 // 注销
@@ -234,13 +235,14 @@ type DeRegisterPMHandler struct {
 }
 
 func (r *DeRegisterPMHandler) Handle(ctx context.Context, m *Manifest) error {
+	fmt.Printf("DeRegister Handle\n")
 	for key := range r.pm.plugins {
 		if key == m.ID {
 			delete(r.pm.plugins, key)
-			return nil
+			return r.BaseHandler.Handle(ctx, m)
 		}
 	}
-	return errors.New("未找到插件")
+	return errors.New("deRegister 未找到插件")
 }
 
 type RunnerPMHandler struct {
@@ -249,15 +251,19 @@ type RunnerPMHandler struct {
 }
 
 func (r *RunnerPMHandler) Handle(ctx context.Context, m *Manifest) error {
+	fmt.Printf("Runner Handle\n")
+
 	for key, p := range r.pm.plugins {
 		if key == m.ID {
 			err := p.Run(ctx)
 			if err == nil {
 				m.State = Working
+				r.BaseHandler.Handle(ctx, m)
 			}
+			return err
 		}
 	}
-	return errors.New("未找到插件")
+	return errors.New("runner 未找到插件")
 }
 
 type InitPMHandler struct {
@@ -266,13 +272,17 @@ type InitPMHandler struct {
 }
 
 func (r *InitPMHandler) Handle(ctx context.Context, m *Manifest) error {
-	fmt.Printf("初始化\n")
+	fmt.Printf("Init Handler\n")
 	for key, p := range r.pm.plugins {
 		if key == m.ID {
-			return p.Init(ctx)
+			err := p.Init(ctx)
+			if err == nil {
+				r.BaseHandler.Handle(ctx, m)
+			}
+			return err
 		}
 	}
-	return errors.New("未找到插件")
+	return errors.New("init 未找到插件")
 }
 
 type StopperPMHandler struct {
@@ -281,16 +291,19 @@ type StopperPMHandler struct {
 }
 
 func (r *StopperPMHandler) Handle(ctx context.Context, m *Manifest) error {
+	fmt.Printf("Stopper Handle\n")
+
 	for key, p := range r.pm.plugins {
 		if key == m.ID {
 			err := p.Shutdown(ctx)
 			if err == nil {
 				m.State = NotWork
+				return r.BaseHandler.Handle(ctx, m)
 			}
 			return err
 		}
 	}
-	return errors.New("未找到插件")
+	return errors.New("stopper 未找到插件")
 }
 
 // 注入插件参数
@@ -300,14 +313,17 @@ type UpdatePluginParamsPMHandler struct {
 }
 
 func (r *UpdatePluginParamsPMHandler) Handle(ctx context.Context, m *Manifest) error {
-	fmt.Printf("更新插件参数\n")
+	fmt.Printf("UpdatePluginParams Handler\n")
 	for key, p := range r.pm.plugins {
 		if key == m.ID {
 			ctx = InjectMetadata(ctx, m.Settings)
-			return p.Update(ctx)
+			if err := p.Update(ctx); err != nil {
+				return err
+			}
+			return r.BaseHandler.Handle(ctx, m)
 		}
 	}
-	return errors.New("未找到插件")
+	return errors.New("updatePluginParams 未找到插件")
 }
 
 // 注入系统参数(请提前传正确的ctx)
@@ -317,12 +333,16 @@ type UpdateSystemParamsPMHandler struct {
 }
 
 func (r *UpdateSystemParamsPMHandler) Handle(ctx context.Context, m *Manifest) error {
-	fmt.Printf("更新系统参数\n")
+	fmt.Printf("UpdateSystemParams Handler\n")
 
 	for key, p := range r.pm.plugins {
 		if key == m.ID {
-			p.Update(ctx)
+			if err := p.Update(ctx); err != nil {
+				return err
+			}
+			return r.BaseHandler.Handle(ctx, m)
+
 		}
 	}
-	return nil
+	return errors.New("updateSystemParams 未找到插件")
 }

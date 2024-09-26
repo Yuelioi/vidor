@@ -105,7 +105,7 @@ func (pm *PluginManager) Download(m *Manifest, ctx context.Context) error {
 	return handlerChain.Handle(pm.ctx, m)
 }
 
-// 更新插件
+// 更新插件本体
 //
 // 1.禁用,注销插件并删除
 // 2.下载并解压
@@ -159,6 +159,7 @@ func (pm *PluginManager) RunPlugin(m *Manifest, ctx context.Context) error {
 	return handlerChain.Handle(ctx, m)
 }
 
+// 停止插件
 func (pm *PluginManager) StopPlugin(m *Manifest) error {
 	handlerChain := pm.createHandlerChain(
 		&StopperPMHandler{pm: pm},
@@ -175,7 +176,7 @@ func (pm *PluginManager) Register(m *Manifest) error {
 	return handlerChain.Handle(pm.ctx, m)
 }
 
-// 更新插件系统参数
+// 更新插件参数
 func (pm *PluginManager) UpdatePluginParams(m *Manifest) error {
 	handlerChain := pm.createHandlerChain(
 		&UpdatePluginParamsPMHandler{pm: pm},

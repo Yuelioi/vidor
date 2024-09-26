@@ -75,9 +75,9 @@ func (p *DownloadPlugin) Run(ctx context.Context) error {
 		}
 	}
 	// TODO 远程
-	if strings.HasPrefix(p.Manifest.Addr, "remote") {
-		// ...
-	}
+	// if strings.HasPrefix(p.Manifest.Addr, "remote") {
+	// ...
+	// }
 
 	conn, err := connect(p.Manifest.Addr)
 	if err != nil {

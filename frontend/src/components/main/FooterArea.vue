@@ -6,6 +6,8 @@ const { switchTheme } = useTheme(_themes)
 const { configs, tasks } = storeToRefs(useBasicStore())
 import { Notice, Task } from '@/models/go'
 
+import { WindowMinimise } from '@wailsjs/runtime'
+
 EventsOn('updateInfo', (optionalData?: Task) => {
   const index = tasks.value.findIndex((task) => task.id === optionalData?.id)
   if (index !== -1 && optionalData) {
@@ -23,6 +25,12 @@ function blockWindowScale(event: KeyboardEvent) {
   }
 }
 
+function handleEscape(event) {
+  if (event.key === 'Escape') {
+    WindowMinimise()
+  }
+}
+
 onMounted(async () => {
   // 加载配置
   const fetchedConfig = (await GetConfig()) as Config
@@ -35,7 +43,9 @@ onMounted(async () => {
   // 加载任务
   const fetchedTasks = (await GetTaskParts()) as Task[]
   tasks.value.splice(0, tasks.value.length, ...fetchedTasks)
+})
 
+onMounted(() => {
   // 切换主题
   switchTheme(configs.value.theme)
 
@@ -44,13 +54,20 @@ onMounted(async () => {
   document.documentElement.style.fontSize = `${scale}px`
 
   // 禁用页面缩放
-  document.addEventListener('mousewheel', blockWindowScale, {
+  document.addEventListener('wheel', blockWindowScale, {
     capture: false,
     passive: false
   })
+
+  // 加载快捷方式
+  document.addEventListener('keydown', handleEscape)
 })
 
 onUnmounted(() => {
-  document.removeEventListener('mousewheel', blockWindowScale)
+  // 注销页面缩放
+  document.removeEventListener('wheel', blockWindowScale)
+
+  // 注销快捷键
+  document.removeEventListener('keydown', handleEscape)
 })
 </script>

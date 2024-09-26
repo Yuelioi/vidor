@@ -139,6 +139,9 @@ func (a *App) Startup(ctx context.Context) {
 
 	}()
 
+	// 注册快捷键
+	go registerHotkey(a)
+
 	// 缓存
 	a.logger.Info("缓存器加载中")
 	a.cache = NewCache()
