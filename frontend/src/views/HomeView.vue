@@ -365,7 +365,14 @@ function applyMagicName() {
   })
 }
 
+let firstModify = true
+
 watch(configs.value, async () => {
+  // 初始化配置 不用触发更新配置
+  if (firstModify) {
+    firstModify = false
+    return
+  }
   SaveConfig(configs.value).then(() => {
     console.log('保存配置成功')
   })

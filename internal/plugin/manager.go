@@ -98,8 +98,7 @@ func (pm *PluginManager) Download(m *Manifest, ctx context.Context) error {
 		&RegisterPMHandler{pm: pm},
 		&RunnerPMHandler{pm: pm},
 		&InitPMHandler{pm: pm},
-		&UpdatePluginParamsPMHandler{pm: pm},
-		&UpdateSystemParamsPMHandler{pm: pm},
+		&UpdateParamsPMHandler{pm: pm},
 		&SaveHandler{},
 	)
 	return handlerChain.Handle(pm.ctx, m)
@@ -122,8 +121,7 @@ func (pm *PluginManager) UpdatePlugin(m *Manifest, ctx context.Context) error {
 		&RegisterPMHandler{pm: pm},
 		&RunnerPMHandler{pm: pm},
 		&InitPMHandler{pm: pm},
-		&UpdatePluginParamsPMHandler{pm: pm},
-		&UpdateSystemParamsPMHandler{pm: pm},
+		&UpdateParamsPMHandler{pm: pm},
 		&SaveHandler{},
 	)
 
@@ -153,8 +151,7 @@ func (pm *PluginManager) RunPlugin(m *Manifest, ctx context.Context) error {
 	handlerChain := pm.createHandlerChain(
 		&RunnerPMHandler{pm: pm},
 		&InitPMHandler{pm: pm},
-		&UpdatePluginParamsPMHandler{pm: pm},
-		&UpdateSystemParamsPMHandler{pm: pm},
+		&UpdateParamsPMHandler{pm: pm},
 	)
 	return handlerChain.Handle(ctx, m)
 }

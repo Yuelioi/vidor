@@ -28,6 +28,7 @@ func (c *Cache) Task(id string) (*pb.Task, bool) {
 }
 
 func (c *Cache) AddTask(id string, info *pb.Task) {
+
 	c.tasks.Store(id, info)
 }
 

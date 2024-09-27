@@ -323,7 +323,31 @@ func (r *UpdatePluginParamsPMHandler) Handle(ctx context.Context, m *Manifest) e
 			return r.BaseHandler.Handle(ctx, m)
 		}
 	}
+
 	return errors.New("updatePluginParams 未找到插件")
+}
+
+// 同时注入插件参数与系统参数
+type UpdateParamsPMHandler struct {
+	BaseHandler
+	pm *PluginManager
+}
+
+func (r *UpdateParamsPMHandler) Handle(ctx context.Context, m *Manifest) error {
+	fmt.Printf("UpdateParams Handler\n")
+
+	for key, p := range r.pm.plugins {
+		if key == m.ID {
+			ctx = InjectMetadata(ctx, m.Settings)
+
+			if err := p.Update(ctx); err != nil {
+				return err
+			}
+			return r.BaseHandler.Handle(ctx, m)
+
+		}
+	}
+	return errors.New("updateSystemParams 未找到插件")
 }
 
 // 注入系统参数(请提前传正确的ctx)
