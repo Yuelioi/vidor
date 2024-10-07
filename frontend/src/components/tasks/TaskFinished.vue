@@ -18,7 +18,7 @@
             <div v-if="task.cover" class="relative">
               <img class="object-contain h-full" :src="task.cover" :alt="task.title" />
               <div
-                @click="OpenFileWithSystemPlayer(task.workdir)"
+                @click="OpenFileWithSystemPlayer(task.work_dir)"
                 :class="tab.color"
                 class="transition-opacity duration-300 opacity-0 group-hover:opacity-100 absolute icon-[lucide--circle-play] size-8 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"></div>
             </div>
@@ -45,7 +45,7 @@
               <span class="icon-[lucide--trash-2] size-8" @click="removeTask(task.id)"></span>
               <span
                 class="icon-[ic--baseline-folder-open] size-8"
-                @click="OpenExplorer(task.workdir)"></span>
+                @click="OpenExplorer(task.work_dir)"></span>
             </div>
           </div>
         </div>
@@ -60,15 +60,15 @@
 <script setup lang="ts">
 import { OpenExplorer, RemoveTask, OpenFileWithSystemPlayer } from '@wailsjs/go/app/App'
 import { BrowserOpenURL } from '@wailsjs/runtime/runtime'
-import { Task } from '@/models/go'
 import { Tab } from '@/models/ui'
+import { proto } from '@wailsjs/go/models'
 
 defineProps<{ tab: Tab }>()
 
 const { tasks } = storeToRefs(useBasicStore())
 
 const filteredTasks = computed(() => {
-  return tasks.value.filter((task) => task.state === 3)
+  return tasks.value.filter((task: proto.Task) => task.state === 3)
 })
 
 const removeTask = (uid: string) => {
@@ -108,7 +108,7 @@ const removeAll = () => {
   })
 }
 
-function subtractTaskLists(tasks: Task[], filteredTasks: Task[]): Task[] {
+function subtractTaskLists(tasks: proto.Task[], filteredTasks: proto.Task[]): proto.Task[] {
   const filteredTaskids = new Set(filteredTasks.map((task) => task.id))
   return tasks.filter((task) => !filteredTaskids.has(task.id))
 }

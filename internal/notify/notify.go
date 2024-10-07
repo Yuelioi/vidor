@@ -1,11 +1,7 @@
 package notify
 
-import (
-	"context"
-)
-
 type Notification interface {
-	Send(ctx context.Context, msg Notice) error
+	Send(msg Notice) error
 }
 
 type Notice struct {

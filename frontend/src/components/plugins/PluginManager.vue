@@ -116,14 +116,6 @@ const { plugins } = storeToRefs(useBasicStore())
 const hoveredIndex = ref('')
 defineProps<{ tab: Tab }>()
 
-EventsOn('updateInfo', (plugin: Plugin) => {
-  for (let key in plugins.value) {
-    if (plugins.value[key].id == plugin.id) {
-      Object.assign(plugins.value[key], plugin)
-    }
-  }
-})
-
 async function savePlugin(plugin: Plugin) {
   const ok = await UpdatePluginPrams(plugin.id, plugin.settings)
   if (ok) {

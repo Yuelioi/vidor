@@ -1,53 +1,188 @@
 package task
 
 import (
+	"context"
 	"fmt"
+	"io"
+	"slices"
 	"sync"
+	"sync/atomic"
+	"time"
+
+	"github.com/Yuelioi/vidor/internal/notify"
+	"github.com/Yuelioi/vidor/internal/plugin"
+	pb "github.com/Yuelioi/vidor/internal/proto"
 )
 
 // TaskQueue 任务队列接口
 type TaskQueue struct {
-	tasks map[string]Task
-	mu    sync.RWMutex
-}
+	manager *plugin.PluginManager
 
-// Task 任务结构体
-type Task struct {
-	ID string
+	workingTasks  []*pb.Task
+	queueTasks    []*pb.Task
+	finishedTasks []*pb.Task
+	limit         int
+	mu            sync.Mutex
+	taskChan      chan *pb.Task
+	ctx           context.Context
+	working       atomic.Bool
+	notification  *notify.TaskNotification
 }
 
 // New 创建一个新的任务队列
-func New() *TaskQueue {
+func New(limit int, manager *plugin.PluginManager, ctx context.Context) *TaskQueue {
+
+	taskNotify := notify.NewTaskNotification(ctx)
+
 	return &TaskQueue{
-		tasks: make(map[string]Task),
+		manager:       manager,
+		workingTasks:  make([]*pb.Task, 0),
+		queueTasks:    make([]*pb.Task, 0),
+		finishedTasks: make([]*pb.Task, 0),
+		limit:         limit,
+		taskChan:      make(chan *pb.Task, limit),
+		ctx:           ctx,
+		working:       atomic.Bool{},
+		notification:  taskNotify,
+	}
+}
+func (tq *TaskQueue) Add(task *pb.Task) {
+	tq.mu.Lock()
+	defer tq.mu.Unlock()
+
+	tq.queueTasks = append(tq.queueTasks, task)
+
+	fmt.Printf("tq.working.Load(): %v\n", tq.working.Load())
+
+	if !tq.working.Load() {
+		tq.working.Store(true)
+		go func() {
+			tq.Start()
+			tq.working.Store(false)
+		}()
+	}
+	tq.Reload()
+}
+
+func (tq *TaskQueue) AddAll(tasks []*pb.Task) {
+	tq.mu.Lock()
+	defer tq.mu.Unlock()
+
+	tq.queueTasks = append(tq.queueTasks, tasks...)
+
+	fmt.Printf("tq.working.Load(): %v\n", tq.working.Load())
+
+	if !tq.working.Load() {
+		tq.working.Store(true)
+		go func() {
+			tq.Start()
+			tq.working.Store(false)
+		}()
+	}
+	tq.Reload()
+}
+
+func (tq *TaskQueue) Notify() {
+	ticker := time.NewTicker(1 * time.Second)
+	defer ticker.Stop()
+
+	for range ticker.C {
+		tasks := slices.Concat(tq.workingTasks, tq.queueTasks, tq.finishedTasks)
+		tq.notification.UpdateTasks(tasks)
 	}
 }
 
-// AddTask 添加任务到队列
-func (tq *TaskQueue) AddTask(id string) {
-	tq.mu.Lock()
-	defer tq.mu.Unlock()
-	tq.tasks[id] = Task{ID: id}
+func (tq *TaskQueue) Start() {
+	ticker := time.NewTicker(1 * time.Second)
+	defer ticker.Stop()
+
+	for range ticker.C {
+		select {
+		case task, ok := <-tq.taskChan:
+			if !ok {
+				continue
+			}
+
+			fmt.Printf("开始下载task.Title: %v\n\n", task.Title)
+
+			tq.mu.Lock()
+			tq.workingTasks = append(tq.workingTasks, task)
+			tq.mu.Unlock()
+
+			// 下载
+			p, err := tq.manager.Select(task.Url)
+			if err != nil {
+				continue
+			}
+
+			stream, err := p.Service.Download(context.Background(), &pb.TaskRequest{
+				Task: task,
+			})
+			if err != nil {
+				continue
+			}
+
+			go func() {
+				for {
+					progress, err := stream.Recv()
+					if err == io.EOF {
+						break
+					}
+					if err != nil {
+						fmt.Printf("Error receiving progress: %v\n", err)
+						break
+					}
+					fmt.Printf("Download progress: %s - %s\n", progress.Id, progress.Speed)
+				}
+				tq.mu.Lock()
+				tq.finishedTasks = append(tq.finishedTasks, task)
+				tq.workingTasks = removeTask(task, tq.workingTasks)
+				tq.mu.Unlock()
+			}()
+
+		default:
+
+			if len(tq.queueTasks) == 0 {
+				// 任务队列没任务 直接结束
+				return
+			} else if len(tq.workingTasks) < tq.limit {
+				//  任务队列有任务 但是正在下载的任务数量小于限制
+				tq.Reload()
+			}
+		}
+	}
 }
 
-// RemoveTask 从队列中移除任务
-func (tq *TaskQueue) RemoveTask(id string) {
-	tq.mu.Lock()
-	defer tq.mu.Unlock()
-	delete(tq.tasks, id)
+func removeTask(task *pb.Task, tasks []*pb.Task) []*pb.Task {
+	for i, t := range tasks {
+		if t.Id == task.Id {
+			tasks = append(tasks[:i], tasks[i+1:]...)
+			return tasks
+		}
+	}
+	return tasks
 }
 
 // List 列出所有任务
 func (tq *TaskQueue) List() {
-	tq.mu.RLock()
-	defer tq.mu.RUnlock()
-	for _, task := range tq.tasks {
-		fmt.Println(task.ID)
+	for _, task := range tq.queueTasks {
+		fmt.Println(task.Id)
+	}
+}
+
+// 重新装填, 把队列中的补充到任务通道
+func (tq *TaskQueue) Reload() {
+	free := tq.limit - len(tq.workingTasks)
+	tasksToReload := tq.queueTasks[:min(free, len(tq.queueTasks))]
+	tq.queueTasks = tq.queueTasks[len(tasksToReload):]
+
+	for _, task := range tasksToReload {
+		tq.taskChan <- task
 	}
 }
 
 // 保存单个任务
-func saveTask(srcTask *Task, tasks []*Task, configDir string) error {
+func saveTask(srcTask *pb.Task, tasks []*pb.Task, configDir string) error {
 	// parts := make([]Part, 0)
 
 	// // 修改/更新
@@ -73,7 +208,7 @@ func saveTask(srcTask *Task, tasks []*Task, configDir string) error {
 }
 
 // task更新时 保存
-func saveTasks(tasks []*Task, configDir string) error {
+func saveTasks(tasks []*pb.Task, configDir string) error {
 	// parts := make([]Part, 0)
 
 	// for _, task := range tasks {

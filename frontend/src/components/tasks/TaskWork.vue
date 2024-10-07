@@ -40,14 +40,14 @@
                   <span class="icon-[lucide--play] size-5"></span>
                   <span class="icon-[lucide--pause] size-5"></span>
                   <div
-                    @click="OpenFileWithSystemPlayer(task.workdir)"
+                    @click="OpenFileWithSystemPlayer(task.work_dir)"
                     class="icon-[lucide--circle-play] size-5"></div>
                   <span
                     class="icon-[lucide--trash-2] size-5 cursor-pointer"
                     @click="removeTask(task.id)"></span>
                   <span
                     class="icon-[ic--baseline-folder-open] size-5 cursor-pointer"
-                    @click="OpenExplorer(task.workdir)"></span>
+                    @click="OpenExplorer(task.work_dir)"></span>
                 </div>
               </div>
 
@@ -81,8 +81,8 @@
 <script setup lang="ts">
 import { OpenExplorer, RemoveTask, OpenFileWithSystemPlayer } from '@wailsjs/go/app/App'
 import { BrowserOpenURL } from '@wailsjs/runtime/runtime'
-import { Task } from '@/models/go'
 import { Tab } from '@/models/ui'
+import { proto } from '@wailsjs/go/models'
 defineProps<{ tab: Tab }>()
 
 const { tasks } = storeToRefs(useBasicStore())
@@ -128,7 +128,7 @@ const removeAll = () => {
   })
 }
 
-function subtractTaskLists(tasks: Task[], filteredTasks: Task[]): Task[] {
+function subtractTaskLists(tasks: proto.Task[], filteredTasks: proto.Task[]): proto.Task[] {
   const filteredTaskids = new Set(filteredTasks.map((task) => task.id))
   return tasks.filter((task) => !filteredTaskids.has(task.id))
 }

@@ -1,18 +1,8 @@
 package app
 
 import (
-	"context"
-	"fmt"
-	"io"
-	"log"
-
 	pb "github.com/Yuelioi/vidor/internal/proto"
 )
-
-type taskMap struct {
-	id        string
-	formatIds []string
-}
 
 func (app *App) GetTasks() []*pb.Task {
 	return nil
@@ -25,55 +15,14 @@ func (app *App) GetTasks() []*pb.Task {
 2. 创建/添加到任务队列
 3. 保存任务信息
 */
-func (app *App) AddDownloadTasks(taskMaps []taskMap) bool {
+func (a *App) AddDownloadTasks(tasks []*pb.Task) bool {
 
-	// 获取任务
-	tasks := []*pb.Task{}
-	for _, taskMap := range taskMaps {
-		cacheTask, ok := app.cache.Task(taskMap.id)
-		if !ok {
-			continue
-		}
-
-		// 将 formatIds 转换为集合，便于快速查找
-		formatSet := make(map[string]struct{})
-		for _, formatId := range taskMap.formatIds {
-			formatSet[formatId] = struct{}{}
-		}
-
-		// 过滤掉不符合条件的 formats
-		filterSegments(cacheTask.Segments, formatSet)
-
-		tasks = append(tasks, cacheTask)
+	for _, task := range tasks {
+		task.WorkDir = a.config.DownloadDir
 	}
-
-	// 获取缓存下载器
-	plugin := app.cache.Downloader()
-
-	// 清除任务缓存
-	app.cache.ClearTasks()
-
-	stream, err := plugin.Service.Download(context.Background(), &pb.TasksRequest{
-		Tasks: tasks,
-	})
-
-	if err != nil {
-		return false
-	}
-
-	for {
-		progress, err := stream.Recv()
-		if err == io.EOF {
-			break
-		}
-		if err != nil {
-			log.Fatalf("Error receiving progress: %v", err)
-		}
-		fmt.Printf("Download progress: %s - %s\n", progress.Id, progress.Speed)
-	}
+	a.taskQueue.AddAll(tasks)
 
 	return true
-
 }
 
 /*

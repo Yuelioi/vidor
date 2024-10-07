@@ -40,7 +40,7 @@ func (a *App) SaveConfig(config *config.Config) bool {
 // 注入系统metadata(默认的+config)
 func (a *App) injectMetadata() context.Context {
 	configs := map[string]string{
-		"system.ffmpeg":     filepath.Join(a.appDirs.Libs, "ffmpeg.exe"),
+		"system.ffmpeg":     filepath.Join(a.appDirs.Libs, "ffmpeg", "ffmpeg.exe"),
 		"system.tmpdirs":    a.appDirs.Temps,
 		"system.logdirs":    a.appDirs.Logs,
 		"system.plugindirs": a.appDirs.Plugins,

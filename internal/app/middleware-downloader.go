@@ -2,7 +2,6 @@ package app
 
 import (
 	"context"
-	"fmt"
 	"os"
 	"path/filepath"
 
@@ -18,13 +17,11 @@ import (
 //   - 2. 调用展示信息函数
 //   - 3. 缓存信息数据
 func (a *App) ShowDownloadInfo(link string) *pb.InfoResponse {
-	// 清理上次查询任务缓存
-	a.cache.ClearTasks()
 
 	// 获取下载器
 	p, err := a.manager.Select(link)
 	if err != nil {
-		a.notification.Send(a.ctx, notify.Notice{
+		a.notification.Send(notify.Notice{
 			EventName:  "system.notice",
 			Content:    "未找到可用插件",
 			NoticeType: "info",
@@ -47,17 +44,20 @@ func (a *App) ShowDownloadInfo(link string) *pb.InfoResponse {
 	})
 
 	if err != nil {
-		a.notification.Send(a.ctx, notify.Notice{
+		a.notification.Send(notify.Notice{
 			EventName:  "system.notice",
-			Content:    "获取视频信息失败",
+			Content:    "获取视频信息失败" + err.Error(),
 			NoticeType: "info",
 			Provider:   p.Manifest.Name},
 		)
 		return nil
 	}
 
-	// 缓存任务数据
-	a.cache.AddTasks(response.Tasks)
+	// 本地化封面
+	response.Cover = "/files/" + response.Cover
+
+	// 设置工作文件夹
+	response.DownloaderDir = a.config.DownloadDir
 
 	return response
 }
@@ -65,15 +65,7 @@ func (a *App) ShowDownloadInfo(link string) *pb.InfoResponse {
 /*
 解析数据
 */
-func (a *App) ParsePlaylist(ids []string) *pb.TasksResponse {
-
-	// 获取任务缓存数据
-	tasks, err := a.cache.Tasks(ids)
-
-	fmt.Printf("tasks: %v\n", tasks)
-	if err != nil {
-		return nil
-	}
+func (a *App) ParsePlaylist(tasks []*pb.Task) *pb.TasksResponse {
 
 	// 获取缓存下载器
 	plugin := a.cache.Downloader()
@@ -82,18 +74,13 @@ func (a *App) ParsePlaylist(ids []string) *pb.TasksResponse {
 	ctx := context.Background()
 
 	// 解析
-	TasksResponse, err := plugin.Service.Parse(ctx, &pb.TasksRequest{Tasks: tasks})
-
+	tasksResponse, err := plugin.Service.Parse(ctx, &pb.TasksRequest{Tasks: tasks})
 	if err != nil {
 		return nil
 	}
 
-	fmt.Println("TasksResponse", TasksResponse)
-	// 更新数据
-
 	// 缓存任务
-	a.cache.AddTasks(TasksResponse.Tasks)
-	return TasksResponse
+	return tasksResponse
 }
 
 func (a *App) SetDownloadDir(title string) string {

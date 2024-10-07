@@ -18,7 +18,7 @@ func NewSystem(ctx context.Context) *SystemNotification {
 	}
 }
 
-func (s *SystemNotification) Send(ctx context.Context, nc Notice) error {
+func (s *SystemNotification) Send(nc Notice) error {
 	if nc.EventName == "" {
 		return fmt.Errorf("event name is required")
 	}

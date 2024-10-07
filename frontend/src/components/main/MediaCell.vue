@@ -19,35 +19,35 @@
 </template>
 
 <script setup lang="ts">
-import { Segment, Task, Format } from '@/models/go'
+import { proto } from '@wailsjs/go/models'
 
 const props = defineProps<{
-  tasks: Task[]
-  task: Task
+  tasks: proto.Task[]
+  task: proto.Task
   type: string
 }>()
 
-function filterSegments(segments: Segment[], mimeType: string) {
-  const result = segments.find((segment) => segment.mime_type === mimeType) || new Segment()
+function filterSegments(segments: proto.Segment[], mimeType: string) {
+  const result = segments.find((segment) => segment.mime_type === mimeType) || new proto.Segment()
   return result
 }
 
 const formats = computed(() => {
   return filterSegments(props.task.segments, props.type).formats
 })
-const currentFormat = (formats: Format[]) => {
+const currentFormat = (formats: proto.Format[]) => {
   const selectedFormat = formats.find((format) => format.selected)
   return selectedFormat ? selectedFormat.label : '选择'
 }
 
-function selectFormat(formats: Format[], index: number, event: MouseEvent) {
+function selectFormat(formats: proto.Format[], index: number, event: MouseEvent) {
   if (event.shiftKey) {
     // 批量选择
     const currentFormat = formats[index]
-    props.tasks.forEach((task: Task) => {
-      task.segments.forEach((seg: Segment) => {
+    props.tasks.forEach((task: proto.Task) => {
+      task.segments.forEach((seg: proto.Segment) => {
         if (seg.mime_type === props.type) {
-          seg.formats.forEach((format: Format) => {
+          seg.formats.forEach((format: proto.Format) => {
             if (format.label === currentFormat.label) {
               format.selected = true
             } else {

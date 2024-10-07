@@ -1,19 +1,22 @@
 {
-    "compilerOptions": {
-        "composite": true,
-        "module": "ESNext",
-        "moduleResolution": "Node",
-        "allowSyntheticDefaultImports": true,
-        "paths": {
-            "@/*": [
-                "./src/*"
-            ]
-        },
-        "types": [
-            "node"
-        ]
+  "compilerOptions": {
+    "composite": true,
+    "module": "ESNext",
+    "moduleResolution": "node",
+    "allowSyntheticDefaultImports": true,
+    "typeRoots": [
+      "./node_modules/@types"
+    ],
+    "paths": {
+      "@/*": [
+        "./src/*"
+      ]
     },
-    "include": [
-        "vite.config.ts"
+    "types": [
+      "node",
     ]
+  },
+  "include": [
+    "vite.config.ts"
+  ]
 }

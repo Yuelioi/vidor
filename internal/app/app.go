@@ -110,13 +110,6 @@ func (a *App) Startup(ctx context.Context) {
 
 	go func() {
 		defer wg.Done()
-		// 任务队列
-		a.logger.Info("任务队列加载中")
-		a.taskQueue = task.New()
-	}()
-
-	go func() {
-		defer wg.Done()
 		// 注册事件
 		a.logger.Info("注册事件")
 		registerEvents(a)
@@ -137,6 +130,13 @@ func (a *App) Startup(ctx context.Context) {
 		systemNotification := notify.NewSystem(a.ctx)
 		a.notification = notify.NewLoggingNotification(a.logger, systemNotification)
 
+	}()
+
+	go func() {
+		defer wg.Done()
+		// 任务队列
+		a.logger.Info("任务队列加载中")
+		a.taskQueue = task.New(a.config.DownloadLimit, a.manager, a.ctx)
 	}()
 
 	// 注册快捷键

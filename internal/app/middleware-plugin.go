@@ -31,7 +31,7 @@ func (a *App) DownloadPlugin(id string) bool {
 	ctx := a.injectMetadata()
 
 	if err := a.manager.Download(m, ctx); err != nil {
-		a.notification.Send(a.ctx, notify.Notice{
+		a.notification.Send(notify.Notice{
 			EventName:  "system.notice",
 			Content:    "下载插件失败: " + err.Error(),
 			NoticeType: "info",
@@ -56,7 +56,7 @@ func (a *App) UpdatePlugin(id string) bool {
 	ctx := a.injectMetadata()
 
 	if err := a.manager.UpdatePlugin(p.GetManifest(), ctx); err != nil {
-		a.notification.Send(a.ctx, notify.Notice{
+		a.notification.Send(notify.Notice{
 			EventName:  "system.notice",
 			Content:    "更新插件失败: " + err.Error(),
 			NoticeType: "info",
@@ -77,7 +77,7 @@ func (a *App) RemovePlugin(id string) bool {
 	}
 
 	if err := a.manager.RemovePlugin(p.GetManifest()); err != nil {
-		a.notification.Send(a.ctx, notify.Notice{
+		a.notification.Send(notify.Notice{
 			EventName:  "system.notice",
 			Content:    "移除插件失败: " + err.Error(),
 			NoticeType: "info",
@@ -98,7 +98,7 @@ func (a *App) RunPlugin(id string) bool {
 	ctx := a.injectMetadata()
 	m := p.GetManifest()
 	if err := a.manager.RunPlugin(p.GetManifest(), ctx); err != nil {
-		a.notification.Send(a.ctx, notify.Notice{
+		a.notification.Send(notify.Notice{
 			EventName:  "system.notice",
 			Content:    "运行插件失败: " + err.Error(),
 			NoticeType: "info",
@@ -120,7 +120,7 @@ func (a *App) UpdatePluginPrams(id string, settings map[string]string) bool {
 
 	if manifest.State == plugin.Working {
 		if err := a.manager.UpdatePluginParams(p.GetManifest()); err != nil {
-			a.notification.Send(a.ctx, notify.Notice{
+			a.notification.Send(notify.Notice{
 				EventName:  "system.notice",
 				Content:    "更新插件参数失败: " + err.Error(),
 				NoticeType: "info",
@@ -142,7 +142,7 @@ func (a *App) StopPlugin(id string) bool {
 	// 停止
 	if manifest.State == plugin.Working {
 		if err := a.manager.StopPlugin(manifest); err != nil {
-			a.notification.Send(a.ctx, notify.Notice{
+			a.notification.Send(notify.Notice{
 				EventName:  "system.notice",
 				Content:    "插件关闭失败: " + err.Error(),
 				NoticeType: "info",
@@ -162,7 +162,7 @@ func (a *App) EnablePlugin(id string) bool {
 		return false
 	}
 	if !ok {
-		a.notification.Send(a.ctx, notify.Notice{
+		a.notification.Send(notify.Notice{
 			EventName:  "system.notice",
 			Content:    "未找到当前插件, 请联系作者",
 			NoticeType: "info",

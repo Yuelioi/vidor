@@ -163,7 +163,7 @@
                       name=""
                       class="input w-full"
                       id=""
-                      v-model="task.magicName" />
+                      v-model="task.magic_name" />
                   </div>
                 </td>
                 <template v-for="type in mediaTypes" :key="type">
@@ -206,9 +206,11 @@
               全选
             </span>
           </label>
+
           <button
             class="btn btn-sm mx-4"
             @click="parsePlaylistInfo"
+            v-if="videoInfo.need_parse"
             :disabled="isSelectAtLessOne(videoInfo.tasks)">
             解析
           </button>
@@ -226,22 +228,20 @@
 </template>
 <script lang="ts" setup>
 import { VDialog } from '@/plugins/dialog/index.js'
-import { proto, app } from '@wailsjs/go/models'
+import { proto } from '@wailsjs/go/models'
 
 const mediaTypes = ['video', 'audio']
 
-import { Playlist, Task } from '@/models/go'
 import { ShowDownloadInfo, AddDownloadTasks, ParsePlaylist } from '@wailsjs/go/app/App'
-import { MagicName } from '@/utils/util'
-// import { MagicName } from '@/utils/util'
+import { MagicName, sanitizeFileName } from '@/utils/util'
+import router from '@/router'
 
 const { configs } = storeToRefs(useBasicStore())
-const isDownloadBtnDisabled = ref(false)
 const link = ref('https://www.bilibili.com/video/BV1k14y117di/')
 
 const showPlaylistInfo = ref(false)
 const showMagicName = ref(false)
-const videoInfo = reactive<Playlist>(new Playlist(configs.value.download_dir))
+const videoInfo = reactive<proto.InfoResponse>(new proto.InfoResponse())
 
 const hasVideo = computed(() => {
   return videoInfo.tasks[0].segments.some((segment) => segment.mime_type === 'video')
@@ -254,23 +254,29 @@ const hasImage = computed(() => {
   return videoInfo.tasks[0].segments.some((segment) => segment.mime_type === 'image')
 })
 
-// const router = useRouter()
-
-function isSelectAll(tasks: Task[]) {
-  return tasks.every((task: Task) => {
+function isSelectAll(tasks: proto.Task[]) {
+  return tasks.every((task: proto.Task) => {
     return task.selected
   })
 }
-function isSelectAtLessOne(tasks: Task[]) {
-  return !tasks.some((task: Task) => {
+function isSelectAtLessOne(tasks: proto.Task[]) {
+  return !tasks.some((task: proto.Task) => {
     return task.selected
   })
 }
 
-function handleSelectedAll(tasks: Task[]) {
+function handleSelectedAll(tasks: proto.Task[]) {
   const status = isSelectAll(tasks)
   tasks.forEach((task) => {
     task.selected = !status
+  })
+}
+
+function setWorkDir(videoInfo: proto.InfoResponse) {
+  const pureTitle = sanitizeFileName(videoInfo.title)
+
+  videoInfo.tasks.forEach((task: proto.Task) => {
+    task.work_dir = videoInfo.downloader_dir + '/' + pureTitle
   })
 }
 
@@ -284,35 +290,33 @@ async function extractPlaylistInfo() {
   if (result.title !== '') {
     showPlaylistInfo.value = true
     Object.assign(videoInfo, result)
+    applyMagicName()
+    setWorkDir(videoInfo)
     selectBest(videoInfo)
   }
 }
 
 // 解析视频
 function parsePlaylistInfo() {
-  const ids: string[] = []
+  // 收集所有选中的任务 ID
 
-  videoInfo.tasks.forEach((task) => {
-    if (task.selected) {
-      ids.push(task.id)
-    }
-  })
-
-  ParsePlaylist(ids).then((vi: proto.TasksResponse) => {
-    if (vi.id === '') {
-      Message({ message: '获取视频信息失败, 请检查设置, 以及日志文件', type: 'warn' })
-    } else {
-      Message({ message: '解析成功', type: 'success' })
-      Object.assign(videoInfo, vi)
-      console.log(videoInfo)
-
-      selectBest(videoInfo)
-    }
-  })
+  ParsePlaylist(videoInfo.tasks)
+    .then((vi: proto.TasksResponse) => {
+      if (vi.id !== '') {
+        Message({ message: '解析成功', type: 'success' })
+        Object.assign(videoInfo, vi)
+        // applyMagicName()
+        selectBest(videoInfo)
+      }
+    })
+    .catch((error) => {
+      Message({ message: '解析失败', type: 'error' })
+      console.error('解析播放列表失败:', error)
+    })
 }
 
 // 选择最高画质
-function selectBest(videoInfo: Playlist) {
+function selectBest(videoInfo: proto.InfoResponse) {
   videoInfo.tasks.forEach((task) => {
     task.segments.forEach((seg) => {
       if (seg.formats.length > 0) {
@@ -322,43 +326,18 @@ function selectBest(videoInfo: Playlist) {
   })
 }
 
-function addTasks() {
-  const mps = new app.taskMap()
-  mps['1'] = 1
+async function addTasks() {
+  await router.push({ name: 'tasks' })
+  showPlaylistInfo.value = false
 
-  isDownloadBtnDisabled.value = true
-  for (let i = 0; i < videoInfo.tasks.length; i++) {
-    const task = videoInfo.tasks[i]
-
-    if (!task.selected) {
-      continue
-    }
-  }
-
-  setTimeout(() => {
-    isDownloadBtnDisabled.value = false
-  }, 1000)
-
-  AddDownloadTasks(videoInfo.tasks).then((result: boolean) => {
-    console.log(result)
-
-    // if (parts.length == 0) {
-    //   Message({ message: '添加失败', type: 'warn' })
-    // } else {
-    //   tasks.value.push(...parts)
-    //   Message({ message: '添加成功', type: 'success' })
-    //   router.push({
-    //     name: 'task'
-    //   })
-    // }
-  })
+  AddDownloadTasks(videoInfo.tasks).then((result: boolean) => {})
 }
 
 function applyMagicName() {
   videoInfo.tasks.forEach((element, index) => {
-    element.magicName = MagicName(
+    element.magic_name = MagicName(
       configs.value.magic_name,
-      videoInfo.workDir,
+      videoInfo.downloader_dir,
       element.title,
       index + 1
     )

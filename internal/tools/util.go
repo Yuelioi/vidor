@@ -79,7 +79,6 @@ func randomString(length int) string {
 
 // 生成魔法名称
 func MagicName(template, workDirname, title string, index int) string {
-	template = strings.ReplaceAll(template, "{{WorkDir}}", workDirname)
 	template = strings.ReplaceAll(template, "{{Title}}", title)
 	template = strings.ReplaceAll(template, "{{Index}}", fmt.Sprintf("%0.3d", index))
 	template = strings.ReplaceAll(template, "{{RndInt}}", fmt.Sprintf("%0.3d", rand.Intn(999)))

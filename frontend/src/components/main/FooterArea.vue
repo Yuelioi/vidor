@@ -4,11 +4,12 @@
 const _themes = ['light', 'dark']
 const { switchTheme } = useTheme(_themes)
 const { configs, tasks } = storeToRefs(useBasicStore())
-import { Notice, Task } from '@/models/go'
+import { Notice } from '@/models/go'
+import { proto } from '@wailsjs/go/models'
 
 import { WindowMinimise } from '@wailsjs/runtime'
 
-EventsOn('updateInfo', (optionalData?: Task) => {
+EventsOn('system.task', (optionalData?: proto.Task) => {
   const index = tasks.value.findIndex((task) => task.id === optionalData?.id)
   if (index !== -1 && optionalData) {
     tasks.value.splice(index, 1, optionalData)
@@ -41,7 +42,7 @@ onMounted(async () => {
   }
 
   // 加载任务
-  const fetchedTasks = (await GetTaskParts()) as Task[]
+  const fetchedTasks = (await GetTaskParts()) as proto.Task[]
   tasks.value.splice(0, tasks.value.length, ...fetchedTasks)
 })
 
