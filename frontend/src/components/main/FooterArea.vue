@@ -42,7 +42,7 @@ onMounted(async () => {
   }
 
   // 加载任务
-  const fetchedTasks = (await GetTaskParts()) as proto.Task[]
+  const fetchedTasks = (await GetTasks()) as proto.Task[]
   tasks.value.splice(0, tasks.value.length, ...fetchedTasks)
 })
 

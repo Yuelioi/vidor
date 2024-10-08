@@ -162,6 +162,13 @@
     "Notice": true,
     "RemovePlugin": true,
     "UpdatePluginPrams": true,
-    "GetMarketPlugins": true
+    "GetMarketPlugins": true,
+    "DirectiveBinding": true,
+    "MaybeRef": true,
+    "MaybeRefOrGetter": true,
+    "onWatcherCleanup": true,
+    "useId": true,
+    "useModel": true,
+    "useTemplateRef": true
   }
 }
