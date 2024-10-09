@@ -21,11 +21,15 @@ func (a *App) ShowDownloadInfo(link string) *pb.InfoResponse {
 	// 获取下载器
 	p, err := a.manager.Select(link)
 	if err != nil {
+		provider := "unknown"
+		if p != nil {
+			provider = p.Manifest.Name
+		}
 		a.notification.Send(notify.Notice{
 			EventName:  "system.notice",
 			Content:    "未找到可用插件",
 			NoticeType: "info",
-			Provider:   p.Manifest.Name},
+			Provider:   provider},
 		)
 		return nil
 	}

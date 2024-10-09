@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"slices"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -42,6 +43,19 @@ func NewTaskQueue(limit int) *TaskQueue {
 		downloadCtx:   ctx,
 		cancel:        cancel,
 		working:       atomic.Bool{},
+	}
+}
+
+func (tq *TaskQueue) StartNotify() {
+	ticker := time.NewTicker(1 * time.Second)
+	defer ticker.Stop()
+
+	for range ticker.C {
+		tasks := slices.Concat(tq.workingTasks, tq.queueTasks, tq.finishedTasks)
+		fmt.Printf("tasks: %v\n", tasks)
+		if len(tq.queueTasks) == 0 && len(tq.workingTasks) == 0 {
+			return
+		}
 	}
 }
 

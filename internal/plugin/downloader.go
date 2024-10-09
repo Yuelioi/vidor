@@ -34,6 +34,8 @@ func (p *DownloadPlugin) Run(ctx context.Context) error {
 	// 获取命令
 	pluginPath := filepath.Join(p.Manifest.BaseDir, p.Manifest.Executable)
 
+	var addr string
+
 	// 本地启动 localhost[:port]
 	if strings.HasPrefix(p.Manifest.Addr, "localhost") {
 		addrs := strings.Split(p.Manifest.Addr, ":")
@@ -62,7 +64,7 @@ func (p *DownloadPlugin) Run(ctx context.Context) error {
 		if err != nil {
 			return errors.New("启动进程失败: " + err.Error())
 		}
-		p.Manifest.Addr = "localhost:" + port
+		addr = "localhost:" + port
 
 	}
 
@@ -71,7 +73,7 @@ func (p *DownloadPlugin) Run(ctx context.Context) error {
 		addrs := strings.Split(p.Manifest.Addr, ":")
 		if len(addrs) == 2 {
 			// 启动进程
-			p.Manifest.Addr = "localhost:" + addrs[1]
+			addr = "localhost:" + addrs[1]
 		}
 	}
 	// TODO 远程
@@ -79,7 +81,7 @@ func (p *DownloadPlugin) Run(ctx context.Context) error {
 	// ...
 	// }
 
-	conn, err := connect(p.Manifest.Addr)
+	conn, err := connect(addr)
 	if err != nil {
 		return err
 	}

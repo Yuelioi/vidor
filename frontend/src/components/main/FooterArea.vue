@@ -9,11 +9,17 @@ import { proto } from '@wailsjs/go/models'
 
 import { WindowMinimise } from '@wailsjs/runtime'
 
-EventsOn('system.task', (optionalData?: proto.Task) => {
-  const index = tasks.value.findIndex((task) => task.id === optionalData?.id)
-  if (index !== -1 && optionalData) {
-    tasks.value.splice(index, 1, optionalData)
+EventsOn('system.task', (fetchData?: proto.Task) => {
+  const index = tasks.value.findIndex((task) => task.id === fetchData?.id)
+  if (index !== -1 && fetchData) {
+    tasks.value.splice(index, 1, fetchData)
   }
+})
+EventsOn('system.tasks', (fetchData?: proto.Task[]) => {
+  Object.assign(tasks.value, fetchData)
+  Message({ message: '任务更新' })
+
+  console.log(tasks.value)
 })
 
 EventsOn('system.notice', (messageData: Notice) => {
@@ -37,8 +43,7 @@ onMounted(async () => {
   const fetchedConfig = (await GetConfig()) as Config
   if (fetchedConfig) {
     Object.assign(configs.value, fetchedConfig)
-    console.log('加载配置')
-    console.log(configs.value)
+    console.log('加载配置成功')
   }
 
   // 加载任务

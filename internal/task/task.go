@@ -25,7 +25,8 @@ type TaskQueue struct {
 	mu            sync.Mutex
 	taskChan      chan *pb.Task
 	ctx           context.Context
-	working       atomic.Bool
+	queueEnable   atomic.Bool
+	notifyEnable  atomic.Bool
 	notification  *notify.TaskNotification
 }
 
@@ -42,7 +43,8 @@ func New(limit int, manager *plugin.PluginManager, ctx context.Context) *TaskQue
 		limit:         limit,
 		taskChan:      make(chan *pb.Task, limit),
 		ctx:           ctx,
-		working:       atomic.Bool{},
+		queueEnable:   atomic.Bool{},
+		notifyEnable:  atomic.Bool{},
 		notification:  taskNotify,
 	}
 }
@@ -52,13 +54,11 @@ func (tq *TaskQueue) Add(task *pb.Task) {
 
 	tq.queueTasks = append(tq.queueTasks, task)
 
-	fmt.Printf("tq.working.Load(): %v\n", tq.working.Load())
-
-	if !tq.working.Load() {
-		tq.working.Store(true)
+	if !tq.queueEnable.Load() {
+		tq.queueEnable.Store(true)
 		go func() {
 			tq.Start()
-			tq.working.Store(false)
+			tq.queueEnable.Store(false)
 		}()
 	}
 	tq.Reload()
@@ -70,31 +70,50 @@ func (tq *TaskQueue) AddAll(tasks []*pb.Task) {
 
 	tq.queueTasks = append(tq.queueTasks, tasks...)
 
-	fmt.Printf("tq.working.Load(): %v\n", tq.working.Load())
+	fmt.Printf("tq.queueEnable.Load(): %v\n", tq.queueEnable.Load())
 
-	if !tq.working.Load() {
-		tq.working.Store(true)
+	if !tq.queueEnable.Load() {
+		tq.queueEnable.Store(true)
 		go func() {
 			tq.Start()
-			tq.working.Store(false)
+			tq.queueEnable.Store(false)
 		}()
 	}
 	tq.Reload()
 }
 
-func (tq *TaskQueue) Notify() {
+func (tq *TaskQueue) StartNotify() {
 	ticker := time.NewTicker(1 * time.Second)
 	defer ticker.Stop()
 
 	for range ticker.C {
+
+		for _, task := range tq.workingTasks {
+			task.State = 1
+		}
+		for _, task := range tq.queueTasks {
+			task.State = 2
+		}
+		for _, task := range tq.finishedTasks {
+			task.State = 3
+		}
+
 		tasks := slices.Concat(tq.workingTasks, tq.queueTasks, tq.finishedTasks)
+
 		tq.notification.UpdateTasks(tasks)
+
+		// 没有工作任务 就退出
+		if len(tq.queueTasks) == 0 && len(tq.workingTasks) == 0 {
+			return
+		}
 	}
 }
 
 func (tq *TaskQueue) Start() {
 	ticker := time.NewTicker(1 * time.Second)
 	defer ticker.Stop()
+
+	go tq.StartNotify()
 
 	for range ticker.C {
 		select {
@@ -132,7 +151,9 @@ func (tq *TaskQueue) Start() {
 						fmt.Printf("Error receiving progress: %v\n", err)
 						break
 					}
-					fmt.Printf("Download progress: %s - %s\n", progress.Id, progress.Speed)
+					task.Percent = int64(progress.BytesTransferred / progress.TotalBytes)
+					task.Speed = progress.Speed
+					fmt.Printf("Download progress: %s - %d\n", progress.Id, progress.Speed)
 				}
 				tq.mu.Lock()
 				tq.finishedTasks = append(tq.finishedTasks, task)
@@ -144,6 +165,7 @@ func (tq *TaskQueue) Start() {
 
 			if len(tq.queueTasks) == 0 {
 				// 任务队列没任务 直接结束
+				fmt.Println("无任务队列, 退出")
 				return
 			} else if len(tq.workingTasks) < tq.limit {
 				//  任务队列有任务 但是正在下载的任务数量小于限制

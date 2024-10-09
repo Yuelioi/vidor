@@ -1,6 +1,7 @@
 <template>
   <div class="p-4 h-full flex flex-col">
-    <div class="h-full" v-if="filteredTasks.length > 0">
+    <div class="h-full flex flex-col" v-if="filteredTasks.length > 0">
+      <!-- 任务顶部功能组 -->
       <div class="pb-4 pt-2 flex space-x-4 items-center">
         <div class="badge badge-lg mr-auto">任务:{{ filteredTasks.length }}</div>
 
@@ -8,44 +9,47 @@
           <span class="icon-[ant-design--clear-outlined] size-6"></span>
         </div>
       </div>
-      <div class="overflow-y-auto space-y-3 h-full text">
-        <div v-for="(task, index) in filteredTasks" :key="index" class="bg-base-100 rounded-md">
-          <div class="flex p-2 h-20 group relative">
-            <div
-              class="absolute group-hover:opacity-0 right-2 top-3 badge badge-sm opacity-45 bg-base-200">
-              {{ task.title }}
-            </div>
-            <div v-if="task.cover" class="relative">
-              <img class="object-contain h-full" :src="task.cover" :alt="task.title" />
-              <div
-                @click="OpenFileWithSystemPlayer(task.work_dir)"
-                :class="tab.color"
-                class="transition-opacity duration-300 opacity-0 group-hover:opacity-100 absolute icon-[lucide--circle-play] size-8 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"></div>
-            </div>
-            <div v-else>
-              <div class="h-16 w-24 skeleton shrink-0"></div>
+
+      <!-- 任务列表-->
+      <div class="overflow-y-auto space-y-3 h-full text flex-1">
+        <div
+          v-for="(task, index) in filteredTasks"
+          :key="index"
+          class="h-24 group hover:shadow-2xl">
+          <div class="card w-full h-full card-side bg-base-100 shadow-xl">
+            <!-- 封面 -->
+            <figure class="basis-2/12 relative" v-if="task.cover !== '1'">
+              <img :src="task.cover" :alt="task.title" />
+            </figure>
+            <div v-else class="basis-2/12">
+              <div class="h-24 skeleton shrink-0 rounded-r-none"></div>
             </div>
 
-            <div class="flex-1 pl-4 flex flex-col">
-              <h2 class="flex-1 font-bold line-clamp-1">
+            <div class="card-body py-4 px-6 basis-10/12 relative">
+              <!-- 第一行 -->
+              <div class="flex items-center">
                 <span
-                  :class="'group-hover:' + tab.color"
-                  class="group-hover:link font-bold"
+                  class="text-center line-clamp-1 font-bold group-hover:link"
                   @click="BrowserOpenURL(task.url)">
                   {{ task.title ? task.title : '标题正在加载中...' }}
                 </span>
-              </h2>
 
-              <div class="text-xs text-base-content/40">
-                <div>52.3M</div>
+                <div class="text-slate-300 space-x-2 ml-auto">
+                  <div
+                    @click="OpenFileWithSystemPlayer(task.work_dir)"
+                    class="icon-[lucide--circle-play] size-5"></div>
+                  <span
+                    class="icon-[lucide--trash-2] size-5 cursor-pointer"
+                    @click="removeTask(task.id)"></span>
+                  <span
+                    class="icon-[ic--baseline-folder-open] size-5 cursor-pointer"
+                    @click="OpenExplorer(task.work_dir)"></span>
+                </div>
               </div>
-            </div>
-            <div
-              class="ml-3 h-full flex space-x-2 items-center justify-between transition-opacity duration-300 opacity-0 group-hover:opacity-100">
-              <span class="icon-[lucide--trash-2] size-8" @click="removeTask(task.id)"></span>
-              <span
-                class="icon-[ic--baseline-folder-open] size-8"
-                @click="OpenExplorer(task.work_dir)"></span>
+
+              <div class="flex items-center gap-2 text-xs text-base-content/40">
+                <span>{{ task.size }}</span>
+              </div>
             </div>
           </div>
         </div>
@@ -62,13 +66,12 @@ import { OpenExplorer, RemoveTask, OpenFileWithSystemPlayer } from '@wailsjs/go/
 import { BrowserOpenURL } from '@wailsjs/runtime/runtime'
 import { Tab } from '@/models/ui'
 import { proto } from '@wailsjs/go/models'
-
 defineProps<{ tab: Tab }>()
 
 const { tasks } = storeToRefs(useBasicStore())
 
 const filteredTasks = computed(() => {
-  return tasks.value.filter((task: proto.Task) => task.state === 3)
+  return tasks.value.filter((task) => task.state === 3)
 })
 
 const removeTask = (uid: string) => {

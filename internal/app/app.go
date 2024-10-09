@@ -3,6 +3,7 @@ package app
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"os"
 	"path/filepath"
 	"sync"
@@ -199,6 +200,8 @@ func (a *App) loadPlugins() error {
 
 	for _, dir := range dirs {
 		if dir.IsDir() {
+			fmt.Print("加载插件目录中")
+
 			// 读取插件信息
 			pluginDir := filepath.Join(a.appDirs.Plugins, dir.Name())
 			pluginManifestPath := filepath.Join(pluginDir, "manifest.json")
