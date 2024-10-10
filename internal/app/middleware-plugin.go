@@ -148,6 +148,7 @@ func (a *App) StopPlugin(id string) bool {
 				NoticeType: "info",
 				Provider:   "system",
 			})
+			manifest.State = plugin.NotWork
 			return false
 		}
 	}

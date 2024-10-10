@@ -19,7 +19,7 @@ export const useBasicStore = defineStore('basic', () => {
   const task1 = new proto.Task()
   task1.state = 1
   task1.status = '下载出错下载出错下载出错下载出错下载出错下载出错下载出错'
-  task1.speed = '20M/S'
+  task1.speed = 20
   task1.size = 500
   task1.duration = 300
   task1.percent = 50
@@ -34,7 +34,7 @@ export const useBasicStore = defineStore('basic', () => {
   const task4 = new proto.Task()
   task4.state = 1
   task4.status = '下载视频中'
-  task4.speed = '20M/S'
+  task4.speed = 20
   task4.size = 5000
   task4.duration = 600
   task4.percent = 50
@@ -42,13 +42,13 @@ export const useBasicStore = defineStore('basic', () => {
   task4.url = 'http://example.com/task1'
   task4.session_id = 'session-123'
   task4.title = 'Task One'
-  task4.cover = '1'
+  task4.cover = ''
   task4.work_dir = '/path/to/workdir'
   task4.segments = [] // 假设Segment是一个空数组
 
   const task2 = new proto.Task()
   task2.state = 2
-  task2.speed = '20M/S'
+  task2.speed = 20
   task1.size = 6000
   task2.duration = 600
   task2.percent = 75
@@ -62,7 +62,7 @@ export const useBasicStore = defineStore('basic', () => {
 
   const task3 = new proto.Task()
   task3.state = 3
-  task1.speed = '20M/S'
+  task1.speed = 20
   task1.size = 500
   task3.duration = 600
   task3.percent = 25

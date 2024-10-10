@@ -16,12 +16,7 @@ func (app *App) GetTasks() []*pb.Task {
 3. 保存任务信息
 */
 func (a *App) AddDownloadTasks(tasks []*pb.Task) bool {
-
-	for _, task := range tasks {
-		task.WorkDir = a.config.DownloadDir
-	}
 	a.taskQueue.AddAll(tasks)
-
 	return true
 }
 

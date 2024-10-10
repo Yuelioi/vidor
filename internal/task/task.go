@@ -151,9 +151,10 @@ func (tq *TaskQueue) Start() {
 						fmt.Printf("Error receiving progress: %v\n", err)
 						break
 					}
-					task.Percent = int64(progress.BytesTransferred / progress.TotalBytes)
+
+					task.Status = progress.Status
+					task.Percent = progress.Percent
 					task.Speed = progress.Speed
-					fmt.Printf("Download progress: %s - %d\n", progress.Id, progress.Speed)
 				}
 				tq.mu.Lock()
 				tq.finishedTasks = append(tq.finishedTasks, task)
@@ -162,12 +163,11 @@ func (tq *TaskQueue) Start() {
 			}()
 
 		default:
-
 			if len(tq.queueTasks) == 0 {
 				// 任务队列没任务 直接结束
 				fmt.Println("无任务队列, 退出")
 				return
-			} else if len(tq.workingTasks) < tq.limit {
+			} else if len(tq.taskChan) < tq.limit {
 				//  任务队列有任务 但是正在下载的任务数量小于限制
 				tq.Reload()
 			}

@@ -19,7 +19,7 @@
           <div class="card w-full h-full card-side bg-base-100 shadow-xl">
             <!-- 封面 -->
             <figure class="basis-2/12 relative" v-if="task.cover !== '1'">
-              <img :src="task.cover" :alt="task.title" />
+              <img :src="task.cover" />
             </figure>
             <div v-else class="basis-2/12">
               <div class="h-24 skeleton shrink-0 rounded-r-none"></div>
@@ -91,8 +91,6 @@ const removeTask = (uid: string) => {
 const removeAll = () => {
   VAlert({ alert: '确定要清理所有任务吗(不会删除文件)' }).then((ok) => {
     if (ok) {
-      console.log(filteredTasks.value)
-
       RemoveAllTask([]).then((ok) => {
         if (ok) {
           Message({ message: '删除任务成功', type: 'success' })
