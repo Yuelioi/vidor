@@ -36,14 +36,14 @@
 
                 <div class="text-slate-300 space-x-2 ml-auto">
                   <div
-                    @click="OpenFileWithSystemPlayer(task.work_dir)"
+                    @click="OpenFileWithSystemPlayer(task.filepath)"
                     class="icon-[lucide--circle-play] size-5"></div>
                   <span
                     class="icon-[lucide--trash-2] size-5 cursor-pointer"
                     @click="removeTask(task.id)"></span>
                   <span
                     class="icon-[ic--baseline-folder-open] size-5 cursor-pointer"
-                    @click="OpenExplorer(task.work_dir)"></span>
+                    @click="OpenExplorer(task.filepath)"></span>
                 </div>
               </div>
 

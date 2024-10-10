@@ -28,7 +28,7 @@ export const useBasicStore = defineStore('basic', () => {
   task1.session_id = 'session-123'
   task1.title = 'Task One Task One Task One Task One Task One'
   task1.cover = 'https://cdn.yuelili.com/docs/web/assert/anime-girl.jpg'
-  task1.work_dir = '/path/to/workdir'
+  task1.filepath = '/path/to/workdir'
   task1.segments = [] // 假设Segment是一个空数组
 
   const task4 = new proto.Task()
@@ -43,7 +43,7 @@ export const useBasicStore = defineStore('basic', () => {
   task4.session_id = 'session-123'
   task4.title = 'Task One'
   task4.cover = ''
-  task4.work_dir = '/path/to/workdir'
+  task4.filepath = '/path/to/workdir'
   task4.segments = [] // 假设Segment是一个空数组
 
   const task2 = new proto.Task()
@@ -57,7 +57,7 @@ export const useBasicStore = defineStore('basic', () => {
   task2.session_id = 'session-456'
   task2.title = 'Task Two'
   task2.cover = 'https://cdn.yuelili.com/docs/web/assert/anime-girl.jpg'
-  task2.work_dir = '/path/to/workdir2'
+  task2.filepath = '/path/to/workdir2'
   task2.segments = [] // 假设Segment是一个空数组
 
   const task3 = new proto.Task()
@@ -71,7 +71,7 @@ export const useBasicStore = defineStore('basic', () => {
   task3.session_id = 'session-789'
   task3.title = 'Task Three'
   task3.cover = 'https://cdn.yuelili.com/docs/web/assert/anime-girl.jpg'
-  task3.work_dir = '/path/to/workdir3'
+  task3.filepath = '/path/to/workdir3'
   task3.segments = [] // 假设Segment是一个空数组
 
   tasks.push(task1)

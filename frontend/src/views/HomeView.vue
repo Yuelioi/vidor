@@ -276,7 +276,7 @@ function setWorkDir(videoInfo: proto.InfoResponse) {
   const pureTitle = sanitizeFileName(videoInfo.title)
 
   videoInfo.tasks.forEach((task: proto.Task) => {
-    task.work_dir = videoInfo.downloader_dir + '/' + pureTitle
+    task.filepath = videoInfo.downloader_dir + '/' + pureTitle
   })
 }
 
