@@ -40,16 +40,3 @@ func (app *App) RemoveTask(id string) bool {
 func (app *App) RemoveAllTask(ids []string) bool {
 	return true
 }
-
-// 过滤 segments 中的 formats
-func filterSegments(segments []*pb.Segment, formatSet map[string]struct{}) {
-	for _, seg := range segments {
-		filteredFormats := []*pb.Format{}
-		for _, format := range seg.Formats {
-			if _, exists := formatSet[format.Id]; exists {
-				filteredFormats = append(filteredFormats, format)
-			}
-		}
-		seg.Formats = filteredFormats
-	}
-}

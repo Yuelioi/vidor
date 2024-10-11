@@ -302,7 +302,7 @@ function parsePlaylistInfo() {
 
   ParsePlaylist(videoInfo.tasks)
     .then((vi: proto.TasksResponse) => {
-      if (vi.id !== '') {
+      if (vi !== null) {
         Message({ message: '解析成功', type: 'success' })
         Object.assign(videoInfo, vi)
         // applyMagicName()

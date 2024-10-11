@@ -6,8 +6,11 @@ const { switchTheme } = useTheme(_themes)
 const { configs, tasks } = storeToRefs(useBasicStore())
 import { Notice } from '@/models/go'
 import { proto } from '@wailsjs/go/models'
+import { Plugin } from '@/models/go'
 
 import { WindowMinimise } from '@wailsjs/runtime'
+
+const { plugins } = storeToRefs(useBasicStore())
 
 EventsOn('system.task', (fetchData?: proto.Task) => {
   const index = tasks.value.findIndex((task) => task.id === fetchData?.id)
@@ -18,8 +21,13 @@ EventsOn('system.task', (fetchData?: proto.Task) => {
 EventsOn('system.tasks', (fetchData?: proto.Task[]) => {
   Object.assign(tasks.value, fetchData)
   Message({ message: '任务更新' })
+})
 
-  console.log(tasks.value)
+// 用来更新插件状态
+EventsOn('system.plugin', (fetchData?: Plugin) => {
+  if (fetchData.id in plugins.value) {
+    plugins.value[fetchData.id].state = fetchData.state
+  }
 })
 
 EventsOn('system.notice', (messageData: Notice) => {

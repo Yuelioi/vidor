@@ -34,7 +34,7 @@ func (pm *PluginManager) Select(url string) (*DownloadPlugin, error) {
 				if err != nil {
 					return nil, errors.New("插件正则表达式编译失败: " + err.Error())
 				}
-				if reg.MatchString(url) {
+				if reg.MatchString(url) && downloadPlugin.Manifest.State == Working {
 					return downloadPlugin, nil
 				}
 			}

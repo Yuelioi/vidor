@@ -5,11 +5,12 @@ go 1.22.6
 require (
 	github.com/energye/systray v1.0.2
 	github.com/go-resty/resty/v2 v2.14.0
+	github.com/google/uuid v1.6.0
 	github.com/kkdai/youtube/v2 v2.10.1
 	github.com/michimani/deepl-sdk-go v0.3.1
 	github.com/sirupsen/logrus v1.9.3
 	github.com/u2takey/ffmpeg-go v0.5.0
-	github.com/wailsapp/wails/v2 v2.9.2
+	github.com/wailsapp/wails/v2 v2.9.1
 	golang.design/x/hotkey v0.4.1
 	golang.org/x/exp v0.0.0-20240909161429-701f63a606c0
 	golift.io/xtractr v0.2.2
@@ -34,7 +35,6 @@ require (
 	github.com/go-sourcemap/sourcemap v2.1.3+incompatible // indirect
 	github.com/godbus/dbus/v5 v5.1.0 // indirect
 	github.com/google/pprof v0.0.0-20240227163752-401108e1b7e7 // indirect
-	github.com/google/uuid v1.6.0 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/go-multierror v1.1.1 // indirect
 	github.com/jchv/go-winloader v0.0.0-20210711035445-715c2860da7e // indirect

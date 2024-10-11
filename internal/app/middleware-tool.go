@@ -25,6 +25,7 @@ func (app *App) OpenExplorer(dir string) error {
 	return cmd.Start()
 }
 
+// 以本地管理器打开文件
 func (app *App) OpenFileWithSystemPlayer(filePath string) error {
 	var cmd *exec.Cmd
 

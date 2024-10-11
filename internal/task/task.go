@@ -49,6 +49,9 @@ func New(limit int, manager *plugin.PluginManager, ctx context.Context) *TaskQue
 	}
 }
 func (tq *TaskQueue) Add(task *pb.Task) {
+	if !task.Selected {
+		return
+	}
 	tq.mu.Lock()
 	defer tq.mu.Unlock()
 
@@ -65,10 +68,23 @@ func (tq *TaskQueue) Add(task *pb.Task) {
 }
 
 func (tq *TaskQueue) AddAll(tasks []*pb.Task) {
+
+	tmpTasks := make([]*pb.Task, 0)
+
+	for _, task := range tasks {
+		if task.Selected {
+			tmpTasks = append(tmpTasks, task)
+		}
+	}
+
+	if len(tmpTasks) == 0 {
+		return
+	}
+
 	tq.mu.Lock()
 	defer tq.mu.Unlock()
 
-	tq.queueTasks = append(tq.queueTasks, tasks...)
+	tq.queueTasks = append(tq.queueTasks, tmpTasks...)
 
 	fmt.Printf("tq.queueEnable.Load(): %v\n", tq.queueEnable.Load())
 
@@ -83,6 +99,8 @@ func (tq *TaskQueue) AddAll(tasks []*pb.Task) {
 }
 
 func (tq *TaskQueue) StartNotify() {
+	fmt.Println("开始下载通知")
+
 	ticker := time.NewTicker(1 * time.Second)
 	defer ticker.Stop()
 
@@ -104,6 +122,7 @@ func (tq *TaskQueue) StartNotify() {
 
 		// 没有工作任务 就退出
 		if len(tq.queueTasks) == 0 && len(tq.workingTasks) == 0 {
+			fmt.Println("退出下载通知")
 			return
 		}
 	}
@@ -151,10 +170,18 @@ func (tq *TaskQueue) Start() {
 						fmt.Printf("Error receiving progress: %v\n", err)
 						break
 					}
+					// 持续更新: 状态 百分比 速度
 
 					task.Status = progress.Status
 					task.Percent = progress.Percent
 					task.Speed = progress.Speed
+					task.Cover = progress.Cover
+
+					fmt.Printf("task.Percent: %v task.Status %v \n", task.Percent, task.Status)
+
+					if task.Cover != "" {
+						task.Cover = "/files/" + task.Cover
+					}
 				}
 				tq.mu.Lock()
 				tq.finishedTasks = append(tq.finishedTasks, task)

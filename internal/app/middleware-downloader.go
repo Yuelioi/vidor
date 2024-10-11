@@ -8,6 +8,7 @@ import (
 	"github.com/Yuelioi/vidor/internal/notify"
 	"github.com/Yuelioi/vidor/internal/plugin"
 	pb "github.com/Yuelioi/vidor/internal/proto"
+	"github.com/google/uuid"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
 
@@ -46,6 +47,11 @@ func (a *App) ShowDownloadInfo(link string) *pb.InfoResponse {
 	response, err := p.Service.GetInfo(ctx, &pb.InfoRequest{
 		Url: link,
 	})
+
+	for _, task := range response.Tasks {
+		uid := uuid.New()
+		task.Id = uid.String()
+	}
 
 	if err != nil {
 		a.notification.Send(notify.Notice{
