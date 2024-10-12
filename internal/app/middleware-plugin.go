@@ -15,7 +15,7 @@ func (a *App) GetPlugins() map[string]plugin.Manifest {
 // 返回主机注册的插件
 func (a *App) GetMarketPlugins() []*plugin.Manifest {
 
-	ms, err := a.manager.NetManifests()
+	ms, err := a.manager.GetManifests()
 	if err != nil {
 		return nil
 	}

@@ -64,7 +64,7 @@ func (pm *PluginManager) Manifests() map[string]Manifest {
 	return ms
 }
 
-func (pm *PluginManager) NetManifests() ([]*Manifest, error) {
+func (pm *PluginManager) GetManifests() ([]*Manifest, error) {
 	return fetchPlugins()
 }
 
