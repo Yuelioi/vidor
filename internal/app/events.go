@@ -1,5 +1,8 @@
 package app
 
+// APP 接受前端事件
+// 前端 >> 后端
+
 import (
 	"fmt"
 

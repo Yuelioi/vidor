@@ -1,5 +1,7 @@
 package notify
 
+// 系统消息分发(发给前端)
+
 import (
 	"context"
 	"fmt"
@@ -7,7 +9,6 @@ import (
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
 
-// 系统消息分发(发给前端)
 type SystemNotification struct {
 	ctx context.Context
 }

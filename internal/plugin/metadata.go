@@ -1,5 +1,7 @@
 package plugin
 
+// 插件注入数据 用于与插件系统通信
+
 import (
 	"context"
 	"strings"

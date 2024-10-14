@@ -1,5 +1,7 @@
 package app
 
+// APP 全局热键注册
+
 import (
 	"log"
 

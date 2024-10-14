@@ -1,5 +1,7 @@
 package app
 
+// APP 路径集合
+
 type AppDirs struct {
 	AppRoot string // 应用程序根目录
 	Libs    string // 库文件

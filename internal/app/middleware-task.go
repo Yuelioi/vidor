@@ -1,5 +1,8 @@
 package app
 
+// APP 中间件
+// 前端 >> 后端 下载任务
+
 import (
 	pb "github.com/Yuelioi/vidor/internal/proto"
 )

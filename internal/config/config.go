@@ -78,7 +78,6 @@ func (c *Config) Load() error {
 
 // 保存配置
 func (c *Config) Save() error {
-
 	configData, err := json.MarshalIndent(c, "", "  ")
 	if err != nil {
 		return err

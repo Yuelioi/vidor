@@ -1,5 +1,7 @@
 package app
 
+// APP 基础信息
+
 import "github.com/Yuelioi/vidor/internal/globals"
 
 // 软件基础信息 aa

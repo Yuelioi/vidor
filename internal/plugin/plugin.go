@@ -23,6 +23,7 @@ const (
 	Disabled            // 插件被禁用
 )
 
+// 插件接口
 type Plugin interface {
 	GetManifest() *Manifest // 获取插件基础信息
 
@@ -36,6 +37,7 @@ type Plugin interface {
 	Talk(ctx context.Context) error
 }
 
+// 插件配置
 type Manifest struct {
 	BaseDir string // 插件所在的文件夹路径(app生成)。
 

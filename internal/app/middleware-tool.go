@@ -1,5 +1,8 @@
 package app
 
+// APP 中间件
+// 前端 >> 后端 一些通用函数
+
 import (
 	"fmt"
 	"os/exec"

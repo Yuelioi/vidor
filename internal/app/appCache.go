@@ -1,5 +1,7 @@
 package app
 
+// APP 缓存
+
 import (
 	"github.com/Yuelioi/vidor/internal/plugin"
 )
@@ -19,5 +21,3 @@ func (c *Cache) Downloader() *plugin.DownloadPlugin {
 func (c *Cache) SetDownloader(p *plugin.DownloadPlugin) {
 	c.downloader = p
 }
-
-// 插件列表缓存

@@ -6,8 +6,9 @@ import (
 	"regexp"
 )
 
+// 插件管理器
 type PluginManager struct {
-	ctx     context.Context
+	ctx     context.Context // app的ctx 用于与app通信
 	plugins map[string]Plugin
 }
 

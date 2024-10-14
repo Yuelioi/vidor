@@ -1,5 +1,6 @@
 package config
 
+// 此乃系统配置
 type Config struct {
 	BaseDir          string // 配置所在文件夹
 	Theme            string `json:"theme"`

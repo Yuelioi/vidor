@@ -1,5 +1,8 @@
 package app
 
+// APP 中间件
+// 前端 >> 后端 配置信息
+
 import (
 	"context"
 	"path/filepath"

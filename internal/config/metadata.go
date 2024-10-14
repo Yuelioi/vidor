@@ -9,7 +9,7 @@ import (
 	"google.golang.org/grpc/metadata"
 )
 
-// 注入系统配置元数据
+// 注入系统配置元数据 用于与插件系统通信
 func (c *Config) InjectMetadata(ctx context.Context) context.Context {
 	v := reflect.ValueOf(c).Elem()
 	t := v.Type()

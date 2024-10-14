@@ -1,5 +1,7 @@
 package plugin
 
+// 处理插件下载功能
+
 import (
 	"context"
 	"encoding/json"

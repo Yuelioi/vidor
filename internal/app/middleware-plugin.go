@@ -1,5 +1,8 @@
 package app
 
+// APP 中间件
+// 前端 >> 后端 插件开启关闭下载更新等功能
+
 import (
 	"context"
 
