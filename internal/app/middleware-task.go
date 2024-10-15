@@ -19,7 +19,7 @@ func (app *App) GetTasks() []*pb.Task {
 3. 保存任务信息
 */
 func (a *App) AddDownloadTasks(tasks []*pb.Task) bool {
-	a.taskQueue.AddAll(tasks)
+	a.taskManager.AddTasks(tasks...)
 	return true
 }
 

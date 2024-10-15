@@ -30,7 +30,7 @@ type App struct {
 	appDirs      *AppDirs                    // 软件路径
 	appInfo      AppInfo                     // 软件信息
 	config       *config.Config              // 软件配置信息
-	taskQueue    *task.TaskQueue             // 任务队列 用于分发任务
+	taskManager  *task.TaskManager           // 任务队列 用于分发任务
 	manager      *plugin.PluginManager       // 插件管理系统
 	cache        *Cache                      // 缓存
 	notification *notify.LoggingNotification // 消息分发
@@ -137,7 +137,7 @@ func (a *App) Startup(ctx context.Context) {
 		defer wg.Done()
 		// 任务队列
 		a.logger.Info("任务队列加载中")
-		a.taskQueue = task.New(a.config.DownloadLimit, a.manager, a.ctx)
+		a.taskManager = task.NewTaskManager(a.config.DownloadLimit, a.manager, a.ctx)
 	}()
 
 	// 注册快捷键
