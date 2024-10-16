@@ -13,6 +13,7 @@ require (
 	github.com/wailsapp/wails/v2 v2.9.1
 	golang.design/x/hotkey v0.4.1
 	golang.org/x/exp v0.0.0-20240909161429-701f63a606c0
+	golang.org/x/sync v0.8.0
 	golift.io/xtractr v0.2.2
 	google.golang.org/grpc v1.65.0
 	google.golang.org/protobuf v1.34.2

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"slices"
+	"sync"
 	"time"
 
 	"github.com/Yuelioi/vidor/internal/notify"
@@ -21,40 +22,31 @@ type TaskManager struct {
 	finishedTasks []*pb.Task
 	notifyChan    chan struct{}
 	notification  *notify.TaskNotification
+	taskQueuePool *sync.Pool
 }
 
 func NewTaskManager(limit int, manager *plugin.PluginManager, ctx context.Context) *TaskManager {
 	taskNotify := notify.NewTaskNotification(ctx)
 
 	return &TaskManager{
+		pm:            manager,
+		limit:         limit,
+		queue:         []*TaskQueue{},
 		workingTasks:  make([]*pb.Task, 0),
 		queueTasks:    make([]*pb.Task, 0),
 		finishedTasks: make([]*pb.Task, 0),
-		pm:            manager,
-		queue:         []*TaskQueue{},
-		limit:         limit,
+		notifyChan:    make(chan struct{}),
 		notification:  taskNotify,
+		taskQueuePool: &sync.Pool{},
 	}
 }
 
 func (tm *TaskManager) AddTasks(tasks ...*pb.Task) {
-
 	for _, task := range tasks {
-
 		if len(tm.queue) < tm.limit {
-			// 选择下载器
-			p, err := tm.pm.Select(task.Url)
-			if err != nil {
-				task.Status = err.Error()
-				tm.notification.UpdateTask(task)
-				continue
-			}
-			tq := NewTaskQueue(p, func(completedTask *pb.Task, err error) {
-				tm.taskCompleted(completedTask, err)
-			})
-			tm.queue = append(tm.queue, tq)
-			tm.workingTasks = append(tm.workingTasks, task)
-			tq.work(task)
+
+			tm.processTask(task)
+
 		} else {
 			tm.queueTasks = append(tm.queueTasks, task)
 		}
@@ -62,46 +54,47 @@ func (tm *TaskManager) AddTasks(tasks ...*pb.Task) {
 
 }
 
+func (tm *TaskManager) processTask(task *pb.Task) error {
+	tq := tm.getTaskQueue(task)
+	defer tm.putTaskQueue(tq)
+
+	// 	tq := NewTaskQueue(p, func(completedTask *pb.Task, err error) {
+	// 	tm.taskCompleted(completedTask, err)
+	// })
+	tm.queue = append(tm.queue, tq)
+	tm.workingTasks = append(tm.workingTasks, task)
+	tq.work()
+
+	// 处理任务...
+
+	return nil
+}
+
+// 获取/新建任务队列, 可能为nil
+func (tm *TaskManager) getTaskQueue(task *pb.Task) *TaskQueue {
+	tq := tm.taskQueuePool.Get().(*TaskQueue)
+	if tq == nil {
+		p, err := tm.pm.Select(task.Url)
+		if err != nil {
+			task.Status = err.Error()
+			tm.notification.UpdateTask(task)
+			return nil
+		}
+
+		tq = NewTaskQueue(p, task, func(completedTask *pb.Task, err error) {
+			tm.taskCompleted(completedTask, err)
+		})
+	}
+	// 初始化tq
+	return tq
+}
+
+func (tm *TaskManager) putTaskQueue(tq *TaskQueue) {
+	tm.taskQueuePool.Put(tq)
+}
+
 func (tm *TaskManager) SetLimit(newLimit int) {
 	tm.limit = newLimit
-	tm.adjustRunningTasks()
-}
-
-func (tm *TaskManager) adjustRunningTasks() {
-	// 如果当前正在工作的任务数超过新的限制，则停止多余的任务
-	if len(tm.workingTasks) > tm.limit {
-		for i := len(tm.workingTasks) - 1; i >= tm.limit; i-- {
-			// 停止最后一个任务并移至队列
-			tm.queueTasks = append(tm.queueTasks, tm.workingTasks[i])
-			// tm.removeWorkingTask(tm.workingTasks[i])
-		}
-		tm.workingTasks = tm.workingTasks[:tm.limit]
-	} else if len(tm.workingTasks) < tm.limit && len(tm.queueTasks) > 0 {
-		// 如果有空闲槽位且有待处理的任务，则开始新的任务
-		for len(tm.workingTasks) < tm.limit && len(tm.queueTasks) > 0 {
-			nextTask := tm.queueTasks[0] // 取出第一个待处理任务
-			tm.queueTasks = tm.queueTasks[1:]
-			tm.AddTasks(nextTask) // 重新添加任务以启动它
-
-		}
-	}
-}
-
-func (tm *TaskManager) handleError(task *pb.Task, err error) {
-	// 从workingTasks中移除出错的任务
-	for i, t := range tm.workingTasks {
-		if t == task {
-			tm.workingTasks = append(tm.workingTasks[:i], tm.workingTasks[i+1:]...)
-			break
-		}
-	}
-
-	// 可以选择将任务放回队列或进行其他处理
-	tm.queueTasks = append(tm.queueTasks, task)
-
-	// 发送错误通知
-	task.Status = err.Error()
-	tm.notification.UpdateTask(task)
 }
 
 func (tm *TaskManager) taskCompleted(task *pb.Task, err error) error {
@@ -137,6 +130,7 @@ func (tm *TaskManager) startNextQueuedTask() {
 		tm.AddTasks(nextTask)
 	} else {
 		close(tm.notifyChan)
+
 	}
 }
 
