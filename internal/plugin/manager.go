@@ -20,7 +20,7 @@ func NewPluginManager(ctx context.Context) *PluginManager {
 }
 
 // 获取下载器实例
-func (pm *PluginManager) Select(url string) (*DownloadPlugin, error) {
+func (pm *PluginManager) SelectDownloader(url string) (*DownloadPlugin, error) {
 	for _, p := range pm.plugins {
 
 		base := p.GetManifest()

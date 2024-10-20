@@ -23,7 +23,7 @@ import (
 func (a *App) ShowDownloadInfo(link string) *pb.InfoResponse {
 
 	// 获取下载器
-	p, err := a.manager.Select(link)
+	p, err := a.manager.SelectDownloader(link)
 	if err != nil {
 		provider := "unknown"
 		if p != nil {

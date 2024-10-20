@@ -12,30 +12,30 @@ import (
 
 // TaskQueue 任务队列接口
 type TaskQueue struct {
-	plugin     *plugin.DownloadPlugin
-	stop       chan chan struct{}
-	working    atomic.Bool
-	onFinished func(*pb.Task, error)
-	task       *pb.Task
+	plugin  *plugin.DownloadPlugin
+	stop    chan chan struct{}
+	working atomic.Bool
+
+	task *pb.Task
 }
 
 // New 创建一个新的任务队列
-func NewTaskQueue(plugin *plugin.DownloadPlugin, task *pb.Task, onFinished func(*pb.Task, error)) *TaskQueue {
+func NewTaskQueue(p *plugin.DownloadPlugin, task *pb.Task) *TaskQueue {
 	return &TaskQueue{
-		plugin:     plugin,
-		stop:       make(chan chan struct{}),
-		working:    atomic.Bool{},
-		onFinished: onFinished,
-		task:       task,
+		plugin:  p,
+		stop:    make(chan chan struct{}),
+		working: atomic.Bool{},
+
+		task: task,
 	}
 }
 
-func (tq *TaskQueue) work() {
+func (tq *TaskQueue) work(onFinished func(*pb.Task, error)) {
 	stream, err := tq.plugin.Service.Download(context.Background(), &pb.TaskRequest{
 		Task: tq.task,
 	})
 	if err != nil {
-		tq.onFinished(tq.task, nil)
+		onFinished(tq.task, nil)
 		return
 	}
 
@@ -45,7 +45,7 @@ func (tq *TaskQueue) work() {
 			break
 		}
 		if err != nil {
-			tq.onFinished(tq.task, nil)
+			onFinished(tq.task, nil)
 			fmt.Printf("Error receiving progress: %v\n", err)
 			break
 		}
@@ -59,5 +59,6 @@ func (tq *TaskQueue) work() {
 			tq.task.Cover = "/files/" + tq.task.Cover
 		}
 	}
-	tq.onFinished(tq.task, nil)
+	onFinished(tq.task, nil)
+
 }

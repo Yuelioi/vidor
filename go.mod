@@ -10,10 +10,9 @@ require (
 	github.com/michimani/deepl-sdk-go v0.3.1
 	github.com/sirupsen/logrus v1.9.3
 	github.com/u2takey/ffmpeg-go v0.5.0
-	github.com/wailsapp/wails/v2 v2.9.1
+	github.com/wailsapp/wails/v2 v2.9.2
 	golang.design/x/hotkey v0.4.1
 	golang.org/x/exp v0.0.0-20240909161429-701f63a606c0
-	golang.org/x/sync v0.8.0
 	golift.io/xtractr v0.2.2
 	google.golang.org/grpc v1.65.0
 	google.golang.org/protobuf v1.34.2
