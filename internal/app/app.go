@@ -53,7 +53,15 @@ func initDirs() (*AppDirs, error) {
 		Logs:    filepath.Join(root, "logs"),
 	}
 
-	err = tools.MkDirs(appDirs.Libs, appDirs.Temps, appDirs.Plugins, appDirs.Configs, appDirs.Logs)
+	err = tools.MkDirs(
+		appDirs.Libs,
+		appDirs.Temps,
+		appDirs.Plugins,
+		appDirs.Configs,
+		appDirs.Logs,
+		filepath.Join(appDirs.Temps, "cover"),
+		filepath.Join(appDirs.Temps, "downloading"),
+	)
 	if err != nil {
 		return nil, err
 	}
